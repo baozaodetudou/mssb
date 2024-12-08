@@ -15,11 +15,8 @@ plugins:
   - tag: forward_local
     type: forward
     args:
-      concurrent: 4 # 并发查询数量
+      concurrent: 1 # 并发查询数量
       upstreams:
-        - addr: udp://221.130.33.60
-        - addr: udp://221.179.155.161
-        - addr: udp://119.29.29.29
         - addr: udp://223.5.5.5
 
 #   # 转发至国外DNS，拿真实ip
