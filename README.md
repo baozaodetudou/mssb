@@ -31,3 +31,8 @@
 53是mosdns端口
 9090是singbox UI界面端口
 
+## 安装命令 仅在debain12虚拟机和自己的dbain12 lxc上进行测试
+```sh
+git clone https://github.com/baozaodetudou/mssb.git -b lxc && cd mssb && bash install.sh
+```
+
