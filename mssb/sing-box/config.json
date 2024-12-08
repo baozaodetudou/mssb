@@ -12,9 +12,9 @@
       "default_mode": "rule"
     },
     "cache_file": {
-      "enabled": true,
+      "enabled": false,
       "path": "/mssb/sing-box/cache.db",
-      "store_fakeip": true
+      "store_fakeip": false
     }
   },
   "dns": {
