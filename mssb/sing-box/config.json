@@ -488,21 +488,15 @@
     "rule_set": [
       {
         "tag": "mydirect",
-        "type": "remote",
+        "type": "local",
         "format": "source",
-        "path": "/mssb/sing-box/ruleset/mydirect.json",
-        "url": "https://raw.githubusercontent.com/baozaodetudou/singbox/main/rule/direct.json",
-        "download_detour": "🚀 节点选择",
-        "update_interval": "1h"
+        "path": "/mssb/sing-box/ruleset/mydirect.json"
       },
       {
         "tag": "myproxy",
-        "type": "remote",
+        "type": "local",
         "format": "source",
-        "path": "/mssb/sing-box/ruleset/myproxy.json",
-        "url": "https://raw.githubusercontent.com/baozaodetudou/singbox/main/rule/proxy.json",
-        "download_detour": "🚀 节点选择",
-        "update_interval": "1h"
+        "path": "/mssb/sing-box/ruleset/myproxy.json"
       },
       {
         "tag": "pt",
