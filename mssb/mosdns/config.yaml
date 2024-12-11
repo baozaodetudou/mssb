@@ -107,7 +107,7 @@ plugins:
 
       # 拒绝HTTPS类型查询
       - matches: qtype 65
-        exec: reject 3
+        exec: black_hole
 
       # 拒绝在拒绝列表中的域名
       - matches: qname &./reject-list.txt &./my-reject-list.txt
