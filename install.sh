@@ -742,6 +742,52 @@ add_cron_jobs() {
     done
 }
 
+install_adguardhome() {
+  # 下载并安装 AdGuardHome 到 /mssb/AdGuardHome
+  log "开始下载 AdGuardHome..."
+  arch=$(detect_architecture)
+  log "系统架构是：$arch"
+
+  # 获取最新版本号（从 GitHub tags 获取）
+  LATEST_ADGUARD_VERSION=$(curl -sL -o /dev/null -w %{url_effective} https://github.com/AdguardTeam/AdGuardHome/releases/latest | awk -F '/' '{print $NF}')
+
+  # 构建下载 URL（AdGuardHome 的发布包命名规则）
+  ADGUARD_URL="https://github.com/AdguardTeam/AdGuardHome/releases/download/${LATEST_ADGUARD_VERSION}/AdGuardHome_linux_${arch}.tar.gz"
+
+  log "从 $ADGUARD_URL 下载 AdGuardHome..."
+  if curl -L --fail -o /tmp/AdGuardHome.tar.gz "$ADGUARD_URL"; then
+      log "AdGuardHome 下载成功。"
+  else
+      log "AdGuardHome 下载失败，请检查网络连接或 URL 是否正确。"
+      exit 1
+  fi
+
+  # 创建目标目录 /mssb/AdGuardHome
+  mkdir -p /mssb
+
+  log "解压 AdGuardHome 到 /mssb/AdGuardHome..."
+  if tar -zxvf /tmp/AdGuardHome.tar.gz -C /mssb --strip-components=1; then
+      log "AdGuardHome 解压成功。"
+  else
+      log "AdGuardHome 解压失败，请检查压缩包是否正确。"
+      exit 1
+  fi
+
+  log "设置 AdGuardHome 可执行权限..."
+  if chmod +x /mssb/AdGuardHome/AdGuardHome; then
+      log "AdGuardHome 设置权限成功。"
+  else
+      log "AdGuardHome 设置权限失败，请检查文件路径和权限设置。"
+      exit 1
+  fi
+
+  log "尝试启动 AdGuardHome 安装..."
+  cd /mssb/AdGuardHome && ./AdGuardHome -s install
+  log "AdGuardHome 安装在/mssb/AdGuardHome 目录下"
+  log "安装已经启动了, 请进入 ${green_text}http://${local_ip}:3000${reset} 进行配置设置"
+  log "请设置AdGuardHome默认dns服务为53, 进入配置界面后上游dns为mosdns的dns: 127.0.0.1:1053"
+}
+
 
 # 主函数
 main() {
@@ -859,6 +905,7 @@ main() {
             check_ui
             install_tproxy
             reload_service
+            install_adguardhome
             ;;
         2)
             core_name="mihomo"
@@ -872,6 +919,7 @@ main() {
             install_tproxy
             mihomo_customize_settings
             reload_service
+            install_adguardhome
             ;;
         *)
             log "无效选项，退出安装。"
@@ -912,6 +960,9 @@ main() {
     echo
     echo -e "🕸️  Sing-box/Mihomo 面板 UI：${green_text}http://${local_ip}:9090/ui${reset}"
     echo -e "   - 密码：mssb123.."
+    echo
+    echo -e "🌐  AdGuardHome 配置面板 UI：${green_text}http://${local_ip}:3000${reset}"
+    echo
     echo -e "${green_text}-------------------------------------------------${reset}"
 
 
