@@ -63,7 +63,7 @@ export http_proxy=http://192.168.12.239:6152
 export all_proxy=socks5://192.168.12.239:6153
 
 # 拉取仓库并安装（包含安装、卸载、启动、停止功能）
-git clone --depth=1 https://github.com/baozaodetudou/mssb.git && cd mssb && bash install.sh
+git clone --depth=1 https://github.com/baozaodetudou/mssb.git -b adguard && cd mssb && bash install.sh
 ```
 
 ## 查看日志
