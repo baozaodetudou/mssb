@@ -903,9 +903,9 @@ main() {
             singbox_configure_files
             singbox_customize_settings
             check_ui
+            install_adguardhome
             install_tproxy
             reload_service
-            install_adguardhome
             ;;
         2)
             core_name="mihomo"
@@ -916,10 +916,11 @@ main() {
             cp_config_files
             mihomo_configure_files
             check_ui
+            install_adguardhome
             install_tproxy
             mihomo_customize_settings
             reload_service
-            install_adguardhome
+
             ;;
         *)
             log "无效选项，退出安装。"
