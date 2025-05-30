@@ -784,11 +784,13 @@ install_adguardhome() {
   fi
 
   # 复制默认配置文件
-  log "复制默认配置文件 AdGuardHome.yaml..."
+  log "备份配置文件到 /mssb/AdGuardHome/AdGuardHome.yaml.bak"
   cp /mssb/AdGuardHome/AdGuardHome.yaml /mssb/AdGuardHome/AdGuardHome.yaml.bak
+  log "复制默认配置文件 AdGuardHome.yaml..."
+  cp ./mssb/AdGuardHome/AdGuardHome.yaml /mssb/AdGuardHome/AdGuardHome.yaml
 
   # 获取用户输入密码
-  read -s -p "请输入 AdGuardHome 登录密码（直接回车跳过使用默认密码 mssb123..）: " input_pass
+  read -p "请输入 AdGuardHome 登录密码（直接回车跳过使用默认密码 mssb123..）: " input_pass
   echo
   if [[ -z "$input_pass" ]]; then
     input_pass="mssb123.."
@@ -808,8 +810,8 @@ install_adguardhome() {
   cd /mssb/AdGuardHome && ./AdGuardHome -s install
 
   log "AdGuardHome 安装在 /mssb/AdGuardHome 目录下"
-  log "AdGuardHome 已启动，请访问 ${green_text}http://${local_ip}:80${reset} 查看并进行配置确认修改"
-  log "默认登录账号为 ${green_text}mssb${reset}，密码为 ${green_text}$input_pass${reset}"
+  echo -e "AdGuardHome 已启动，请访问 ${green_text}http://${local_ip}:80${reset} 查看并进行配置确认修改"
+  echo -e "${green_text}默认登录账号为 mssb，密码为 $input_pass${reset}"
 }
 
 
