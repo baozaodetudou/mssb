@@ -835,6 +835,7 @@ main() {
         2)
             echo -e "${red_text}⛔ 正在停止所有转发相关服务...${reset}"
             supervisorctl stop all || echo "supervisorctl 未安装或未配置"
+            /mssb/AdGuardHome/AdGuardHome -s uninstall 2>/dev/null
             systemctl stop sing-box-router.service 2>/dev/null
             systemctl stop mihomo-router.service 2>/dev/null
             systemctl stop nftables.service 2>/dev/null
@@ -844,6 +845,7 @@ main() {
         3)
             echo -e "${red_text}⚠️ 正在停止并卸载所有服务...${reset}"
             supervisorctl stop all || echo "supervisorctl 未安装或未配置"
+            /mssb/AdGuardHome/AdGuardHome -s uninstall 2>/dev/null
             systemctl stop sing-box-router.service 2>/dev/null
             systemctl stop mihomo-router.service 2>/dev/null
             systemctl stop nftables.service 2>/dev/null
@@ -888,6 +890,7 @@ main() {
             else
                 echo "⚠️ supervisorctl 未安装"
             fi
+            /mssb/AdGuardHome/AdGuardHome -s install 2>/dev/null
 
             log "✅ 所有相关服务已启动完成。"
             exit 0
@@ -915,8 +918,8 @@ main() {
     echo
 
     echo -e "${green_text}请选择安装方案：${reset}"
-    echo "1) 方案1：Sing-box P核(支持订阅) + MosDNS"
-    echo "2) 方案2：Mihomo + MosDNS"
+    echo "1) 方案1：Sing-box P核(支持订阅) + MosDNS + AdGuardHome"
+    echo "2) 方案2：Mihomo + MosDNS + AdGuardHome"
     echo -e "${green_text}-------------------------------------------------${reset}"
     read -p "请输入选项 (1/2): " choice
     case "$choice" in
