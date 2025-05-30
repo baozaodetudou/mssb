@@ -127,14 +127,14 @@ proxy-groups:
   - {name: 🎬 国内媒体, type: select, proxies: [🎯 全球直连, ✈️ 节点选择]}
   - {name: 🎵 TikTok, type: select, proxies: [🇨🇳 台湾节点, 🇭🇰 香港节点, ✈️ 节点选择, 🇯🇵 日本节点, 🇸🇬 新加坡节点, 🇺🇸 美国节点, 🇰🇷 韩国节点]}
   - {name: 📈 网络测试, type: select, proxies: [🎯 全球直连, ✈️ 节点选择, 🇭🇰 香港节点, 🇨🇳 台湾节点, 🇯🇵 日本节点, 🇰🇷 韩国节点, 🇸🇬 新加坡节点, 🇺🇸 美国节点]}
-  - {name: 📲 Telegram, type: select, proxies: [ 🇭🇰 香港节点, ✈️ 节点选择, 🇨🇳 台湾节点, 🇯🇵 日本节点, 🇸🇬 新加坡节点, 🇺🇸 美国节点, 🇰🇷 韩国节点 ] }
+  - {name: 📲 Telegram, type: select, proxies: [🇭🇰 香港节点, ✈️ 节点选择, 🇨🇳 台湾节点, 🇯🇵 日本节点, 🇸🇬 新加坡节点, 🇺🇸 美国节点, 🇰🇷 韩国节点 ] }
   - {name: 🚀 手动切换, type: select, proxies: [🇨🇳 台湾节点, 🇭🇰 香港节点, 🎯 全球直连, 🇯🇵 日本节点, 🇸🇬 新加坡节点, 🇺🇸 美国节点, 🇰🇷 韩国节点, 📺 省流节点, 👍 高级节点, 🎮 游戏节点, ✈️ 机场节点]}
 #  - {name: 🎥 奈飞视频, type: select, proxies: [🇭🇰 香港节点, 🇨🇳 台湾节点, 🇯🇵 日本节点, 🇸🇬 新加坡节点, 🇺🇸 美国节点, 🇰🇷 韩国节点]}
 #  - {name: 📽️ 迪士尼+, type: select, proxies: [🇭🇰 香港节点, 🇨🇳 台湾节点, 🇯🇵 日本节点, 🇸🇬 新加坡节点, 🇺🇸 美国节点, 🇰🇷 韩国节点]}
 #  - {name: 📹 油管视频, type: select, proxies: [✈️ 节点选择, 🇭🇰 香港节点, 🇨🇳 台湾节点, 🇯🇵 日本节点, 🇸🇬 新加坡节点, 🇺🇸 美国节点, 🇰🇷 韩国节点]}
 #  - {name: 📺 哔哩哔哩, type: select, proxies: [🎯 全球直连, ✈️ 节点选择, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 新加坡节点]}
   - {name: 🤖 人工智能, type: select, proxies: [🇨🇳 台湾节点, 🇺🇸 美国节点, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇸🇬 新加坡节点, ✈️ 节点选择]}
-  - {name: 🧲 PT下载, type: select, proxies: [🎯 全球直连, ✈️ 节点选择]}
+  - {name: 🧲 PT下载, type: select, proxies: [🎯 全球直连, 🇭🇰 香港节点, ✈️ 节点选择, 🇨🇳 台湾节点, 🇯🇵 日本节点, 🇸🇬 新加坡节点, 🇺🇸 美国节点, 🇰🇷 韩国节点]}
 #  - {name: Ⓜ️ 微软云盘, type: select, proxies: [🎯 全球直连, ✈️ 节点选择]}
   - {name: Ⓜ️ 微软服务, type: select, proxies: [🎯 全球直连, ✈️ 节点选择]}
   - {name: 🛒 亚马逊, type: select, proxies: [🎯 全球直连, ✈️ 节点选择]}
