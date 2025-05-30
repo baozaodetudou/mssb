@@ -743,15 +743,18 @@ add_cron_jobs() {
 }
 
 install_adguardhome() {
+  log "安装AdGuardHome必要的软件包..."
+  if ! apt install -y apache2-utils; then
+      log "${red}软件包安装失败，退出！${reset}"
+      exit 1
+  fi
+
   # 下载并安装 AdGuardHome 到 /mssb/AdGuardHome
   log "开始下载 AdGuardHome..."
   arch=$(detect_architecture)
   log "系统架构是：$arch"
 
-  # 获取最新版本号（从 GitHub tags 获取）
   LATEST_ADGUARD_VERSION=$(curl -sL -o /dev/null -w %{url_effective} https://github.com/AdguardTeam/AdGuardHome/releases/latest | awk -F '/' '{print $NF}')
-
-  # 构建下载 URL（AdGuardHome 的发布包命名规则）
   ADGUARD_URL="https://github.com/AdguardTeam/AdGuardHome/releases/download/${LATEST_ADGUARD_VERSION}/AdGuardHome_linux_${arch}.tar.gz"
 
   log "从 $ADGUARD_URL 下载 AdGuardHome..."
@@ -762,7 +765,6 @@ install_adguardhome() {
       exit 1
   fi
 
-  # 创建目标目录 /mssb/AdGuardHome
   mkdir -p /mssb
 
   log "解压 AdGuardHome 到 /mssb/AdGuardHome..."
@@ -781,12 +783,35 @@ install_adguardhome() {
       exit 1
   fi
 
+  # 复制默认配置文件
+  log "复制默认配置文件 AdGuardHome.yaml..."
+  cp /mssb/AdGuardHome/AdGuardHome.yaml /mssb/AdGuardHome/AdGuardHome.yaml.bak
+
+  # 获取用户输入密码
+  read -s -p "请输入 AdGuardHome 登录密码（直接回车跳过使用默认密码 mssb123..）: " input_pass
+  echo
+  if [[ -z "$input_pass" ]]; then
+    input_pass="mssb123.."
+    log "未输入密码，使用默认密码：$input_pass"
+  else
+    log "已设置自定义密码。"
+  fi
+
+  # 生成 bcrypt 哈希
+  hashed_pass=$(htpasswd -nbB user "$input_pass" | cut -d: -f2)
+
+  # 替换 password 字段
+  log "替换 AdGuardHome 配置文件中的密码哈希..."
+  sed -i "s|^\(\s*password:\s*\).*|\1$hashed_pass|" /mssb/AdGuardHome/AdGuardHome.yaml
+
   log "尝试启动 AdGuardHome 安装..."
   cd /mssb/AdGuardHome && ./AdGuardHome -s install
-  log "AdGuardHome 安装在/mssb/AdGuardHome 目录下"
-  log "安装已经启动了, 请进入 ${green_text}http://${local_ip}:3000${reset} 进行配置设置"
-  log "请设置AdGuardHome默认dns服务为53, 进入配置界面后上游dns为mosdns的dns: 127.0.0.1:1053"
+
+  log "AdGuardHome 安装在 /mssb/AdGuardHome 目录下"
+  log "AdGuardHome 已启动，请访问 ${green_text}http://${local_ip}:80${reset} 查看并进行配置确认修改"
+  log "默认登录账号为 ${green_text}mssb${reset}，密码为 ${green_text}$input_pass${reset}"
 }
+
 
 
 # 主函数
@@ -962,7 +987,9 @@ main() {
     echo -e "🕸️  Sing-box/Mihomo 面板 UI：${green_text}http://${local_ip}:9090/ui${reset}"
     echo -e "   - 密码：mssb123.."
     echo
-    echo -e "🌐  AdGuardHome 配置面板 UI：${green_text}http://${local_ip}:3000${reset}"
+    echo -e "🌐  AdGuardHome 安装在 /mssb/AdGuardHome 目录下"
+    echo -e "🌐  AdGuardHome 已启动，请访问 ${green_text}http://${local_ip}:80${reset} 查看并进行配置确认修改"
+    echo -e "默认登录账号为 ${green_text}mssb${reset}，密码查看上边AdGuardHome安装日志"
     echo
     echo -e "${green_text}-------------------------------------------------${reset}"
 

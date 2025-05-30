@@ -678,25 +678,25 @@ plugins:
     type: udp_server
     args:
       entry: sequence_main
-      listen: ":5656"
+      listen: ":1053"
 
   - tag: tcp_main
     type: tcp_server
     args:
       entry: sequence_main
-      listen: ":5656"
-      idle_timeout: 720
-
-#对外服务器
-  - tag: udp_all
-    type: udp_server
-    args:
-      entry: sequence_all
-      listen: ":1053"
-
-  - tag: tcp_all
-    type: tcp_server
-    args:
-      entry: sequence_all
       listen: ":1053"
       idle_timeout: 720
+
+##对外服务器
+#  - tag: udp_all
+#    type: udp_server
+#    args:
+#      entry: sequence_all
+#      listen: ":1053"
+#
+#  - tag: tcp_all
+#    type: tcp_server
+#    args:
+#      entry: sequence_all
+#      listen: ":1053"
+#      idle_timeout: 720
