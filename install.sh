@@ -807,7 +807,8 @@ install_adguardhome() {
   sed -i "s|^\(\s*password:\s*\).*|\1$hashed_pass|" /mssb/AdGuardHome/AdGuardHome.yaml
 
   log "尝试启动 AdGuardHome 安装..."
-  cd /mssb/AdGuardHome && ./AdGuardHome -s install
+  cd /mssb/AdGuardHome && /mssb/AdGuardHome/AdGuardHome -s uninstall
+  cd /mssb/AdGuardHome && /mssb/AdGuardHome/AdGuardHome -s install
 
   log "AdGuardHome 安装在 /mssb/AdGuardHome 目录下"
   echo -e "AdGuardHome 已启动，请访问 ${green_text}http://${local_ip}:80${reset} 查看并进行配置确认修改"
@@ -835,7 +836,7 @@ main() {
         2)
             echo -e "${red_text}⛔ 正在停止所有转发相关服务...${reset}"
             supervisorctl stop all || echo "supervisorctl 未安装或未配置"
-            /mssb/AdGuardHome/AdGuardHome -s uninstall 2>/dev/null
+            cd /mssb/AdGuardHome && /mssb/AdGuardHome/AdGuardHome -s uninstall 2>/dev/null
             systemctl stop sing-box-router.service 2>/dev/null
             systemctl stop mihomo-router.service 2>/dev/null
             systemctl stop nftables.service 2>/dev/null
@@ -845,7 +846,7 @@ main() {
         3)
             echo -e "${red_text}⚠️ 正在停止并卸载所有服务...${reset}"
             supervisorctl stop all || echo "supervisorctl 未安装或未配置"
-            /mssb/AdGuardHome/AdGuardHome -s uninstall 2>/dev/null
+            cd /mssb/AdGuardHome && /mssb/AdGuardHome/AdGuardHome -s uninstall 2>/dev/null
             systemctl stop sing-box-router.service 2>/dev/null
             systemctl stop mihomo-router.service 2>/dev/null
             systemctl stop nftables.service 2>/dev/null
@@ -890,7 +891,7 @@ main() {
             else
                 echo "⚠️ supervisorctl 未安装"
             fi
-            /mssb/AdGuardHome/AdGuardHome -s install 2>/dev/null
+            cd /mssb/AdGuardHome && /mssb/AdGuardHome/AdGuardHome -s install 2>/dev/null
 
             log "✅ 所有相关服务已启动完成。"
             exit 0
