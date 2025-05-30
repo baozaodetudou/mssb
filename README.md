@@ -1,6 +1,7 @@
 # adguard + Mosdns + Singbox/Mihomo 虚拟机分流代理项目（纯自用版本）
 
-# adguard分支不提供设备分流控制功能 mosdns默认使用1053，ad使用53
+# adguard分支 设备分流控制功能使用adguard完成而不是mosdns设置看下边教程图
+# mosdns默认使用1053，ad使用53
 
 ## 项目简介
 
@@ -108,6 +109,9 @@ tail -f /var/log/supervisor/*.log
 ### 5. 使用方法
 
 * 安装完成后，将主路由的 DNS 设置为 Debian 主机的 IP；
+* 实现分流控制：将不需要走代理的设备 IP 在adguard中设置如图,未单独设置会走代理
+  ![adguard.png](docs/png/adguard.png)
+
 ---
 
 ### 项目来源和参考
