@@ -2000,8 +2000,8 @@ install_adguardhome() {
   if [ -n "$latest_backup" ]; then
     echo -e "\n${green_text}=== AdGuardHome 配置恢复选项 ===${reset}"
     echo -e "发现 AdGuardHome 备份配置文件：$latest_backup"
-    echo -e "1. 恢复备份配置（保持原有用户名和密码）"
-    echo -e "2. 使用新配置（重新设置用户名和密码）"
+    echo -e "1. 恢复备份配置（保持原有配置和设置）"
+    echo -e "2. 使用默认配置（使用默认用户名密码）"
     echo -e "${green_text}------------------------${reset}"
 
     read -p "请选择操作 (1/2): " restore_choice
@@ -2034,41 +2034,17 @@ install_adguardhome() {
     esac
   fi
 
-  # 如果没有恢复配置，则复制默认配置文件并设置用户名密码
+  # 如果没有恢复配置，则复制默认配置文件
   if [ "$config_restored" = false ]; then
     # 复制默认配置文件
     log "复制默认配置文件 AdGuardHome.yaml..."
     cp ./mssb/AdGuardHome/AdGuardHome.yaml /mssb/AdGuardHome/AdGuardHome.yaml
 
-    # 获取用户输入用户名
-    read -p "请输入 AdGuardHome 登录用户名（直接回车使用默认用户名 mssb）: " input_user
-    echo
-    if [[ -z "$input_user" ]]; then
-      adguard_username="mssb"
-      log "未输入用户名，使用默认用户名：$adguard_username"
-    else
-      adguard_username="$input_user"
-      log "已设置自定义用户名：$adguard_username"
-    fi
-
-    # 获取用户输入密码
-    read -p "请输入 AdGuardHome 登录密码（直接回车跳过使用默认密码 mssb123..）: " input_pass
-    echo
-    if [[ -z "$input_pass" ]]; then
-      adguard_password="mssb123.."
-      log "未输入密码，使用默认密码：$adguard_password"
-    else
-      adguard_password="$input_pass"
-      log "已设置自定义密码。"
-    fi
-
-    # 生成 bcrypt 哈希
-    hashed_pass=$(htpasswd -nbB user "$adguard_password" | cut -d: -f2)
-
-    # 替换用户名和密码字段
-    log "替换 AdGuardHome 配置文件中的用户名和密码..."
-    sed -i "s|^\(\s*name:\s*\).*|\1$adguard_username|" /mssb/AdGuardHome/AdGuardHome.yaml
-    sed -i "s|^\(\s*password:\s*\).*|\1$hashed_pass|" /mssb/AdGuardHome/AdGuardHome.yaml
+    # 使用默认配置
+    adguard_username="mssb"
+    adguard_password="mssb123.."
+    log "使用默认配置 - 用户名：$adguard_username，密码：$adguard_password"
+    log "您可以在 AdGuardHome Web 界面中修改用户名和密码"
   fi
 
   log "尝试启动 AdGuardHome..."
@@ -2080,7 +2056,8 @@ install_adguardhome() {
   if [ "$config_restored" = true ]; then
     echo -e "${green_text}已恢复备份配置，登录账号为 $adguard_username${reset}"
   else
-    echo -e "${green_text}登录账号为 $adguard_username，密码为 $adguard_password${reset}"
+    echo -e "${green_text}默认登录账号为 $adguard_username，密码为 $adguard_password${reset}"
+    echo -e "${yellow}建议登录后在 Web 界面中修改用户名和密码${reset}"
   fi
 }
 
@@ -2274,10 +2251,12 @@ main() {
             echo -e "   - 密码：${green_text}已从备份恢复${reset}"
         else
             echo -e "   - 密码：${green_text}$adguard_password${reset}"
+            echo -e "   - ${yellow}建议在 Web 界面中修改默认密码${reset}"
         fi
     else
         echo -e "   - 用户名：${green_text}mssb${reset}"
         echo -e "   - 密码：${green_text}mssb123..${reset}"
+        echo -e "   - ${yellow}建议在 Web 界面中修改默认密码${reset}"
     fi
     echo
     echo -e "${green_text}-------------------------------------------------${reset}"
