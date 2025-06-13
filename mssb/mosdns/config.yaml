@@ -297,10 +297,7 @@ plugins:
     type: sequence
     args:
       - exec: drop_resp      #丢弃用于标记的blackhole ip
-      - matches: "!client_ip &./proxy-device-list.txt"
-        exec: $forward_local_in
-      - matches: "client_ip &./proxy-device-list.txt"
-        exec: $forward_fakeip
+      - exec: $forward_fakeip
 
 #缓存序列-列表外域名
   - tag: sequence_google
@@ -323,9 +320,9 @@ plugins:
     args:
       - matches: "qtype 6 12 65"
         exec: reject 0
-      #   - exec: $cache_all
-      #   - matches: has_resp
-      #     exec: accept
+      - exec: $cache_all
+      - matches: has_resp
+        exec: accept
       - exec: $forward_all_in
 
   - tag: sequence_all
@@ -682,11 +679,25 @@ plugins:
     type: udp_server
     args:
       entry: sequence_main
-      listen: ":53"
+      listen: ":1053"
 
   - tag: tcp_main
     type: tcp_server
     args:
       entry: sequence_main
-      listen: ":53"
+      listen: ":1053"
       idle_timeout: 720
+
+##对外服务器
+#  - tag: udp_all
+#    type: udp_server
+#    args:
+#      entry: sequence_all
+#      listen: ":1053"
+#
+#  - tag: tcp_all
+#    type: tcp_server
+#    args:
+#      entry: sequence_all
+#      listen: ":1053"
+#      idle_timeout: 720

@@ -1409,6 +1409,7 @@ stop_all_services() {
     fi
     
     systemctl daemon-reload
+    cd /mssb/AdGuardHome && /mssb/AdGuardHome/AdGuardHome -s uninstall
     log "所有服务已停止。"
 }
 
@@ -1475,6 +1476,9 @@ start_all_services() {
     if command -v supervisorctl &>/dev/null; then
         supervisorctl start all || log "supervisor 服务启动失败"
     fi
+
+    log "尝试启动 AdGuardHome..."
+    cd /mssb/AdGuardHome && /mssb/AdGuardHome/AdGuardHome -s install
     
     log "所有服务启动完成。"
 }
@@ -1916,134 +1920,89 @@ format_route_rules() {
     echo -e "${green_text} routeros 具体可以参考: https://github.com/baozaodetudou/mssb/blob/main/docs/fakeip.md ${reset}"
 }
 
-# 扫描局域网设备并配置代理设备列表
-scan_lan_devices() {
-    echo -e "\n${green_text}=== 局域网设备扫描 ===${reset}"
-    echo -e "此功能将扫描局域网中的设备，让您选择需要代理的设备"
-    echo -e "${yellow}注意：此操作会清空并重写 /mssb/mosdns/proxy-device-list.txt 文件${reset}"
-    echo -e "${green_text}------------------------${reset}"
+# 安装adhome
+install_adguardhome() {
+  log "安装AdGuardHome必要的软件包..."
+  if ! apt install -y apache2-utils; then
+      log "${red}软件包安装失败，退出！${reset}"
+      exit 1
+  fi
 
-    read -p "是否继续扫描局域网设备？(y/n): " scan_choice
-    if [[ "$scan_choice" != "y" && "$scan_choice" != "Y" ]]; then
-        log "已取消局域网设备扫描"
-        return 0
-    fi
+  # 下载并安装 AdGuardHome 到 /mssb/AdGuardHome
+  log "开始下载 AdGuardHome..."
+  arch=$(detect_architecture)
+  log "系统架构是：$arch"
 
-    # 检查必要工具
-    if ! command -v arp-scan &> /dev/null; then
-        log "正在安装 arp-scan 工具..."
-        apt update && apt install -y arp-scan
-        if ! command -v arp-scan &> /dev/null; then
-            log "arp-scan 安装失败，无法进行设备扫描"
-            return 1
-        fi
-    fi
+  LATEST_ADGUARD_VERSION=$(curl -sL -o /dev/null -w %{url_effective} https://github.com/AdguardTeam/AdGuardHome/releases/latest | awk -F '/' '{print $NF}')
+  ADGUARD_URL="https://github.com/AdguardTeam/AdGuardHome/releases/download/${LATEST_ADGUARD_VERSION}/AdGuardHome_linux_${arch}.tar.gz"
 
-    # 获取当前使用的网络接口
-    local interface
-    if [ -n "$selected_interface" ]; then
-        interface="$selected_interface"
-    else
-        interface=$(ip route | grep default | awk '{print $5}' | head -n1)
-        if [ -z "$interface" ]; then
-            log "无法自动检测网络接口，请手动指定"
-            read -p "请输入网络接口名称（如 eth0, ens18）: " interface
-        fi
-    fi
+  log "从 $ADGUARD_URL 下载 AdGuardHome..."
+  if curl -L --fail -o /tmp/AdGuardHome.tar.gz "$ADGUARD_URL"; then
+      log "AdGuardHome 下载成功。"
+  else
+      log "AdGuardHome 下载失败，请检查网络连接或 URL 是否正确。"
+      exit 1
+  fi
 
-    log "使用网络接口：$interface"
+  mkdir -p /mssb
 
-    # 扫描局域网设备
-    echo -e "${yellow}🔍 正在扫描局域网设备，请稍等...${reset}"
-    local raw_result
-    raw_result=$(arp-scan --interface="$interface" --localnet 2>/dev/null | grep -E "^([0-9]{1,3}\.){3}[0-9]{1,3}")
+  log "解压 AdGuardHome 到 /mssb/AdGuardHome..."
+  if tar -zxvf /tmp/AdGuardHome.tar.gz -C /mssb --strip-components=1; then
+      log "AdGuardHome 解压成功。"
+  else
+      log "AdGuardHome 解压失败，请检查压缩包是否正确。"
+      exit 1
+  fi
 
-    if [ -z "$raw_result" ]; then
-        log "⚠️ 未找到设备，请检查网络接口或网络连接"
-        return 1
-    fi
+  log "设置 AdGuardHome 可执行权限..."
+  if chmod +x /mssb/AdGuardHome/AdGuardHome; then
+      log "AdGuardHome 设置权限成功。"
+  else
+      log "AdGuardHome 设置权限失败，请检查文件路径和权限设置。"
+      exit 1
+  fi
 
-    # 保存完整设备信息到数组
-    local devices=()
-    local device_ips=()
-    while IFS= read -r line; do
-        devices+=("$line")
-        # 提取IP地址用于后续处理
-        local ip=$(echo "$line" | awk '{print $1}')
-        device_ips+=("$ip")
-    done < <(echo "$raw_result")
+  # 复制默认配置文件
+  log "复制默认配置文件 AdGuardHome.yaml..."
+  cp ./mssb/AdGuardHome/AdGuardHome.yaml /mssb/AdGuardHome/AdGuardHome.yaml
 
-    # 显示设备列表
-    echo ""
-    echo -e "${green_text}📋 发现的局域网设备：${reset}"
-    echo -e "${green_text}┌─────┬─────────────────┬───────────────────┬──────────────────────────────────────────────────┐${reset}"
-    echo -e "${green_text}│ 编号│ IP地址          │ MAC地址           │ 设备描述                                         │${reset}"
-    echo -e "${green_text}├─────┼─────────────────┼───────────────────┼──────────────────────────────────────────────────┤${reset}"
-    for i in "${!devices[@]}"; do
-        local ip=$(echo "${devices[$i]}" | awk '{print $1}')
-        local mac=$(echo "${devices[$i]}" | awk '{print $2}')
-        local desc=$(echo "${devices[$i]}" | awk '{for(j=3;j<=NF;j++) printf "%s ", $j; print ""}' | sed 's/[()]//g' | sed 's/^ *//;s/ *$//')
+  # 获取用户输入用户名
+  read -p "请输入 AdGuardHome 登录用户名（直接回车使用默认用户名 mssb）: " input_user
+  echo
+  if [[ -z "$input_user" ]]; then
+    adguard_username="mssb"
+    log "未输入用户名，使用默认用户名：$adguard_username"
+  else
+    adguard_username="$input_user"
+    log "已设置自定义用户名：$adguard_username"
+  fi
 
-        # 如果描述为空，显示Unknown
-        if [ -z "$desc" ]; then
-            desc="Unknown"
-        fi
+  # 获取用户输入密码
+  read -p "请输入 AdGuardHome 登录密码（直接回车跳过使用默认密码 mssb123..）: " input_pass
+  echo
+  if [[ -z "$input_pass" ]]; then
+    adguard_password="mssb123.."
+    log "未输入密码，使用默认密码：$adguard_password"
+  else
+    adguard_password="$input_pass"
+    log "已设置自定义密码。"
+  fi
 
-        # 限制描述长度，增加到48个字符
-        if [ ${#desc} -gt 48 ]; then
-            desc="${desc:0:45}..."
-        fi
+  # 生成 bcrypt 哈希
+  hashed_pass=$(htpasswd -nbB user "$adguard_password" | cut -d: -f2)
 
-        printf "${green_text}│ %3d │ %-15s │ %-17s │ %-48s │${reset}\n" "$((i+1))" "$ip" "$mac" "$desc"
-    done
-    echo -e "${green_text}└─────┴─────────────────┴───────────────────┴──────────────────────────────────────────────────┘${reset}"
+  # 替换用户名和密码字段
+  log "替换 AdGuardHome 配置文件中的用户名和密码..."
+  sed -i "s|^\(\s*name:\s*\).*|\1$adguard_username|" /mssb/AdGuardHome/AdGuardHome.yaml
+  sed -i "s|^\(\s*password:\s*\).*|\1$hashed_pass|" /mssb/AdGuardHome/AdGuardHome.yaml
 
-    # 用户选择设备
-    echo ""
-    echo -e "${yellow}提示：可以选择多个设备，用英文逗号分隔（如 1,3,5）${reset}"
-    read -p "👉 请输入要添加到代理列表的设备编号： " selected_ids
+  log "尝试启动 AdGuardHome..."
+  cd /mssb/AdGuardHome && /mssb/AdGuardHome/AdGuardHome -s uninstall
+  cd /mssb/AdGuardHome && /mssb/AdGuardHome/AdGuardHome -s install
 
-    if [ -z "$selected_ids" ]; then
-        log "未选择任何设备，操作已取消"
-        return 0
-    fi
-
-    # 创建输出目录
-    mkdir -p "/mssb/mosdns"
-    local output_file="/mssb/mosdns/proxy-device-list.txt"
-
-    # 清空输出文件
-    > "$output_file"
-
-    # 处理选择结果
-    local valid_count=0
-    IFS=',' read -ra ids <<< "$selected_ids"
-    for id in "${ids[@]}"; do
-        # 去除空格
-        id=$(echo "$id" | tr -d ' ')
-        local idx=$((id-1))
-
-        if [ "$idx" -ge 0 ] && [ "$idx" -lt "${#device_ips[@]}" ]; then
-            local ip="${device_ips[$idx]}"
-            echo "$ip" >> "$output_file"
-            log "已添加设备 IP：$ip"
-            ((valid_count++))
-        else
-            log "⚠️ 无效编号: $id，跳过"
-        fi
-    done
-
-    if [ $valid_count -gt 0 ]; then
-        echo ""
-        echo -e "${green_text}✅ 已将 $valid_count 个设备的IP地址写入 $output_file${reset}"
-        echo -e "${green_text}当前代理设备列表：${reset}"
-        cat "$output_file" | while read -r ip; do
-            echo -e "  📱 $ip"
-        done
-    else
-        log "未成功添加任何设备"
-        return 1
-    fi
+  log "AdGuardHome 安装在 /mssb/AdGuardHome 目录下"
+  echo -e "AdGuardHome 已启动，请访问 ${green_text}http://${local_ip}:80${reset} 查看并进行配置确认修改"
+  echo -e "${green_text}默认登录账号为 $adguard_username，密码为 $adguard_password${reset}"
 }
 
 # 主函数
@@ -2058,9 +2017,8 @@ main() {
     echo -e "${green_text}4) 启用所有服务${reset}"
     echo -e "${green_text}5) 修改服务配置${reset}"
     echo -e "${green_text}6) 备份所有重要文件${reset}"
-    echo -e "${green_text}7) 扫描局域网设备并配置mosdns代理列表${reset}"
     echo -e "${green_text}-------------------------------------------------${reset}"
-    read -p "请输入选项 (1/2/3/4/5/6/7): " main_choice
+    read -p "请输入选项 (1/2/3/4/5/6): " main_choice
 
     case "$main_choice" in
         2)
@@ -2093,15 +2051,6 @@ main() {
             echo -e "${green_text}-------------------------------------------------${reset}"
             exit 0
             ;;
-        7)
-            echo -e "${green_text}扫描局域网设备并配置代理列表${reset}"
-            # 检查网络接口
-            check_interfaces
-            # 扫描局域网设备
-            scan_lan_devices
-            echo -e "${green_text}-------------------------------------------------${reset}"
-            exit 0
-            ;;
         1)
             echo -e "${green_text}✅ 继续安装/更新代理服务...${reset}"
             ;;
@@ -2115,7 +2064,7 @@ main() {
     set_timezone
 
     echo -e "${green_text}-------------------------------------------------${reset}"
-    ≈
+    echo -e "${green_text}Fake-ip 网关代理方案：sing-box/mihomo + MosDNS + AdGuardHome${reset}"
     log "请注意：本脚本支持 Debian/Ubuntu，安装前请确保系统未安装其他代理软件。参考：https://github.com/herozmy/StoreHouse/tree/latest"
     echo -e "当前机器地址:${green_text}${local_ip}${reset}"
     echo -e "${green_text}-------------------------------------------------${reset}"
@@ -2126,8 +2075,8 @@ main() {
     echo
 
     echo -e "${green_text}请选择安装方案：${reset}"
-    echo "1) 方案1：Sing-box (支持订阅) + MosDNS"
-    echo "2) 方案2：Mihomo + MosDNS"
+    echo "1) 方案1：Sing-box (支持订阅) + MosDNS + AdGuardHome"
+    echo "2) 方案2：Mihomo + MosDNS + AdGuardHome"
     echo -e "${green_text}-------------------------------------------------${reset}"
     read -p "请输入选项 (1/2): " choice
     case "$choice" in
@@ -2163,6 +2112,7 @@ main() {
             singbox_configure_files
             singbox_customize_settings
             check_ui
+            install_adguardhome
             install_tproxy
             reload_service
             ;;
@@ -2175,6 +2125,7 @@ main() {
             cp_config_files
             mihomo_configure_files
             check_ui
+            install_adguardhome
             install_tproxy
             mihomo_customize_settings
             reload_service
@@ -2234,27 +2185,19 @@ main() {
     fi
     echo
     echo -e "🕸️  Sing-box/Mihomo 面板 UI：${green_text}http://${local_ip}:9090/ui${reset}"
+    echo -e "   - 密码：mssb123.."
+    echo
+    echo -e "🌐  AdGuardHome 安装在 /mssb/AdGuardHome 目录下"
+    echo -e "🌐  AdGuardHome 已启动，请访问 ${green_text}http://${local_ip}:80${reset} 查看并进行配置确认修改"
+    if [ -n "$adguard_username" ] && [ -n "$adguard_password" ]; then
+        echo -e "   - 用户名：${green_text}$adguard_username${reset}"
+        echo -e "   - 密码：${green_text}$adguard_password${reset}"
+    else
+        echo -e "   - 用户名：${green_text}mssb${reset}"
+        echo -e "   - 密码：${green_text}mssb123..${reset}"
+    fi
+    echo
     echo -e "${green_text}-------------------------------------------------${reset}"
-
-    # 代理设备列表配置
-    echo -e "\n${green_text}=== Mosdns代理设备列表配置 ===${reset}"
-    echo -e "1. 扫描局域网设备并选择"
-    echo -e "2. 跳过配置（使用现有或默认列表）"
-    echo -e "${green_text}------------------------${reset}"
-
-    read -p "请选择代理设备配置方式 (1/2): " device_choice
-
-    case "$device_choice" in
-        1)
-            scan_lan_devices
-            ;;
-        2)
-            log "跳过代理设备列表配置，使用现有配置"
-            ;;
-        *)
-            log "无效选择，跳过代理设备列表配置"
-            ;;
-    esac
 
 
     log "脚本执行完成。"

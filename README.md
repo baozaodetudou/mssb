@@ -1,4 +1,7 @@
-# Mosdns + Singbox/Mihomo 虚拟机分流代理项目（纯自用版本）
+# adguard + Mosdns + Singbox/Mihomo 虚拟机分流代理项目（纯自用版本）
+
+# adguard分支 设备分流控制功能使用adguard完成而不是mosdns设置看下边教程图
+# mosdns默认使用1053，ad使用53
 
 ## 项目简介
 
@@ -61,7 +64,7 @@ export http_proxy=http://192.168.12.239:6152
 export all_proxy=socks5://192.168.12.239:6153
 
 # 拉取仓库并安装（包含安装、卸载、启动、停止功能）
-git clone --depth=1 https://github.com/baozaodetudou/mssb.git && cd mssb && bash install.sh
+git clone --depth=1 https://github.com/baozaodetudou/mssb.git -b ami && cd mssb && bash install.sh
 ```
 
 ## 查看日志
@@ -106,13 +109,9 @@ tail -f /var/log/supervisor/*.log
 ### 5. 使用方法
 
 * 安装完成后，将主路由的 DNS 设置为 Debian 主机的 IP；
-* 实现分流控制：将需要走代理的设备 IP 添加到 `proxy-device-list.txt` 文件中，路径为：
+* 实现分流控制：将不需要走代理的设备 IP 在adguard中设置如图,未单独设置会走代理
+  ![adguard.png](docs/png/adguard.png)
 
-```text
-/mssb/mosdns/proxy-device-list.txt
-```
-
-* 文件中未列出的 IP 只使用 mosdns 加速，不通过代理。
 * 由于mosdns存在缓存针对一下ddns域名需要加进 mywhitelist.txt 不然由于ip更新缓存不更新会导致访问失败
 ```text
 /mssb/mosdns/mywhitelist.txt
