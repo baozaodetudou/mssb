@@ -409,6 +409,17 @@ auto_restore_config() {
                     return 0
                 fi
                 ;;
+            "adguardhome")
+                latest_backup=$(ls -t "$backup_dir"/adguardhome-config-*.yaml 2>/dev/null | head -n1)
+
+                if [ -n "$latest_backup" ]; then
+                    log "发现 AdGuardHome 的备份配置文件：$latest_backup"
+                    mkdir -p "/mssb/AdGuardHome"
+                    cp "$latest_backup" "/mssb/AdGuardHome/AdGuardHome.yaml"
+                    log "AdGuardHome 配置文件已从备份自动恢复"
+                    return 0
+                fi
+                ;;
         esac
     fi
     return 1
@@ -508,6 +519,24 @@ backup_config() {
                 return 1
             fi
             ;;
+        "adguardhome")
+            # 检查配置文件是否存在
+            if [ ! -f "/mssb/AdGuardHome/AdGuardHome.yaml" ]; then
+                log "AdGuardHome 配置文件不存在，跳过备份"
+                return 1
+            fi
+
+            backup_file="$backup_dir/adguardhome-config-$(date +%Y%m%d-%H%M%S).yaml"
+
+            # 执行备份
+            if cp "/mssb/AdGuardHome/AdGuardHome.yaml" "$backup_file"; then
+                log "AdGuardHome 配置文件已备份到：$backup_file"
+                return 0
+            else
+                log "AdGuardHome 配置文件备份失败"
+                return 1
+            fi
+            ;;
         *)
             log "未知的配置类型：$config_type"
             return 1
@@ -520,6 +549,7 @@ backup_all_config() {
     backup_config "sing-box" "/mssb/sing-box/config.json"
     backup_config "mihomo" "/mssb/mihomo/config.yaml"
     backup_config "mosdns" ""
+    backup_config "adguardhome" ""
 }
 
 # 检查并恢复配置文件（保留原有交互功能，用于其他地方）
@@ -1962,39 +1992,84 @@ install_adguardhome() {
       exit 1
   fi
 
-  # 复制默认配置文件
-  log "复制默认配置文件 AdGuardHome.yaml..."
-  cp ./mssb/AdGuardHome/AdGuardHome.yaml /mssb/AdGuardHome/AdGuardHome.yaml
+  # 检查是否有 AdGuardHome 备份配置文件
+  local backup_dir="/mssb/backup"
+  local latest_backup=$(ls -t "$backup_dir"/adguardhome-config-*.yaml 2>/dev/null | head -n1)
+  local config_restored=false
 
-  # 获取用户输入用户名
-  read -p "请输入 AdGuardHome 登录用户名（直接回车使用默认用户名 mssb）: " input_user
-  echo
-  if [[ -z "$input_user" ]]; then
-    adguard_username="mssb"
-    log "未输入用户名，使用默认用户名：$adguard_username"
-  else
-    adguard_username="$input_user"
-    log "已设置自定义用户名：$adguard_username"
+  if [ -n "$latest_backup" ]; then
+    echo -e "\n${green_text}=== AdGuardHome 配置恢复选项 ===${reset}"
+    echo -e "发现 AdGuardHome 备份配置文件：$latest_backup"
+    echo -e "1. 恢复备份配置（保持原有用户名和密码）"
+    echo -e "2. 使用新配置（重新设置用户名和密码）"
+    echo -e "${green_text}------------------------${reset}"
+
+    read -p "请选择操作 (1/2): " restore_choice
+
+    case "$restore_choice" in
+      1)
+        log "选择恢复 AdGuardHome 备份配置"
+        mkdir -p "/mssb/AdGuardHome"
+        if cp "$latest_backup" "/mssb/AdGuardHome/AdGuardHome.yaml"; then
+          log "AdGuardHome 配置文件已从备份恢复"
+          config_restored=true
+
+          # 从恢复的配置文件中提取用户名和密码信息用于显示
+          adguard_username=$(grep -E "^\s*-\s*name:" /mssb/AdGuardHome/AdGuardHome.yaml | head -n1 | sed 's/.*name:\s*//' | tr -d ' ')
+          adguard_password="[已恢复的密码]"
+          log "已恢复用户名：$adguard_username"
+        else
+          log "恢复备份配置失败，将使用新配置"
+          config_restored=false
+        fi
+        ;;
+      2)
+        log "选择使用新配置"
+        config_restored=false
+        ;;
+      *)
+        log "无效选择，默认使用新配置"
+        config_restored=false
+        ;;
+    esac
   fi
 
-  # 获取用户输入密码
-  read -p "请输入 AdGuardHome 登录密码（直接回车跳过使用默认密码 mssb123..）: " input_pass
-  echo
-  if [[ -z "$input_pass" ]]; then
-    adguard_password="mssb123.."
-    log "未输入密码，使用默认密码：$adguard_password"
-  else
-    adguard_password="$input_pass"
-    log "已设置自定义密码。"
+  # 如果没有恢复配置，则复制默认配置文件并设置用户名密码
+  if [ "$config_restored" = false ]; then
+    # 复制默认配置文件
+    log "复制默认配置文件 AdGuardHome.yaml..."
+    cp ./mssb/AdGuardHome/AdGuardHome.yaml /mssb/AdGuardHome/AdGuardHome.yaml
+
+    # 获取用户输入用户名
+    read -p "请输入 AdGuardHome 登录用户名（直接回车使用默认用户名 mssb）: " input_user
+    echo
+    if [[ -z "$input_user" ]]; then
+      adguard_username="mssb"
+      log "未输入用户名，使用默认用户名：$adguard_username"
+    else
+      adguard_username="$input_user"
+      log "已设置自定义用户名：$adguard_username"
+    fi
+
+    # 获取用户输入密码
+    read -p "请输入 AdGuardHome 登录密码（直接回车跳过使用默认密码 mssb123..）: " input_pass
+    echo
+    if [[ -z "$input_pass" ]]; then
+      adguard_password="mssb123.."
+      log "未输入密码，使用默认密码：$adguard_password"
+    else
+      adguard_password="$input_pass"
+      log "已设置自定义密码。"
+    fi
+
+    # 生成 bcrypt 哈希
+    hashed_pass=$(htpasswd -nbB user "$adguard_password" | cut -d: -f2)
+
+    # 替换用户名和密码字段
+    log "替换 AdGuardHome 配置文件中的用户名和密码..."
+    sed -i "s|^\(\s*name:\s*\).*|\1$adguard_username|" /mssb/AdGuardHome/AdGuardHome.yaml
+    sed -i "s|^\(\s*password:\s*\).*|\1$hashed_pass|" /mssb/AdGuardHome/AdGuardHome.yaml
   fi
-
-  # 生成 bcrypt 哈希
-  hashed_pass=$(htpasswd -nbB user "$adguard_password" | cut -d: -f2)
-
-  # 替换用户名和密码字段
-  log "替换 AdGuardHome 配置文件中的用户名和密码..."
-  sed -i "s|^\(\s*name:\s*\).*|\1$adguard_username|" /mssb/AdGuardHome/AdGuardHome.yaml
-  sed -i "s|^\(\s*password:\s*\).*|\1$hashed_pass|" /mssb/AdGuardHome/AdGuardHome.yaml
 
   log "尝试启动 AdGuardHome..."
   cd /mssb/AdGuardHome && /mssb/AdGuardHome/AdGuardHome -s uninstall
@@ -2002,7 +2077,11 @@ install_adguardhome() {
 
   log "AdGuardHome 安装在 /mssb/AdGuardHome 目录下"
   echo -e "AdGuardHome 已启动，请访问 ${green_text}http://${local_ip}:80${reset} 查看并进行配置确认修改"
-  echo -e "${green_text}默认登录账号为 $adguard_username，密码为 $adguard_password${reset}"
+  if [ "$config_restored" = true ]; then
+    echo -e "${green_text}已恢复备份配置，登录账号为 $adguard_username${reset}"
+  else
+    echo -e "${green_text}登录账号为 $adguard_username，密码为 $adguard_password${reset}"
+  fi
 }
 
 # 主函数
@@ -2189,9 +2268,13 @@ main() {
     echo
     echo -e "🌐  AdGuardHome 安装在 /mssb/AdGuardHome 目录下"
     echo -e "🌐  AdGuardHome 已启动，请访问 ${green_text}http://${local_ip}:80${reset} 查看并进行配置确认修改"
-    if [ -n "$adguard_username" ] && [ -n "$adguard_password" ]; then
+    if [ -n "$adguard_username" ]; then
         echo -e "   - 用户名：${green_text}$adguard_username${reset}"
-        echo -e "   - 密码：${green_text}$adguard_password${reset}"
+        if [ "$adguard_password" = "[已恢复的密码]" ]; then
+            echo -e "   - 密码：${green_text}已从备份恢复${reset}"
+        else
+            echo -e "   - 密码：${green_text}$adguard_password${reset}"
+        fi
     else
         echo -e "   - 用户名：${green_text}mssb${reset}"
         echo -e "   - 密码：${green_text}mssb123..${reset}"
