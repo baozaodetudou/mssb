@@ -2359,23 +2359,31 @@ main() {
             stop_all_services
             # 检查 DNS 设置
             check_dns_settings
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
             main
             ;;
         3)
             uninstall_all_services
             # 检查 DNS 设置
             check_dns_settings
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
             main
             ;;
         4)
             start_all_services
             # 检查并设置本地 DNS
             check_and_set_local_dns
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
             main
             ;;
         5)
             # 修改服务配置
             modify_service_config
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
             main
             ;;
         6)
@@ -2383,34 +2391,46 @@ main() {
             # 备份所有重要文件
             backup_all_config
             echo -e "${green_text}-------------------------------------------------${reset}"
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
             main
             ;;
         8)
             echo -e "${green_text}显示服务信息${reset}"
             display_system_status
             display_service_info
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
             main
             ;;
         9)
             echo -e "${green_text}显示路由规则提示${reset}"
             format_route_rules
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
             main
             ;;
         10)
             echo -e "${green_text}创建全局 mssb 命令${reset}"
             create_mssb_command
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
             main
             ;;
         11)
             echo -e "${red}删除全局 mssb 命令${reset}"
             remove_mssb_command
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
             main
             ;;
         12)
-          echo -e "${green_text}更新项目${reset}"
-          update_project
-          main
-          ;;
+            echo -e "${green_text}更新项目${reset}"
+            update_project
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
+            main
+            ;;
         00)
             echo -e "${green_text}退出程序${reset}"
             exit 0
@@ -2418,6 +2438,8 @@ main() {
         1)
             echo -e "${green_text}✅ 继续安装/更新代理服务...${reset}"
             install_update_server
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
             main
             ;;
         *)
