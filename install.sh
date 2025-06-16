@@ -706,6 +706,8 @@ singbox_customize_settings() {
 
                 if [ "$valid" = true ]; then
                     echo -e "${green_text}✅ 已设置订阅链接地址：$suburls${reset}"
+                    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+                    cd "$script_dir"
                     python3 update_sub.py -v "$suburls"
                     log "订阅链接处理完成"
                     break
@@ -1147,9 +1149,7 @@ cp_config_files() {
     check_and_copy_folder "fb"
 
     # 复制 mssb/mosdns 目录
-    log "复制 mssb/mosdns 目录..."
-    cp -r mssb/mosdns /mssb || { log "复制 mssb/mosdns 目录失败！退出脚本。"; exit 1; }
-    log "成功复制 mssb/mosdns 目录到 /mssb"
+    check_and_copy_folder "mosdns"
     # 检查并恢复 mosdns 配置
     echo -e "\n${green_text}=== MosDNS 配置设置 ===${reset}"
     echo -e "1. 检查是否有备份配置"
