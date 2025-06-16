@@ -39,9 +39,6 @@ set_timezone() {
     log "时区设置成功"
 }
 
-# Supervisor 状态缓存，避免多次调用
-SUPERVISOR_STATUS=$(command -v supervisorctl &>/dev/null && supervisorctl status || echo "not_found")
-
 # 打印横线
 print_separator() {
     echo -e "${green_text}───────────────────────────────────────────────────${reset}"
@@ -69,6 +66,9 @@ check_programs() {
 check_supervisor_services() {
     echo -e "\n${yellow}检查服务状态...${reset}"
     print_separator
+    # Supervisor 状态缓存，避免多次调用
+    SUPERVISOR_STATUS=$(command -v supervisorctl &>/dev/null && supervisorctl status || echo "not_found")
+
 
     if [[ "$SUPERVISOR_STATUS" == "not_found" ]]; then
         echo -e "${red}警告：未检测到 Supervisor，无法检查服务状态。${reset}"
@@ -128,6 +128,8 @@ check_systemd_services() {
 # 检测当前代理模式
 detect_proxy_mode() {
     echo -e "\n${yellow}当前代理模式检测：${reset}"
+    # Supervisor 状态缓存，避免多次调用
+    SUPERVISOR_STATUS=$(command -v supervisorctl &>/dev/null && supervisorctl status || echo "not_found")
 
     local mosdns_running=false
     local singbox_active=false
@@ -561,12 +563,8 @@ check_and_restore_config() {
     if [ -d "$backup_dir" ]; then
         case "$config_type" in
             "sing-box")
-                # 获取当前核心类型
-                if [ -f "/mssb/.core_type" ]; then
-                    core_type=$(cat "/mssb/.core_type")
-                else
-                    core_type="sing-box-reF1nd"  # 默认为 R核心
-                fi
+                # 获取当前版本和核心类型信息
+                detect_singbox_info
 
                 # 根据核心类型选择对应的备份文件
                 if [[ "$core_type" == "sing-box-reF1nd" ]]; then
@@ -1283,6 +1281,29 @@ singbox_configure_files() {
     # 复制 mssb/sing-box 目录
     log "复制 mssb/sing-box 目录..."
     check_and_copy_folder "sing-box"
+    # 获取当前核心类型
+    detect_singbox_info
+
+    # 根据核心类型复制对应的配置文件
+    if [ "$core_type" == "sing-box-reF1nd" ]; then
+        log "检测到 R核心，复制 sing-box-r.json 配置文件"
+        if [ -f "/mssb/sing-box/sing-box-r.json" ]; then
+            cp /mssb/sing-box/sing-box-r.json /mssb/sing-box/config.json
+            log "已复制 sing-box-r.json 为 config.json"
+        else
+            log "警告：找不到 sing-box-r.json 文件"
+        fi
+    elif [ "$core_type" = "sing-box-yelnoo" ]; then
+        log "检测到 Y核心，复制 y.json 配置文件"
+        if [ -f "/mssb/sing-box/sing-box-y.json" ]; then
+            cp /mssb/sing-box/sing-box-y.json /mssb/sing-box/config.json
+            log "已复制 sing-box-y.json 为 config.json"
+        else
+            log "警告：找不到 sing-box-y.json 文件"
+        fi
+    else
+        log "未知核心类型：$core_type，使用默认配置文件"
+    fi
 }
 
 # mihomo配置文件复制
@@ -1521,7 +1542,9 @@ uninstall_all_services() {
     stop_all_services
     # 备份所有重要文件
     backup_all_config
-    
+    # 获取当前版本和核心类型信息
+    detect_singbox_info
+
     # 删除服务文件
     rm -f /etc/systemd/system/sing-box-router.service
     rm -f /etc/systemd/system/mihomo-router.service
@@ -1908,7 +1931,7 @@ format_route_rules() {
     echo -e "${green_text}├───────────────────────┬───────────────────────┤${reset}"
     printf "${green_text}│ %-21s     │ %-21s   │${reset}\n" "目标地址" "网关"
     echo -e "${green_text}├───────────────────────┼───────────────────────┤${reset}"
-    printf "${green_text}│ %-21s  │ %-21s │${reset}\n" "28.0.0.0/8" "$local_ip"
+    printf "${green_text}│ %-21s │ %-21s │${reset}\n" "28.0.0.0/8" "$local_ip"
     echo -e "${green_text}└───────────────────────┴───────────────────────┘${reset}"
 
     # Telegram 路由
@@ -2061,61 +2084,107 @@ install_adguardhome() {
   fi
 }
 
-# 主函数
-main() {
-    display_system_status
-    # 主菜单
-    echo -e "${green_text}------------------------注意：请使用 root 用户安装！！！-------------------------${reset}"
-    echo -e "${green_text}请选择操作：${reset}"
-    echo -e "${green_text}1) 安装/更新代理转发服务${reset}"
-    echo -e "${red}2) 停止所有转发服务${reset}"
-    echo -e "${red}3) 停止所有服务并卸载 + 删除所有相关文件（重要文件自动备份）${reset}"
-    echo -e "${green_text}4) 启用所有服务${reset}"
-    echo -e "${green_text}5) 修改服务配置${reset}"
-    echo -e "${green_text}6) 备份所有重要文件${reset}"
+# 创建全局 mssb 命令
+create_mssb_command() {
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local script_path="$script_dir/install.sh"
+
+    # 创建 mssb 命令脚本
+    cat > /usr/local/bin/mssb << EOF
+#!/bin/bash
+# MSSB 全局命令
+# 自动切换到脚本目录并执行 install.sh
+
+SCRIPT_DIR="$script_dir"
+SCRIPT_PATH="$script_path"
+
+# 检查脚本是否存在
+if [ ! -f "\$SCRIPT_PATH" ]; then
+    echo -e "\033[31m错误：找不到 install.sh 脚本文件\033[0m"
+    echo "预期位置：\$SCRIPT_PATH"
+    echo "请确保脚本文件存在或重新安装 MSSB"
+    exit 1
+fi
+
+# 切换到脚本目录并执行
+echo -e "\033[32m正在启动 MSSB 管理脚本...\033[0m"
+echo "脚本位置：\$SCRIPT_DIR"
+cd "\$SCRIPT_DIR" || {
+    echo -e "\033[31m错误：无法切换到脚本目录\033[0m"
+    exit 1
+}
+
+# 执行脚本并传递所有参数
+bash "\$SCRIPT_PATH" "\$@"
+EOF
+
+    # 设置执行权限
+    chmod +x /usr/local/bin/mssb
+
+    if [ $? -eq 0 ]; then
+        echo -e "${green_text}✅ 全局命令 'mssb' 创建成功！${reset}"
+        echo -e "${green_text}现在您可以在任意位置输入 'mssb' 来运行此脚本${reset}"
+        echo -e "${yellow}脚本目录：$script_dir${reset}"
+    else
+        echo -e "${red}❌ 创建全局命令失败，请检查权限${reset}"
+        return 1
+    fi
+}
+
+# 删除全局 mssb 命令
+remove_mssb_command() {
+    if [ -f "/usr/local/bin/mssb" ]; then
+        rm -f /usr/local/bin/mssb
+        if [ $? -eq 0 ]; then
+            echo -e "${green_text}✅ 全局命令 'mssb' 删除成功！${reset}"
+        else
+            echo -e "${red}❌ 删除全局命令失败，请检查权限${reset}"
+            return 1
+        fi
+    else
+        echo -e "${yellow}⚠️  全局命令 'mssb' 不存在${reset}"
+    fi
+}
+
+# 更新项目
+update_project() {
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    echo -e "${green_text}正在更新项目...${reset}"
+    echo "项目目录：$script_dir"
+
+    cd "$script_dir" || {
+        echo -e "${red}❌ 无法切换到项目目录${reset}"
+        return 1
+    }
+
+    git pull
+
+    if [ $? -eq 0 ]; then
+        echo -e "${green_text}✅ 项目更新成功！${reset}"
+    else
+        echo -e "${red}❌ 项目更新失败${reset}"
+        return 1
+    fi
+}
+
+# 显示服务信息
+display_service_info() {
     echo -e "${green_text}-------------------------------------------------${reset}"
-    read -p "请输入选项 (1/2/3/4/5/6): " main_choice
+        echo -e "${green_text}🎉 服务web访问路径：${reset}"
+        echo -e "🌐 Mosdns 统计界面：${green_text}http://${local_ip}:9099/graphic${reset}"
+        echo
+        echo -e "📦 Supervisor 管理界面：${green_text}http://${local_ip}:9001${reset}"
+        echo
+        echo -e "🗂️  文件管理服务 Filebrowser：${green_text}http://${local_ip}:8088${reset}"
+        echo
+        echo -e "🕸️  Sing-box/Mihomo 面板 UI：${green_text}http://${local_ip}:9090/ui${reset}"
+        echo
+        echo -e "🌐  AdGuardHome，请访问 ${green_text}http://${local_ip}:80${reset}"
+        echo -e "${green_text}-------------------------------------------------${reset}"
+}
 
-    case "$main_choice" in
-        2)
-            stop_all_services
-            # 检查 DNS 设置
-            check_dns_settings
-            exit 0
-            ;;
-        3)
-            uninstall_all_services
-            # 检查 DNS 设置
-            check_dns_settings
-            exit 0
-            ;;
-        4)
-            start_all_services
-            # 检查并设置本地 DNS
-            check_and_set_local_dns
-            exit 0
-            ;;
-        5)
-            # 修改服务配置
-            modify_service_config
-            exit 0
-            ;;
-        6)
-            echo -e "${green_text}备份所有重要文件到/mssb/backup ${reset}"
-            # 备份所有重要文件
-            backup_all_config
-            echo -e "${green_text}-------------------------------------------------${reset}"
-            exit 0
-            ;;
-        1)
-            echo -e "${green_text}✅ 继续安装/更新代理服务...${reset}"
-            ;;
-        *)
-            log "无效选项，退出脚本。"
-            exit 1
-            ;;
-    esac
-
+# 安装更新主服务
+install_update_server() {
     update_system
     set_timezone
 
@@ -2254,15 +2323,109 @@ main() {
             echo -e "   - ${yellow}建议在 Web 界面中修改默认密码${reset}"
         fi
     else
-        echo -e "   - 用户名：${green_text}mssb${reset}"
-        echo -e "   - 密码：${green_text}mssb123..${reset}"
-        echo -e "   - ${yellow}建议在 Web 界面中修改默认密码${reset}"
+    echo -e "   - 用户名：${green_text}mssb${reset}"
+    echo -e "   - 密码：${green_text}mssb123..${reset}"
+    echo -e "   - ${yellow}建议在 Web 界面中修改默认密码${reset}"
     fi
     echo
     echo -e "${green_text}-------------------------------------------------${reset}"
-
-
     log "脚本执行完成。"
+}
+
+# 主函数
+main() {
+    # 主菜单
+    echo -e "${green_text}------------------------⚠️注意：请使用 root 用户安装！！！-------------------------${reset}"
+    echo -e "${green_text}⚠️注意：本脚本支持 Debian/Ubuntu，安装前请确保系统未安装其他代理软件。${reset}"
+    echo -e "${red}⚠️注意：服务管理请使用脚本管理，不要单独停用某个服务会导致转发失败cpu暴涨 ${reset}"
+    echo -e "当前机器地址:${green_text}${local_ip}${reset}"
+    echo -e "${green_text}请选择操作：${reset}"
+    echo -e "${green_text}1) 安装/更新代理转发服务${reset}"
+    echo -e "${red}2) 停止所有转发服务${reset}"
+    echo -e "${red}3) 停止所有服务并卸载 + 删除所有相关文件（重要文件自动备份）${reset}"
+    echo -e "${green_text}4) 启用所有服务${reset}"
+    echo -e "${green_text}5) 修改服务配置${reset}"
+    echo -e "${green_text}6) 备份所有重要文件${reset}"
+    echo -e "${green_text}8) 显示服务信息${reset}"
+    echo -e "${green_text}9) 显示路由规则提示${reset}"
+    echo -e "${green_text}10) 创建全局 mssb 命令${reset}"
+    echo -e "${red}11) 删除全局 mssb 命令${reset}"
+    echo -e "${green_text}12) 更新项目${reset}"
+    echo -e "${green_text}-------------------------------------------------${reset}"
+    read -p "请输入选项 (1/2/3/4/5/6/8/9/10/11/12/00): " main_choice
+
+    case "$main_choice" in
+        2)
+            stop_all_services
+            # 检查 DNS 设置
+            check_dns_settings
+            main
+            ;;
+        3)
+            uninstall_all_services
+            # 检查 DNS 设置
+            check_dns_settings
+            main
+            ;;
+        4)
+            start_all_services
+            # 检查并设置本地 DNS
+            check_and_set_local_dns
+            main
+            ;;
+        5)
+            # 修改服务配置
+            modify_service_config
+            main
+            ;;
+        6)
+            echo -e "${green_text}备份所有重要文件到/mssb/backup ${reset}"
+            # 备份所有重要文件
+            backup_all_config
+            echo -e "${green_text}-------------------------------------------------${reset}"
+            main
+            ;;
+        8)
+            echo -e "${green_text}显示服务信息${reset}"
+            display_system_status
+            display_service_info
+            main
+            ;;
+        9)
+            echo -e "${green_text}显示路由规则提示${reset}"
+            format_route_rules
+            main
+            ;;
+        10)
+            echo -e "${green_text}创建全局 mssb 命令${reset}"
+            create_mssb_command
+            main
+            ;;
+        11)
+            echo -e "${red}删除全局 mssb 命令${reset}"
+            remove_mssb_command
+            main
+            ;;
+        12)
+          echo -e "${green_text}更新项目${reset}"
+          update_project
+          main
+          ;;
+        00)
+            echo -e "${green_text}退出程序${reset}"
+            exit 0
+            ;;
+        1)
+            echo -e "${green_text}✅ 继续安装/更新代理服务...${reset}"
+            install_update_server
+            main
+            ;;
+        *)
+            echo -e "${red}无效选项，请重新选择或输入 00 或者 快捷键Ctrl+C 退出${reset}"
+            main
+            ;;
+    esac
+
 }
 
 
