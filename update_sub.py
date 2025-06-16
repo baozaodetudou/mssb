@@ -50,7 +50,7 @@ if __name__ == "__main__":
             "type": "remote",
             "tag": f"✈️机场{index}",
             "url": url,
-            "update_interval": "24000h",
+            "update_interval": "7h",
             "download_detour": "direct"
         })
     # 修改 outbound_providers
