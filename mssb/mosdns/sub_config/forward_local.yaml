@@ -1,0 +1,34 @@
+plugins:
+#定义了一个带过期缓存的内部使用/外部使用的国内dns服务器
+#转发请求到国内dns
+  - tag: forward_local
+    type: forward
+    args:
+      concurrent: 3
+      upstreams:
+        - addr: "223.5.5.5"
+        - addr: "quic://223.5.5.5"
+        - addr: "221.130.33.60"
+          upstream_query_timeout: 5
+
+#国内域名 内部使用
+  - tag: sequence_local_in
+    type: sequence
+    args:
+      - exec: $cache_cn
+      - matches: has_resp
+        exec: accept
+      - exec: $forward_local
+
+#国内
+  - tag: udp_local
+    type: udp_server
+    args:
+      entry: sequence_local_in
+      listen: 127.0.0.1:2222
+
+  - tag: tcp_local
+    type: tcp_server
+    args:
+      entry: sequence_local_in
+      listen: 127.0.0.1:2222

@@ -1,2 +1,2 @@
-logs.netflix.com 127.0.0.1 ::1
+#logs.netflix.com 127.0.0.1 ::1
 trace-server.prod-clustered.bugs.firebat.prime-video.amazon.dev 127.0.0.1 ::1

@@ -1,0 +1,21 @@
+plugins:
+#开关，配置web ui，可以实现动态切换泄露版本/不泄露版本逻辑 源码内置了9个开关备用
+#curl -X POST http://10.10.10.1:9099/plugins/switch1/post -H "Content-Type: application/json" -d '{"value":"B"}'
+#是否启用屏蔽无解析结果的A、AAAA请求及黑名单  'A'-启用  'B'-不启用
+  - tag: switch1
+    type: switch1
+    args:
+      initial_value: 'A'
+
+#是否启用指定client科学开关  'A'-启用  'B'-不启用
+  - tag: switch2
+    type: switch2
+    args:
+      initial_value: 'A'
+
+#泄露版本/不泄露版本开关 'A'-泄露  'B'-不泄露
+  - tag: switch3
+    type: switch3
+    args:
+      initial_value: 'A'
+

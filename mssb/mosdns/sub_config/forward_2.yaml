@@ -1,0 +1,22 @@
+plugins:
+#把main主分流逻辑打包成一个对外服务供调用
+  - tag: forward_all_in
+    type: forward
+    args:
+      concurrent: 1
+      upstreams:
+        - addr: "udp://127.0.0.1:5656"
+
+#主分流服务器
+  - tag: udp_main
+    type: udp_server
+    args:
+      entry: sequence_main
+      listen: 127.0.0.1:5656
+
+  - tag: tcp_main
+    type: tcp_server
+    args:
+      entry: sequence_main
+      listen: 127.0.0.1:5656
+      idle_timeout: 720

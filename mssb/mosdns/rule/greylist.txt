@@ -1,7 +1,8 @@
+domain:4d4y.com
+domain:nflxvideo.net
 full:mypikpak.com
 full:access.mypikpak.com
 domain:googleapis.cn
-domain:4d4y.com
 domain:iii80.com
 domain:googleapis.com
 domain:google.com

@@ -1,0 +1,127 @@
+plugins:
+#生成的realip规则
+  - tag: my_realiprule
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/gen/realiprule.txt"
+
+#生成的fakeip规则
+  - tag: my_fakeiprule
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/gen/fakeiprule.txt"
+
+#生成的没有v6的域名规则
+  - tag: my_nov6rule
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/gen/nov6rule.txt"
+
+#生成的没有ip的域名规则
+  - tag: my_nov4rule
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/gen/nov4rule.txt"
+
+#生成的节点没有v6的域名规则
+  - tag: my_nodenov6rule
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/gen/nodenov6rule.txt"
+
+#生成的节点没有ip的域名规则
+  - tag: my_nodenov4rule
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/gen/nodenov4rule.txt"
+
+#中国域名列表
+  - tag: geosite_cn
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/unpack/geosite-cn.srs"
+
+#中国IP列表
+  - tag: geoip_cn
+    type: ip_set
+    args:
+      files:
+        - "/mssb/mosdns/unpack/geoip-cn.srs"
+
+#需要代理的客户端IP列表
+  - tag: client_ip
+    type: ip_set
+    args:
+      files:
+        - "/mssb/mosdns/client_ip.txt"
+
+#国外域名列表
+  - tag: geosite_no_cn
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/unpack/geolocation-!cn.srs"
+
+#自定义白名单域名列表
+  - tag: whitelist
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/rule/whitelist.txt"
+        - "/mssb/mosdns/mywhitelist.txt"
+
+#屏蔽域名列表
+  - tag: blocklist
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/rule/blocklist.txt"
+
+#屏蔽V4解析的域名列表
+  - tag: blocklistv4
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/rule/blocklistv4.txt"
+
+#屏蔽V6解析的域名列表
+  - tag: blocklistv6
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/rule/blocklistv6.txt"
+
+#国外dns解析realip域名列表
+  - tag: realiplist
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/rule/realiplist.txt"
+
+#自定义强制代理域名列表
+  - tag: greylist
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/rule/greylist.txt"
+
+#自定义hosts域名列表
+  - tag: hosts
+    type: hosts
+    args:
+      files:
+        - "/mssb/mosdns/rule/hosts.txt"
+
+#ddns域名列表
+  - tag: ddnslist
+    type: domain_set
+    args:
+      files:
+        - "/mssb/mosdns/rule/ddnslist.txt"

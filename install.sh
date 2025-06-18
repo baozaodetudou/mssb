@@ -388,12 +388,19 @@ auto_restore_config() {
                     ((restored_count++))
                 fi
 
-                # 恢复 proxy-device-list.txt
+                # 恢复 client_ip.txt
+                latest_backup=$(ls -t "$backup_dir"/mosdns-client_ip-*.txt 2>/dev/null | head -n1)
+                if [ -n "$latest_backup" ]; then
+                    mkdir -p "$mosdns_dir"
+                    cp "$latest_backup" "$mosdns_dir/client_ip.txt"
+                    log "已恢复 mosdns client_ip.txt"
+                    ((restored_count++))
+                fi
                 latest_backup=$(ls -t "$backup_dir"/mosdns-proxy-device-list-*.txt 2>/dev/null | head -n1)
                 if [ -n "$latest_backup" ]; then
                     mkdir -p "$mosdns_dir"
-                    cp "$latest_backup" "$mosdns_dir/proxy-device-list.txt"
-                    log "已恢复 mosdns proxy-device-list.txt"
+                    cp "$latest_backup" "$mosdns_dir/client_ip.txt"
+                    log "已恢复 mosdns client_ip.txt"
                     ((restored_count++))
                 fi
 
@@ -484,11 +491,11 @@ backup_config() {
                 fi
             fi
 
-            # 备份 proxy-device-list.txt
-            if [ -f "$mosdns_dir/proxy-device-list.txt" ]; then
-                backup_file="$backup_dir/mosdns-proxy-device-list-$timestamp.txt"
-                if cp "$mosdns_dir/proxy-device-list.txt" "$backup_file"; then
-                    log "mosdns proxy-device-list.txt 已备份到：$backup_file"
+            # 备份 client_ip.txt
+            if [ -f "$mosdns_dir/client_ip.txt" ]; then
+                backup_file="$backup_dir/mosdns-client_ip-$timestamp.txt"
+                if cp "$mosdns_dir/client_ip.txt" "$backup_file"; then
+                    log "mosdns client_ip.txt 已备份到：$backup_file"
                     ((backup_count++))
                 fi
             fi
@@ -572,13 +579,13 @@ check_and_restore_config() {
                 # mosdns 需要检查多个备份文件
                 local mosdns_dir="/mssb/mosdns"
                 local config_backup=$(ls -t "$backup_dir"/mosdns-config-*.yaml 2>/dev/null | head -n1)
-                local proxy_backup=$(ls -t "$backup_dir"/mosdns-proxy-device-list-*.txt 2>/dev/null | head -n1)
+                local proxy_backup=$(ls -t "$backup_dir"/mosdns-client_ip-*.txt 2>/dev/null | head -n1)
                 local whitelist_backup=$(ls -t "$backup_dir"/mosdns-mywhitelist-*.txt 2>/dev/null | head -n1)
 
                 if [ -n "$config_backup" ] || [ -n "$proxy_backup" ] || [ -n "$whitelist_backup" ]; then
                     echo -e "${green_text}发现 mosdns 的备份配置文件：${reset}"
                     [ -n "$config_backup" ] && echo -e "config.yaml: $config_backup"
-                    [ -n "$proxy_backup" ] && echo -e "proxy-device-list.txt: $proxy_backup"
+                    [ -n "$proxy_backup" ] && echo -e "client_ip.txt: $proxy_backup"
                     [ -n "$whitelist_backup" ] && echo -e "mywhitelist.txt: $whitelist_backup"
 
                     read -p "是否恢复这些备份？(y/n): " restore_choice
@@ -593,8 +600,8 @@ check_and_restore_config() {
                         fi
 
                         if [ -n "$proxy_backup" ]; then
-                            cp "$proxy_backup" "$mosdns_dir/proxy-device-list.txt"
-                            log "已恢复 mosdns proxy-device-list.txt"
+                            cp "$proxy_backup" "$mosdns_dir/client_ip.txt"
+                            log "已恢复 mosdns client_ip.txt"
                             ((restored_count++))
                         fi
 
@@ -1086,7 +1093,8 @@ check_and_copy_folder() {
 # mosdns配置文件复制
 mosdns_configure_files() {
     log "开始处理 mosdns 配置文件..."
-    CONFIG_YAML="/mssb/mosdns/config.yaml"
+    #CONFIG_YAML="/mssb/mosdns/config.yaml"
+    forward_local_yaml="/mssb/mosdns/sub_config/forward_local.yaml"
     echo -e "\n${yellow}=== 运营商 DNS 配置 ===${reset}"
     echo -e "默认已设置第一、第二解析为阿里公共 DNS：${green_text}223.5.5.5${reset}"
     echo -e "当前第三解析配置的运营商 DNS 为：${green_text}221.130.33.60${reset}"
@@ -1101,15 +1109,15 @@ mosdns_configure_files() {
         # 验证输入的 IP 地址格式
         if [[ $dns_addr =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
             # 替换配置文件中的 DNS 地址
-            sed -i "s/addr: \"221.130.33.60\"/addr: \"$dns_addr\"/" "$CONFIG_YAML"
+            sed -i "s/addr: \"221.130.33.60\"/addr: \"$dns_addr\"/" "$forward_local_yaml"
             log "已更新运营商 DNS 地址为：$dns_addr"
         else
             log "输入的 DNS 地址格式不正确，将使用默认值 119.29.29.29"
-            sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$CONFIG_YAML"
+            sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$forward_local_yaml"
         fi
     else
         log "使用默认 DNS 地址：119.29.29.29"
-        sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$CONFIG_YAML"
+        sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$forward_local_yaml"
     fi
 }
 
@@ -1943,7 +1951,7 @@ format_route_rules() {
 scan_lan_devices() {
     echo -e "\n${green_text}=== 局域网设备扫描 ===${reset}"
     echo -e "此功能将扫描局域网中的设备，让您选择需要代理的设备"
-    echo -e "${yellow}注意：此操作会清空并重写 /mssb/mosdns/proxy-device-list.txt 文件${reset}"
+    echo -e "${yellow}注意：此操作会清空并重写 /mssb/mosdns/client_ip.txt 文件${reset}"
     echo -e "${green_text}------------------------${reset}"
 
     read -p "是否继续扫描局域网设备？(y/n): " scan_choice
@@ -2033,7 +2041,7 @@ scan_lan_devices() {
 
     # 创建输出目录
     mkdir -p "/mssb/mosdns"
-    local output_file="/mssb/mosdns/proxy-device-list.txt"
+    local output_file="/mssb/mosdns/client_ip.txt"
 
     # 清空输出文件
     > "$output_file"

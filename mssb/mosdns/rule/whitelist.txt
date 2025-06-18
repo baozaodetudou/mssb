@@ -1,3 +1,7 @@
+domain:unraid.net
+domain:tracker.m-team.io
+domain:tracker.hdsky.me
+domain:steamcontent.com
 full:6.ipw.cn
 full:test6.ustc.edu.cn
 full:apiauth.quickconnect.to

@@ -1,0 +1,99 @@
+log:
+  level: warn
+  file: "/tmp/mosdns.log"
+
+#跟web ui绑定，不要修改此端口
+api:
+  http: "0.0.0.0:9099"
+
+#子配置，不要调整顺序
+include:
+  - "/mssb/mosdns/sub_config/domain_output.yaml"        #域名规则生成输出插件定义
+  - "/mssb/mosdns/sub_config/rule_set.yaml"                    #数据插件定义
+  - "/mssb/mosdns/sub_config/cache.yaml"                       #缓存插件定义
+  - "/mssb/mosdns/sub_config/forward_local.yaml"           #带过期缓存的内部使用国内dns服务器
+  - "/mssb/mosdns/sub_config/forward_nocn.yaml"           #带过期缓存的内部使用国外dns服务器
+  - "/mssb/mosdns/sub_config/forward_nocn_ecs.yaml"    #带过期缓存的内部使用国外dns服务器（带ecs）节点使用
+  - "/mssb/mosdns/sub_config/forward_1.yaml"                 #使用前面定义的内部dns服务器定义序列 1代表调用层级 大的调用小的
+  - "/mssb/mosdns/sub_config/con_match.yaml"               #定义序列对域名列表进行并发匹配生成黑洞IP
+  - "/mssb/mosdns/sub_config/switch.yaml"                       #切换开关定义
+  - "/mssb/mosdns/sub_config/not_in_list_leak.yaml"        #列表外的域名泄露版的处理逻辑
+  - "/mssb/mosdns/sub_config/not_in_list_noleak.yaml"    #列表外的域名不泄露版的处理逻辑
+  - "/mssb/mosdns/sub_config/main.yaml"                         #主分流序列
+  - "/mssb/mosdns/sub_config/for_singbox.yaml"              #专供sing-box使用
+  - "/mssb/mosdns/sub_config/forward_2.yaml"                 #打包主分流逻辑供调用
+
+plugins:
+#缓存序列-all 直面客户端的缓存 不包含fakeip（被强制排除）
+  - tag: sequence_all_single
+    type: sequence
+    args:
+      - exec: $forward_all_in
+
+#使用fallback机制，当main进程无响应时，300ms后重发（多一层保障）
+  - tag: sequence_all
+    type: fallback
+    args:
+      primary: sequence_all_single
+      secondary: sequence_all_single
+      threshold: 300
+      always_standby: false
+
+  - tag: sequence_6666
+    type: sequence
+    args:
+#向上游请求ddns域名，无过期缓存
+      - matches: qname $ddnslist
+        exec: mark 1
+      - matches: mark 1
+        exec: $forward_local
+      - matches: mark 1
+        exec: accept
+#屏蔽blocklist、没有解析记录的A、AAAA请求
+      - matches: switch1 'A'
+        exec: mark 2
+      - matches:    #屏蔽没有v4地址的域名
+        - qtype 1
+        - mark 2
+        - qname $my_nov4rule
+        exec: reject 0
+      - matches:    #屏蔽没有v6地址的域名
+        - qtype 28
+        - mark 2
+        - qname $my_nov6rule
+        exec: reject 0
+      - matches:    #屏蔽没有v6地址的域名
+        - mark 2
+        - qname $blocklist
+        exec: reject 3
+#当mosdns占用53直面客户端，只有client_ip.txt中指定的IP才科学
+      - matches:
+        - "!client_ip $client_ip"
+        - switch2 'A'
+        exec: mark 3
+      - matches: mark 3
+        exec: $sequence_local
+      - matches: mark 3
+        exec: accept
+#web ui中选择泄露版（默认），用cache_all，否则用cache_all_noleak
+      - matches: switch3 'A'
+        exec: $cache_all
+      - matches: switch3 'B'
+        exec: $cache_all_noleak
+      - matches: has_resp
+        exec: accept
+      - exec: $sequence_all
+
+#对外服务器
+  - tag: udp_all
+    type: udp_server
+    args:
+      entry: sequence_6666
+      listen: ":53"
+
+  - tag: tcp_all
+    type: tcp_server
+    args:
+      entry: sequence_6666
+      listen: ":53"
+      idle_timeout: 720

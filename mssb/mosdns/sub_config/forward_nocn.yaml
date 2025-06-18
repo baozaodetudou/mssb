@@ -1,0 +1,35 @@
+plugins:
+#定义了一个带过期缓存的内部使用/外部使用的国外dns服务器
+#转发dns请求到国外dns
+  - tag: forward_google
+    type: forward
+    args:
+      concurrent: 2
+      upstreams:
+        - addr: "https://1.1.1.1/dns-query"
+          #socks5: "127.0.0.1:7891"
+        - addr: "https://8.8.8.8/dns-query"
+          #socks5: "127.0.0.1:7891"
+          upstream_query_timeout: 1000
+
+#国内域名 内部使用
+  - tag: sequence_google_in
+    type: sequence
+    args:
+      - exec: $cache_google
+      - matches: has_resp
+        exec: accept
+      - exec: $forward_google
+
+#国外
+  - tag: udp_google
+    type: udp_server
+    args:
+      entry: sequence_google_in
+      listen: 127.0.0.1:3333
+
+  - tag: tcp_google
+    type: tcp_server
+    args:
+      entry: sequence_google_in
+      listen: 127.0.0.1:3333

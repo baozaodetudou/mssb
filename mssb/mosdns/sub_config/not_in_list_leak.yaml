@@ -1,0 +1,72 @@
+plugins:
+#列表外的域名的处理逻辑
+  - tag: sequence_not_in_list_leak
+    type: sequence
+    args:
+      - matches: "resp_ip 127.0.0.3 ::3"
+        exec: mark 68 #列表外    
+      - matches: mark 68
+        exec: drop_resp      #丢弃结果
+      - matches: mark 68
+        exec: $my_notinlist      
+      - matches: mark 68
+        exec: $sequence_local #表外域名先发到国内   
+      - matches:    #对于223没有返回V6地址且不是污染地址的，接受
+        - "mark 68"
+        - "qtype 28"
+        - "rcode 0 2 3 5"
+        - "!resp_ip 2000::/3"
+        - "!resp_ip ::1"
+        exec: ttl 60000
+      - matches:
+        - "mark 68"
+        - "qtype 28"
+        - "rcode 0 2 3 5"
+        - "!resp_ip 2000::/3"
+        - "!resp_ip ::1"
+        - "!cname keyword:."
+        exec: $my_nov6list  #生成域名规则
+      - matches:
+        - "mark 68"
+        - "qtype 28"
+        - "rcode 0 2 3 5"
+        - "!resp_ip 2000::/3"
+        - "!resp_ip ::1"
+        exec: accept                      #没有ip就接受
+      - matches: "!resp_ip 0.0.0.0/0 2000::/3"   #rcode 235及没有IP等情况
+        exec: mark 123 #标记
+      - matches: "resp_ip 127.0.0.1 0.0.0.0 ::1"   #有污染IP的
+        exec: mark 123 #标记
+      - matches: mark 123
+        exec: drop_resp      #丢弃结果
+      - matches: mark 123
+        exec: $sequence_google      #google dns再查一次
+      - matches: "!resp_ip 0.0.0.0/0 2000::/3"
+        exec: ttl 60000                      #再没有IP延长TTL
+      - matches:
+        - "qtype 28"
+        - "rcode 0 2 3 5"
+        - "!resp_ip 2000::/3"
+        - "!cname keyword:."
+        exec: $my_nov6list  #生成域名规则
+      - matches:
+        - "qtype 1"
+        - "rcode 0 2 3 5"
+        - "!resp_ip 0.0.0.0/0"
+        - "!cname keyword:."
+        exec: $my_nov4list  #生成域名规则
+      - matches: "!resp_ip 0.0.0.0/0 2000::/3"
+        exec: accept                      #没有ip就接受
+      - matches: "resp_ip 127.0.0.1 0.0.0.0 ::1"   #有污染IP的
+        exec: accept                      #谷歌dns结果没有正常ip也接受
+      - matches: "resp_ip 17.0.0.0/8"
+        exec: $my_realiplist
+      - matches: "resp_ip 17.0.0.0/8"
+        exec: accept                      #苹果ip就接受
+      - matches: "!resp_ip $geoip_cn"
+        exec: mark 89 #标记
+      - matches: mark 89
+        exec: $sequence_fakeip
+      - matches: mark 89
+        exec: $my_fakeiplist
+      - exec: accept

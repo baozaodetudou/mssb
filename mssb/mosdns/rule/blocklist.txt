@@ -33,18 +33,20 @@ domain:getcacheddhcpresultsforcurrentconfig
 domain:m4a
 domain:openstacklocal
 domain:stun.ideasip.com
-keyword:mtvod-hw.meituan.net
-#Îí³öÔÆ pcdn
+domain:smtcdns.net
+domain:smtcdns.com
+domain:mtvod-hw.meituan.net
+#é›¾å‡ºäº‘ pcdn
 domain:smogfly.cloud
 
-#²»°üº¬µãµÄÓòÃû
+#ä¸åŒ…å«ç‚¹çš„åŸŸå
 regexp:^[^.]+$
 
-#ÒÔ.lan½áÎ²µÄÓòÃû
+#ä»¥.lanç»“å°¾çš„åŸŸå
 regexp:^.*.lan$
 
-#ÒÔ.arpa½áÎ²µÄÓòÃû
+#ä»¥.arpaç»“å°¾çš„åŸŸå
 regexp:^.*.arpa$
 
-#ÓòÃûºÏ·¨»¯¼ì²é£¬Ö»ÔÊĞíº¬ÓĞÓ¢ÎÄ×ÖÄ¸¡¢Êı×Ö¡¢µãºÅ¡¢ÏÂ»®Ïß¡¢ÖĞÏßµÄÓòÃû
+#åŸŸååˆæ³•åŒ–æ£€æŸ¥ï¼Œåªå…è®¸å«æœ‰è‹±æ–‡å­—æ¯ã€æ•°å­—ã€ç‚¹å·ã€ä¸‹åˆ’çº¿ã€ä¸­çº¿çš„åŸŸå
 regexp:[^a-zA-Z0-9._-]
