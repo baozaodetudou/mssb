@@ -2160,6 +2160,123 @@ update_project() {
     fi
 }
 
+# 更新内核版本菜单
+update_cores_menu() {
+    echo -e "\n${green_text}=== 更新内核版本 ===${reset}"
+
+    # 检测已安装的程序
+    local mosdns_installed=false
+    local singbox_installed=false
+    local mihomo_installed=false
+
+    # 检查执行文件是否存在
+    if [ -f "/usr/local/bin/mosdns" ]; then
+        mosdns_installed=true
+    fi
+
+    if [ -f "/usr/local/bin/sing-box" ]; then
+        singbox_installed=true
+    fi
+
+    if [ -f "/usr/local/bin/mihomo" ]; then
+        mihomo_installed=true
+    fi
+
+    # 显示已安装的程序状态
+    echo -e "${yellow}检测到已安装的程序：${reset}"
+    echo -e "  - MosDNS: $([ $mosdns_installed = true ] && echo '✅ 已安装' || echo '❌ 未安装')"
+    echo -e "  - Sing-box: $([ $singbox_installed = true ] && echo '✅ 已安装' || echo '❌ 未安装')"
+    echo -e "  - Mihomo: $([ $mihomo_installed = true ] && echo '✅ 已安装' || echo '❌ 未安装')"
+
+    # 检查是否有程序可以更新
+    if ! $mosdns_installed && ! $singbox_installed && ! $mihomo_installed; then
+        echo -e "\n${red}❌ 未检测到任何已安装的程序${reset}"
+        echo -e "${yellow}请先安装程序后再使用更新功能${reset}"
+        echo -e "可以使用主菜单选项1进行安装"
+        return 1
+    fi
+
+    # 显示更新选项菜单
+    echo -e "\n${yellow}请选择要更新的组件：${reset}"
+
+    if $mosdns_installed; then
+        echo -e "1. 更新 MosDNS"
+        echo -e "4. 更新 CN域名数据"
+    fi
+
+    if $singbox_installed; then
+        echo -e "2. 更新 Sing-box"
+    fi
+
+    if $mihomo_installed; then
+        echo -e "3. 更新 Mihomo"
+    fi
+
+    echo -e "5. 更新所有已安装的组件"
+    echo -e "0. 返回主菜单"
+    echo -e "${green_text}------------------------${reset}"
+
+    read -p "请选择更新选项 (0-5): " update_choice
+
+    case "$update_choice" in
+        1)
+            if $mosdns_installed; then
+                echo -e "${green_text}正在更新 MosDNS...${reset}"
+                /watch/update_mosdns.sh
+            else
+                echo -e "${red}MosDNS 未安装，无法更新${reset}"
+            fi
+            ;;
+        2)
+            if $singbox_installed; then
+                echo -e "${green_text}正在更新 Sing-box...${reset}"
+                /watch/update_sb.sh
+            else
+                echo -e "${red}Sing-box 未安装，无法更新${reset}"
+            fi
+            ;;
+        3)
+            if $mihomo_installed; then
+                echo -e "${green_text}正在更新 Mihomo...${reset}"
+                /watch/update_mihomo.sh
+            else
+                echo -e "${red}Mihomo 未安装，无法更新${reset}"
+            fi
+            ;;
+        4)
+            echo -e "${green_text}正在更新 CN域名数据...${reset}"
+            /watch/update_cn.sh
+            ;;
+        5)
+            echo -e "${green_text}正在更新所有已安装的组件...${reset}"
+            if $mosdns_installed; then
+                echo -e "${green_text}更新 MosDNS...${reset}"
+                /watch/update_mosdns.sh
+            fi
+            if $singbox_installed; then
+                echo -e "${green_text}更新 Sing-box...${reset}"
+                /watch/update_sb.sh
+            fi
+            if $mihomo_installed; then
+                echo -e "${green_text}更新 Mihomo...${reset}"
+                /watch/update_mihomo.sh
+            fi
+            echo -e "${green_text}更新 CN域名数据...${reset}"
+            /watch/update_cn.sh
+            ;;
+        0)
+            echo -e "${yellow}返回主菜单${reset}"
+            return 0
+            ;;
+        *)
+            echo -e "${red}无效选择，返回主菜单${reset}"
+            return 0
+            ;;
+    esac
+
+    echo -e "${green_text}✅ 更新操作完成${reset}"
+}
+
 # 显示服务信息
 display_service_info() {
     echo -e "${green_text}-------------------------------------------------${reset}"
@@ -2348,8 +2465,9 @@ main() {
     echo -e "${green_text}10) 创建全局 mssb 命令${reset}"
     echo -e "${red}11) 删除全局 mssb 命令${reset}"
     echo -e "${green_text}12) 更新项目${reset}"
+    echo -e "${green_text}13) 更新内核版本(mosdns/singbox/mihomo)${reset}"
     echo -e "${green_text}-------------------------------------------------${reset}"
-    read -p "请输入选项 (1/2/3/4/5/6/7/8/9/10/11/12/00): " main_choice
+    read -p "请输入选项 (1/2/3/4/5/6/7/8/9/10/11/12/13/00): " main_choice
 
     case "$main_choice" in
         2)
@@ -2435,6 +2553,13 @@ main() {
         12)
             echo -e "${green_text}更新项目${reset}"
             update_project
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
+            main
+            ;;
+        13)
+            echo -e "${green_text}更新内核版本(mosdns/singbox/mihomo)${reset}"
+            update_cores_menu
             echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
             read -n 1
             main

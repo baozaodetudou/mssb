@@ -25,17 +25,39 @@ detect_architecture() {
     esac
 }
 
+# 智能检测 Sing-box 核心类型和版本
+detect_singbox_info() {
+    # 获取版本输出
+    version_output=$(/usr/local/bin/sing-box version 2>/dev/null | head -n1)
+    current_version=$(echo "$version_output" | awk '{print $3}' || echo "未知版本")
+
+    # 优先从文件获取核心类型，如果文件不存在则从命令输出智能识别
+    if [ -f "/mssb/.core_type" ]; then
+        core_type=$(cat "/mssb/.core_type")
+        detection_source="类型文件/mssb/.core_type"
+    else
+        # 从版本输出中智能识别核心类型
+        if echo "$version_output" | grep -q "reF1nd"; then
+            core_type="sing-box-reF1nd"
+            detection_source="版本识别"
+        else
+            # 如果没有特殊标识，可能是Y核心或其他版本
+            core_type="sing-box-yelnoo"
+            detection_source="推测可能是Y核心或其他版本"
+        fi
+    fi
+
+    # 输出检测结果
+    log "当前安装的版本: $current_version"
+    log "当前安装的版本: (核心类型：$core_type，来源：$detection_source)"
+}
+
 # 主体流程
 main() {
     log "开始更新 Sing-box..."
 
     # 获取当前核心类型
-    if [ -f "/mssb/sing-box/core_type" ]; then
-        core_type=$(cat "/mssb/sing-box/core_type")
-    else
-        log "未找到核心类型记录，默认使用 reF1nd佬 R核心"
-        core_type="sing-box-reF1nd"
-    fi
+    detect_singbox_info
 
     arch=$(detect_architecture)
     
