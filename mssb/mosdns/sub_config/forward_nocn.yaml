@@ -16,8 +16,11 @@ plugins:
   - tag: sequence_google_in
     type: sequence
     args:
-      - exec: $cache_google
-      - matches: has_resp
+      - matches: switch4 'A'
+        exec: $cache_google
+      - matches:
+        - switch4 'A'
+        - has_resp
         exec: accept
       - exec: $forward_google
 
