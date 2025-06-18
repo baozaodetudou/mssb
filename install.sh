@@ -465,7 +465,6 @@ backup_config() {
             local mosdns_dir="/mssb/mosdns"
             local timestamp=$(date +%Y%m%d-%H%M%S)
             local backup_count=0
-
             # 备份 client_ip.txt
             if [ -f "$mosdns_dir/client_ip.txt" ]; then
                 backup_file="$backup_dir/mosdns-client_ip-$timestamp.txt"
