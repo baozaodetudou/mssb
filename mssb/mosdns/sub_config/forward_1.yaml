@@ -1,0 +1,46 @@
+plugins:
+#使用前面定义的内部dns服务器，并定义可复用的序列，文件名中的1代表了层级
+#转发请求至sing-box/mihome dns请求fakeip
+  - tag: forward_fakeip
+    type: forward
+    args:
+      concurrent: 1
+      upstreams:
+        - addr: "udp://127.0.0.1:6666"
+
+#使用内部的国内dns服务器
+  - tag: forward_local_in
+    type: forward
+    args:
+      concurrent: 1
+      upstreams:
+        - addr: "udp://127.0.0.1:2222"
+
+#转发国外请求到内部带过期缓存的服务
+  - tag: forward_google_in
+    type: forward
+    args:
+      concurrent: 1
+      upstreams:
+        - addr: "udp://127.0.0.1:3333"
+
+#缓存序列-国内域名
+  - tag: sequence_local
+    type: sequence
+    args:
+      - exec: drop_resp      #丢弃用于标记的blackhole ip
+      - exec: $forward_local_in
+
+#缓存序列-国内域名
+  - tag: sequence_fakeip
+    type: sequence
+    args:
+      - exec: drop_resp      #丢弃用于标记的blackhole ip
+      - exec: $forward_fakeip
+
+#缓存序列-列表外域名
+  - tag: sequence_google
+    type: sequence
+    args:
+      - exec: drop_resp      #丢弃用于标记的blackhole ip
+      - exec: $forward_google_in

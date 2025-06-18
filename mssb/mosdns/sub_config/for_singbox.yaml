@@ -1,0 +1,65 @@
+plugins:
+#专门用于解析域名节点，默认使用8888解析，5毫秒不通用换223解析
+  - tag: sbnodefallback
+    type: fallback
+    args:
+      primary: sequence_google_node
+      secondary: sequence_local
+      threshold: 5
+      always_standby: false
+
+  - tag: sequence_sbnode
+    type: sequence
+    args:
+      - matches:    #屏蔽没有v4地址的域名
+        - qtype 1
+        - qname $my_nodenov4rule
+        exec: reject 0
+      - matches:    #屏蔽没有v6地址的域名
+        - qtype 28
+        - qname $my_nodenov6rule
+        exec: reject 0
+      - exec: $cache_node
+      - matches: has_resp
+        exec: accept
+      - exec: sleep 1000
+      - exec: $sbnodefallback
+      - matches:
+        - "qtype 1" 
+        - "rcode 0 2 3 5"
+        - "!resp_ip 0.0.0.0/0"
+        - "!cname keyword:."
+        exec: $my_nodenov4list  #生成域名规则
+      - matches:
+        - "qtype 28" 
+        - "rcode 0 2 3 5"
+        - "!resp_ip 2000::/3"
+        - "!cname keyword:."
+        exec: $my_nodenov6list  #生成域名规则
+
+####################对外服务端口定义部分############
+#解析节点域名的服务器
+  - tag: sbnode_udp
+    type: udp_server
+    args:
+      entry: sequence_sbnode
+      listen: 127.0.0.1:7777
+
+  - tag: sbnode_tcp
+    type: tcp_server
+    args:
+      entry: sequence_sbnode
+      listen: 127.0.0.1:7777
+
+#sing-box使用的服务器
+  - tag: sb_udp
+    type: udp_server
+    args:
+      entry: sequence_local
+      listen: 127.0.0.1:8888
+
+  - tag: sb_tcp
+    type: tcp_server
+    args:
+      entry: sequence_local
+      listen: 127.0.0.1:8888

@@ -1,0 +1,63 @@
+plugins:
+#列表外域名访问记录
+  - tag: my_notinlist
+    type: domain_output
+    args:
+      file_stat: /mssb/mosdns/gen/notinlist.txt
+      file_rule: /mssb/mosdns/gen/notinrule.txt
+      max_entries: 20
+      dump_interval: 36000
+
+#访问过的realip的域名清单和生成规则
+  - tag: my_realiplist
+    type: domain_output
+    args:
+      file_stat: /mssb/mosdns/gen/realiplist.txt
+      file_rule: /mssb/mosdns/gen/realiprule.txt
+      max_entries: 1000
+      dump_interval: 36005
+
+#访问过的fakeip的域名清单和生成规则
+  - tag: my_fakeiplist
+    type: domain_output
+    args:
+      file_stat: /mssb/mosdns/gen/fakeiplist.txt
+      file_rule: /mssb/mosdns/gen/fakeiprule.txt
+      max_entries: 1000
+      dump_interval: 36010
+
+#访问过的无v6 ip的域名清单和生成规则
+  - tag: my_nov6list
+    type: domain_output
+    args:
+      file_stat: /mssb/mosdns/gen/nov6list.txt
+      file_rule: /mssb/mosdns/gen/nov6rule.txt
+      max_entries: 100
+      dump_interval: 36040
+
+#访问过的无v4 v6 ip的域名清单和生成规则
+  - tag: my_nov4list
+    type: domain_output
+    args:
+      file_stat: /mssb/mosdns/gen/nov4list.txt
+      file_rule: /mssb/mosdns/gen/nov4rule.txt
+      max_entries: 3
+      dump_interval: 36030
+
+#节点域名无v6 ip的域名清单和生成规则
+  - tag: my_nodenov6list
+    type: domain_output
+    args:
+      file_stat: /mssb/mosdns/gen/nodenov6list.txt
+      file_rule: /mssb/mosdns/gen/nodenov6rule.txt
+      max_entries: 1000
+      dump_interval: 36060
+
+#节点域名无v4 v6 ip的域名清单和生成规则
+  - tag: my_nodenov4list
+    type: domain_output
+    args:
+      file_stat: /mssb/mosdns/gen/nodenov4list.txt
+      file_rule: /mssb/mosdns/gen/nodenov4rule.txt
+      max_entries: 2
+      dump_interval: 36080

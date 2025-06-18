@@ -1,0 +1,31 @@
+plugins:
+#定义了一个带过期缓存的内部使用/外部使用的国外dns服务器（带ecs），供节点域名解析使用
+#在不泄露版本中，供不在域名列表中的域名初次解析使用
+  - tag: forward_google_ecs
+    type: forward
+    args:
+      concurrent: 1
+      upstreams:
+        - addr: "https://8.8.8.8/dns-query"
+          socks5: "127.0.0.1:7891"
+
+  - tag: sequence_google_node
+    type: sequence
+    args:
+      - exec: $cache_google_node
+      - matches: has_resp
+        exec: accept
+      - exec: ecs 2408:8214:213::1  #使用自己的公网IP，无须更新
+      - exec: $forward_google_ecs
+
+  - tag: udp_google_ecs
+    type: udp_server
+    args:
+      entry: sequence_google_node
+      listen: 127.0.0.1:4444
+
+  - tag: tcp_google_ecs
+    type: tcp_server
+    args:
+      entry: sequence_google_node
+      listen: 127.0.0.1:4444

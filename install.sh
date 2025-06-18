@@ -388,12 +388,19 @@ auto_restore_config() {
                     ((restored_count++))
                 fi
 
-                # 恢复 proxy-device-list.txt
+                # 恢复 client_ip.txt
+                latest_backup=$(ls -t "$backup_dir"/mosdns-client_ip-*.txt 2>/dev/null | head -n1)
+                if [ -n "$latest_backup" ]; then
+                    mkdir -p "$mosdns_dir"
+                    cp "$latest_backup" "$mosdns_dir/client_ip.txt"
+                    log "已恢复 mosdns client_ip.txt"
+                    ((restored_count++))
+                fi
                 latest_backup=$(ls -t "$backup_dir"/mosdns-proxy-device-list-*.txt 2>/dev/null | head -n1)
                 if [ -n "$latest_backup" ]; then
                     mkdir -p "$mosdns_dir"
-                    cp "$latest_backup" "$mosdns_dir/proxy-device-list.txt"
-                    log "已恢复 mosdns proxy-device-list.txt"
+                    cp "$latest_backup" "$mosdns_dir/client_ip.txt"
+                    log "已恢复 mosdns client_ip.txt"
                     ((restored_count++))
                 fi
 
@@ -495,11 +502,11 @@ backup_config() {
                 fi
             fi
 
-            # 备份 proxy-device-list.txt
-            if [ -f "$mosdns_dir/proxy-device-list.txt" ]; then
-                backup_file="$backup_dir/mosdns-proxy-device-list-$timestamp.txt"
-                if cp "$mosdns_dir/proxy-device-list.txt" "$backup_file"; then
-                    log "mosdns proxy-device-list.txt 已备份到：$backup_file"
+            # 备份 client_ip.txt
+            if [ -f "$mosdns_dir/client_ip.txt" ]; then
+                backup_file="$backup_dir/mosdns-client_ip-$timestamp.txt"
+                if cp "$mosdns_dir/client_ip.txt" "$backup_file"; then
+                    log "mosdns client_ip.txt 已备份到：$backup_file"
                     ((backup_count++))
                 fi
             fi
@@ -602,13 +609,13 @@ check_and_restore_config() {
                 # mosdns 需要检查多个备份文件
                 local mosdns_dir="/mssb/mosdns"
                 local config_backup=$(ls -t "$backup_dir"/mosdns-config-*.yaml 2>/dev/null | head -n1)
-                local proxy_backup=$(ls -t "$backup_dir"/mosdns-proxy-device-list-*.txt 2>/dev/null | head -n1)
+                local proxy_backup=$(ls -t "$backup_dir"/mosdns-client_ip-*.txt 2>/dev/null | head -n1)
                 local whitelist_backup=$(ls -t "$backup_dir"/mosdns-mywhitelist-*.txt 2>/dev/null | head -n1)
 
                 if [ -n "$config_backup" ] || [ -n "$proxy_backup" ] || [ -n "$whitelist_backup" ]; then
                     echo -e "${green_text}发现 mosdns 的备份配置文件：${reset}"
                     [ -n "$config_backup" ] && echo -e "config.yaml: $config_backup"
-                    [ -n "$proxy_backup" ] && echo -e "proxy-device-list.txt: $proxy_backup"
+                    [ -n "$proxy_backup" ] && echo -e "client_ip.txt: $proxy_backup"
                     [ -n "$whitelist_backup" ] && echo -e "mywhitelist.txt: $whitelist_backup"
 
                     read -p "是否恢复这些备份？(y/n): " restore_choice
@@ -623,8 +630,8 @@ check_and_restore_config() {
                         fi
 
                         if [ -n "$proxy_backup" ]; then
-                            cp "$proxy_backup" "$mosdns_dir/proxy-device-list.txt"
-                            log "已恢复 mosdns proxy-device-list.txt"
+                            cp "$proxy_backup" "$mosdns_dir/client_ip.txt"
+                            log "已恢复 mosdns client_ip.txt"
                             ((restored_count++))
                         fi
 
@@ -1116,7 +1123,8 @@ check_and_copy_folder() {
 # mosdns配置文件复制
 mosdns_configure_files() {
     log "开始处理 mosdns 配置文件..."
-    CONFIG_YAML="/mssb/mosdns/config.yaml"
+    #CONFIG_YAML="/mssb/mosdns/config.yaml"
+    forward_local_yaml="/mssb/mosdns/sub_config/forward_local.yaml"
     echo -e "\n${yellow}=== 运营商 DNS 配置 ===${reset}"
     echo -e "默认已设置第一、第二解析为阿里公共 DNS：${green_text}223.5.5.5${reset}"
     echo -e "当前第三解析配置的运营商 DNS 为：${green_text}221.130.33.60${reset}"
@@ -1131,15 +1139,15 @@ mosdns_configure_files() {
         # 验证输入的 IP 地址格式
         if [[ $dns_addr =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
             # 替换配置文件中的 DNS 地址
-            sed -i "s/addr: \"221.130.33.60\"/addr: \"$dns_addr\"/" "$CONFIG_YAML"
+            sed -i "s/addr: \"221.130.33.60\"/addr: \"$dns_addr\"/" "$forward_local_yaml"
             log "已更新运营商 DNS 地址为：$dns_addr"
         else
             log "输入的 DNS 地址格式不正确，将使用默认值 119.29.29.29"
-            sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$CONFIG_YAML"
+            sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$forward_local_yaml"
         fi
     else
         log "使用默认 DNS 地址：119.29.29.29"
-        sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$CONFIG_YAML"
+        sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$forward_local_yaml"
     fi
 }
 
@@ -2167,6 +2175,123 @@ update_project() {
     fi
 }
 
+# 更新内核版本菜单
+update_cores_menu() {
+    echo -e "\n${green_text}=== 更新内核版本 ===${reset}"
+
+    # 检测已安装的程序
+    local mosdns_installed=false
+    local singbox_installed=false
+    local mihomo_installed=false
+
+    # 检查执行文件是否存在
+    if [ -f "/usr/local/bin/mosdns" ]; then
+        mosdns_installed=true
+    fi
+
+    if [ -f "/usr/local/bin/sing-box" ]; then
+        singbox_installed=true
+    fi
+
+    if [ -f "/usr/local/bin/mihomo" ]; then
+        mihomo_installed=true
+    fi
+
+    # 显示已安装的程序状态
+    echo -e "${yellow}检测到已安装的程序：${reset}"
+    echo -e "  - MosDNS: $([ $mosdns_installed = true ] && echo '✅ 已安装' || echo '❌ 未安装')"
+    echo -e "  - Sing-box: $([ $singbox_installed = true ] && echo '✅ 已安装' || echo '❌ 未安装')"
+    echo -e "  - Mihomo: $([ $mihomo_installed = true ] && echo '✅ 已安装' || echo '❌ 未安装')"
+
+    # 检查是否有程序可以更新
+    if ! $mosdns_installed && ! $singbox_installed && ! $mihomo_installed; then
+        echo -e "\n${red}❌ 未检测到任何已安装的程序${reset}"
+        echo -e "${yellow}请先安装程序后再使用更新功能${reset}"
+        echo -e "可以使用主菜单选项1进行安装"
+        return 1
+    fi
+
+    # 显示更新选项菜单
+    echo -e "\n${yellow}请选择要更新的组件：${reset}"
+
+    if $mosdns_installed; then
+        echo -e "1. 更新 MosDNS"
+        echo -e "4. 更新 CN域名数据"
+    fi
+
+    if $singbox_installed; then
+        echo -e "2. 更新 Sing-box"
+    fi
+
+    if $mihomo_installed; then
+        echo -e "3. 更新 Mihomo"
+    fi
+
+    echo -e "5. 更新所有已安装的组件"
+    echo -e "0. 返回主菜单"
+    echo -e "${green_text}------------------------${reset}"
+
+    read -p "请选择更新选项 (0-5): " update_choice
+
+    case "$update_choice" in
+        1)
+            if $mosdns_installed; then
+                echo -e "${green_text}正在更新 MosDNS...${reset}"
+                /watch/update_mosdns.sh
+            else
+                echo -e "${red}MosDNS 未安装，无法更新${reset}"
+            fi
+            ;;
+        2)
+            if $singbox_installed; then
+                echo -e "${green_text}正在更新 Sing-box...${reset}"
+                /watch/update_sb.sh
+            else
+                echo -e "${red}Sing-box 未安装，无法更新${reset}"
+            fi
+            ;;
+        3)
+            if $mihomo_installed; then
+                echo -e "${green_text}正在更新 Mihomo...${reset}"
+                /watch/update_mihomo.sh
+            else
+                echo -e "${red}Mihomo 未安装，无法更新${reset}"
+            fi
+            ;;
+        4)
+            echo -e "${green_text}正在更新 CN域名数据...${reset}"
+            /watch/update_cn.sh
+            ;;
+        5)
+            echo -e "${green_text}正在更新所有已安装的组件...${reset}"
+            if $mosdns_installed; then
+                echo -e "${green_text}更新 MosDNS...${reset}"
+                /watch/update_mosdns.sh
+            fi
+            if $singbox_installed; then
+                echo -e "${green_text}更新 Sing-box...${reset}"
+                /watch/update_sb.sh
+            fi
+            if $mihomo_installed; then
+                echo -e "${green_text}更新 Mihomo...${reset}"
+                /watch/update_mihomo.sh
+            fi
+            echo -e "${green_text}更新 CN域名数据...${reset}"
+            /watch/update_cn.sh
+            ;;
+        0)
+            echo -e "${yellow}返回主菜单${reset}"
+            return 0
+            ;;
+        *)
+            echo -e "${red}无效选择，返回主菜单${reset}"
+            return 0
+            ;;
+    esac
+
+    echo -e "${green_text}✅ 更新操作完成${reset}"
+}
+
 # 显示服务信息
 display_service_info() {
     echo -e "${green_text}-------------------------------------------------${reset}"
@@ -2200,8 +2325,8 @@ install_update_server() {
     echo
 
     echo -e "${green_text}请选择安装方案：${reset}"
-    echo "1) 方案1：Sing-box (支持订阅) + MosDNS + AdGuardHome"
-    echo "2) 方案2：Mihomo + MosDNS + AdGuardHome"
+    echo "1) 方案1：Sing-box(魔改内核支持订阅) + MosDNS"
+    echo "2) 方案2：Mihomo(原生就支持订阅) + MosDNS"
     echo -e "${green_text}-------------------------------------------------${reset}"
     read -p "请输入选项 (1/2): " choice
     case "$choice" in
@@ -2337,6 +2462,8 @@ main() {
     # 主菜单
     echo -e "${green_text}------------------------⚠️注意：请使用 root 用户安装！！！-------------------------${reset}"
     echo -e "${green_text}⚠️注意：本脚本支持 Debian/Ubuntu，安装前请确保系统未安装其他代理软件。${reset}"
+    echo -e "${green_text}使用前详细阅读 https://github.com/baozaodetudou/mssb/blob/main/README.md ${reset}"
+    echo -e "${green_text}脚本参考: https://github.com/herozmy/StoreHouse/tree/latest ${reset}"
     echo -e "${red}⚠️注意：服务管理请使用脚本管理，不要单独停用某个服务会导致转发失败cpu暴涨 ${reset}"
     echo -e "当前机器地址:${green_text}${local_ip}${reset}"
     echo -e "${green_text}请选择操作：${reset}"
@@ -2351,8 +2478,9 @@ main() {
     echo -e "${green_text}10) 创建全局 mssb 命令${reset}"
     echo -e "${red}11) 删除全局 mssb 命令${reset}"
     echo -e "${green_text}12) 更新项目${reset}"
+    echo -e "${green_text}13) 更新内核版本(mosdns/singbox/mihomo)${reset}"
     echo -e "${green_text}-------------------------------------------------${reset}"
-    read -p "请输入选项 (1/2/3/4/5/6/8/9/10/11/12/00): " main_choice
+    read -p "请输入选项 (1/2/3/4/5/6/8/9/10/11/12/13/00): " main_choice
 
     case "$main_choice" in
         2)
@@ -2427,6 +2555,13 @@ main() {
         12)
             echo -e "${green_text}更新项目${reset}"
             update_project
+            echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
+            read -n 1
+            main
+            ;;
+        13)
+            echo -e "${green_text}更新内核版本(mosdns/singbox/mihomo)${reset}"
+            update_cores_menu
             echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
             read -n 1
             main
