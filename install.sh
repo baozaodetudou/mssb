@@ -16,6 +16,24 @@ log() {
 
 # 系统更新和安装必要软件
 update_system() {
+    # 检查必要软件包是否已安装
+    local packages=("supervisor" "inotify-tools" "curl" "git" "wget" "tar" "gawk" "sed" "cron" "unzip" "nano" "nftables")
+    local all_installed=true
+
+    for pkg in "${packages[@]}"; do
+        if ! dpkg -l | grep -q "ii  $pkg "; then
+            all_installed=false
+            log "未安装软件包: $pkg"
+            break
+        fi
+    done
+
+    if $all_installed; then
+        log "所有必要软件包已安装，跳过系统更新和软件包安装"
+        return 0
+    fi
+
+    # 如果有软件包未安装，则更新系统并安装
     log "开始更新系统..."
     if ! apt update; then
         log "${red}系统更新失败，退出！${reset}"
