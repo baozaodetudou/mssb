@@ -1151,23 +1151,33 @@ cp_config_files() {
             cp "/mssb/mosdns/mywhitelist.txt" "/tmp/mywhitelist.txt.bak"
         fi
 
-        # 复制新的文件
-        cp -r "mssb/mosdns"/* "/mssb/mosdns/" || { log "复制 mssb/mosdns 目录内容失败！退出脚本。"; exit 1; }
+        # 删除目标目录中的所有内容（除了备份的文件）
+        find /mssb/mosdns -mindepth 1 -not -path "/mssb/mosdns/client_ip.txt" -not -path "/mssb/mosdns/mywhitelist.txt" -exec rm -rf {} \; 2>/dev/null || log "清理 /mssb/mosdns 目录时出现警告，继续执行..."
 
-        # 恢复备份的文件
+        # 复制新的文件
+        if cp -r mssb/mosdns/* /mssb/mosdns/ 2>/dev/null; then
+            log "成功复制 mssb/mosdns 目录内容"
+        else
+            log "警告：复制 mssb/mosdns 目录内容时出现错误，部分文件可能未成功复制"
+        fi
+
+        # 恢复备份的文件（如果备份文件存在）
         if [ -f "/tmp/client_ip.txt.bak" ]; then
-            cp "/tmp/client_ip.txt.bak" "/mssb/mosdns/client_ip.txt"
-            rm "/tmp/client_ip.txt.bak"
+            cp "/tmp/client_ip.txt.bak" "/mssb/mosdns/client_ip.txt" || log "警告：恢复 client_ip.txt 失败"
+            rm "/tmp/client_ip.txt.bak" 2>/dev/null
         fi
         if [ -f "/tmp/mywhitelist.txt.bak" ]; then
-            cp "/tmp/mywhitelist.txt.bak" "/mssb/mosdns/mywhitelist.txt"
-            rm "/tmp/mywhitelist.txt.bak"
+            cp "/tmp/mywhitelist.txt.bak" "/mssb/mosdns/mywhitelist.txt" || log "警告：恢复 mywhitelist.txt 失败"
+            rm "/tmp/mywhitelist.txt.bak" 2>/dev/null
         fi
 
-        log "成功更新 /mssb/mosdns 目录（保留了 client_ip.txt 和 mywhitelist.txt）"
+        log "已更新 /mssb/mosdns 目录（保留了 client_ip.txt 和 mywhitelist.txt）"
     else
-        cp -r "mssb/mosdns" "/mssb/" || { log "复制 mssb/mosdns 目录失败！退出脚本。"; exit 1; }
-        log "成功复制 mssb/mosdns 目录到 /mssb/"
+        if cp -r "mssb/mosdns" "/mssb/" 2>/dev/null; then
+            log "成功复制 mssb/mosdns 目录到 /mssb/"
+        else
+            log "警告：复制 mssb/mosdns 目录失败，将尝试继续执行"
+        fi
     fi
 
     # 检查并恢复 mosdns 配置
