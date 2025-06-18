@@ -76,11 +76,17 @@ plugins:
       - matches: mark 3
         exec: accept
 #web ui中选择泄露版（默认），用cache_all，否则用cache_all_noleak
-      - matches: switch3 'A'
+      - matches:
+        - switch3 'A'    #泄露模式
+        - switch4 'A'    #缓存开关打开
         exec: $cache_all
-      - matches: switch3 'B'
+      - matches:
+        - switch3 'B'    #非泄露模式
+        - switch4 'A'    #缓存开关打开
         exec: $cache_all_noleak
-      - matches: has_resp
+      - matches:
+        - switch4 'A'
+        - has_resp
         exec: accept
       - exec: $sequence_all
 

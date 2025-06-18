@@ -19,3 +19,10 @@ plugins:
     args:
       initial_value: 'A'
 
+#是否启用过期缓存开关 'A'-打开  'B'-关闭  
+#cache_google_node缓存不会被关闭，否则会影响7777逻辑
+  - tag: switch4
+    type: switch4
+    args:
+      initial_value: 'A'
+

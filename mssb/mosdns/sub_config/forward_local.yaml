@@ -15,8 +15,11 @@ plugins:
   - tag: sequence_local_in
     type: sequence
     args:
-      - exec: $cache_cn
-      - matches: has_resp
+      - matches: switch4 'A'
+        exec: $cache_cn
+      - matches:
+        - switch4 'A'
+        - has_resp
         exec: accept
       - exec: $forward_local
 
