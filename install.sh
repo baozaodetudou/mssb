@@ -379,24 +379,8 @@ auto_restore_config() {
                 local mosdns_dir="/mssb/mosdns"
                 local restored_count=0
 
-                # 恢复 config.yaml
-                latest_backup=$(ls -t "$backup_dir"/mosdns-config-*.yaml 2>/dev/null | head -n1)
-                if [ -n "$latest_backup" ]; then
-                    mkdir -p "$mosdns_dir"
-                    cp "$latest_backup" "$mosdns_dir/config.yaml"
-                    log "已恢复 mosdns config.yaml"
-                    ((restored_count++))
-                fi
-
                 # 恢复 client_ip.txt
                 latest_backup=$(ls -t "$backup_dir"/mosdns-client_ip-*.txt 2>/dev/null | head -n1)
-                if [ -n "$latest_backup" ]; then
-                    mkdir -p "$mosdns_dir"
-                    cp "$latest_backup" "$mosdns_dir/client_ip.txt"
-                    log "已恢复 mosdns client_ip.txt"
-                    ((restored_count++))
-                fi
-                latest_backup=$(ls -t "$backup_dir"/mosdns-proxy-device-list-*.txt 2>/dev/null | head -n1)
                 if [ -n "$latest_backup" ]; then
                     mkdir -p "$mosdns_dir"
                     cp "$latest_backup" "$mosdns_dir/client_ip.txt"
@@ -492,16 +476,6 @@ backup_config() {
             local mosdns_dir="/mssb/mosdns"
             local timestamp=$(date +%Y%m%d-%H%M%S)
             local backup_count=0
-
-            # 备份 config.yaml
-            if [ -f "$mosdns_dir/config.yaml" ]; then
-                backup_file="$backup_dir/mosdns-config-$timestamp.yaml"
-                if cp "$mosdns_dir/config.yaml" "$backup_file"; then
-                    log "mosdns config.yaml 已备份到：$backup_file"
-                    ((backup_count++))
-                fi
-            fi
-
             # 备份 client_ip.txt
             if [ -f "$mosdns_dir/client_ip.txt" ]; then
                 backup_file="$backup_dir/mosdns-client_ip-$timestamp.txt"
@@ -608,13 +582,11 @@ check_and_restore_config() {
             "mosdns")
                 # mosdns 需要检查多个备份文件
                 local mosdns_dir="/mssb/mosdns"
-                local config_backup=$(ls -t "$backup_dir"/mosdns-config-*.yaml 2>/dev/null | head -n1)
                 local proxy_backup=$(ls -t "$backup_dir"/mosdns-client_ip-*.txt 2>/dev/null | head -n1)
                 local whitelist_backup=$(ls -t "$backup_dir"/mosdns-mywhitelist-*.txt 2>/dev/null | head -n1)
 
-                if [ -n "$config_backup" ] || [ -n "$proxy_backup" ] || [ -n "$whitelist_backup" ]; then
+                if [ -n "$proxy_backup" ] || [ -n "$whitelist_backup" ]; then
                     echo -e "${green_text}发现 mosdns 的备份配置文件：${reset}"
-                    [ -n "$config_backup" ] && echo -e "config.yaml: $config_backup"
                     [ -n "$proxy_backup" ] && echo -e "client_ip.txt: $proxy_backup"
                     [ -n "$whitelist_backup" ] && echo -e "mywhitelist.txt: $whitelist_backup"
 
@@ -622,12 +594,6 @@ check_and_restore_config() {
                     if [ "$restore_choice" = "y" ]; then
                         mkdir -p "$mosdns_dir"
                         local restored_count=0
-
-                        if [ -n "$config_backup" ]; then
-                            cp "$config_backup" "$mosdns_dir/config.yaml"
-                            log "已恢复 mosdns config.yaml"
-                            ((restored_count++))
-                        fi
 
                         if [ -n "$proxy_backup" ]; then
                             cp "$proxy_backup" "$mosdns_dir/client_ip.txt"
@@ -1157,7 +1123,35 @@ cp_config_files() {
     check_and_copy_folder "fb"
 
     # 复制 mssb/mosdns 目录
-    check_and_copy_folder "mosdns"
+    if [ -d "/mssb/mosdns" ]; then
+        log "/mssb/mosdns 文件夹已存在，保留 client_ip.txt 和 mywhitelist.txt，替换其他文件。"
+        # 备份需要保留的文件
+        if [ -f "/mssb/mosdns/client_ip.txt" ]; then
+            cp "/mssb/mosdns/client_ip.txt" "/tmp/client_ip.txt.bak"
+        fi
+        if [ -f "/mssb/mosdns/mywhitelist.txt" ]; then
+            cp "/mssb/mosdns/mywhitelist.txt" "/tmp/mywhitelist.txt.bak"
+        fi
+
+        # 复制新的文件
+        cp -r "mssb/mosdns"/* "/mssb/mosdns/" || { log "复制 mssb/mosdns 目录内容失败！退出脚本。"; exit 1; }
+
+        # 恢复备份的文件
+        if [ -f "/tmp/client_ip.txt.bak" ]; then
+            cp "/tmp/client_ip.txt.bak" "/mssb/mosdns/client_ip.txt"
+            rm "/tmp/client_ip.txt.bak"
+        fi
+        if [ -f "/tmp/mywhitelist.txt.bak" ]; then
+            cp "/tmp/mywhitelist.txt.bak" "/mssb/mosdns/mywhitelist.txt"
+            rm "/tmp/mywhitelist.txt.bak"
+        fi
+
+        log "成功更新 /mssb/mosdns 目录（保留了 client_ip.txt 和 mywhitelist.txt）"
+    else
+        cp -r "mssb/mosdns" "/mssb/" || { log "复制 mssb/mosdns 目录失败！退出脚本。"; exit 1; }
+        log "成功复制 mssb/mosdns 目录到 /mssb/"
+    fi
+
     # 检查并恢复 mosdns 配置
     echo -e "\n${green_text}=== MosDNS 配置设置 ===${reset}"
     echo -e "1. 检查是否有备份配置"
@@ -1171,6 +1165,7 @@ cp_config_files() {
             # 检查是否有备份配置
             if check_and_restore_config "mosdns" ""; then
                 log "已从备份恢复 mosdns 配置"
+                mosdns_configure_files
             else
                 log "未找到 mosdns 备份，将使用默认配置"
                 mosdns_configure_files
