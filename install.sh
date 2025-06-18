@@ -2449,6 +2449,7 @@ main() {
     # 主菜单
     echo -e "${green_text}------------------------⚠️注意：请使用 root 用户安装！！！-------------------------${reset}"
     echo -e "${green_text}⚠️注意：本脚本支持 Debian/Ubuntu，安装前请确保系统未安装其他代理软件。${reset}"
+    echo -e "${green_text}使用前详细阅读 https://github.com/baozaodetudou/mssb/blob/main/README.md ${reset}"
     echo -e "${green_text}脚本参考: https://github.com/herozmy/StoreHouse/tree/latest ${reset}"
     echo -e "${red}⚠️注意：服务管理请使用脚本管理，不要单独停用某个服务会导致转发失败cpu暴涨 ${reset}"
     echo -e "当前机器地址:${green_text}${local_ip}${reset}"
