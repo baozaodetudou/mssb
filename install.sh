@@ -951,8 +951,7 @@ EOF
     check_interfaces
     # 获取脚本所在目录的绝对路径
     local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    # 根据核心类型选择不同的防火墙模板
-    local nft_template="$script_dir/ntf/nft-tproxy-redirect.conf"
+    local nft_template="$script_dir/nft/nft-tproxy-redirect.conf"
 
     # 检查模板文件是否存在
     if [ ! -f "$nft_template" ]; then
