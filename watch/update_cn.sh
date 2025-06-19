@@ -49,6 +49,7 @@ download_file() {
     if $CURL_COMMAND "$temp_file" "$url"; then
         # 检查文件完整性
         if check_file_integrity "$temp_file"; then
+            rm "$destination"
             # 如果下载成功且文件完整，则移动到目标位置
             mv "$temp_file" "$destination"
             success_log "${description} 更新成功"
