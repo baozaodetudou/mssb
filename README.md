@@ -144,9 +144,11 @@ git clone --depth=1 https://github.com/baozaodetudou/mssb.git -b ami && cd mssb 
   | DNS 服务器 | `{Debian主机IP}` |
   
   #### MosDNS 和 Mihomo fakeip 路由
-  | 目标地址 | 网关 |
-  |----------|------|
+  | 目标地址       | 网关 |
+  |------------|------|
   | 28.0.0.0/8 | `{Debian主机IP}` |
+  | 8.8.8.8/32 | `{Debian主机IP}` |
+  | 1.1.1.1/32 | `{Debian主机IP}` |
   
   #### Telegram 路由
   | 目标地址 | 网关 |

@@ -1945,6 +1945,8 @@ format_route_rules() {
     printf "${green_text}│ %-21s     │ %-21s   │${reset}\n" "目标地址" "网关"
     echo -e "${green_text}├───────────────────────┼───────────────────────┤${reset}"
     printf "${green_text}│ %-21s │ %-21s │${reset}\n" "28.0.0.0/8" "$local_ip"
+    printf "${green_text}│ %-21s │ %-21s │${reset}\n" "8.8.8.8/32" "$local_ip"
+    printf "${green_text}│ %-21s │ %-21s │${reset}\n" "1.1.1.1/32" "$local_ip"
     echo -e "${green_text}└───────────────────────┴───────────────────────┘${reset}"
 
     # Telegram 路由
