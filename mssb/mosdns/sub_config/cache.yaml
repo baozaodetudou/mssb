@@ -20,7 +20,7 @@ plugins:
       exclude_ip:
         - 28.0.0.0/8
         - f2b0::/18
-      dump_file: /mssb/mosdns/cache_all.dump
+      dump_file: /mssb/mosdns/cache_all_noleak.dump
       dump_interval: 36000
 
 #中国域名列表的过期缓存
