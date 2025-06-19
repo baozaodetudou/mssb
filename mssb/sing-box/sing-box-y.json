@@ -23,19 +23,26 @@
         "servers": [
             {
                 "tag": "localDns",
-                "address": "tls://223.5.5.5:853",
-                "detour": "direct"
+                "type": "udp",
+                "server": "127.0.0.1",
+                "server_port": 8888
             },
             {
                 "tag": "nodedns",
-                "address": "tls://223.6.6.6:853",
-                "detour": "direct"
+                "type": "udp",
+                "server": "127.0.0.1",
+                "server_port": 7777
             },
             {
                 "tag": "fakeipDNS",
                 "address": "fakeip"
             }
         ],
+        "fakeip": {
+            "enabled": true,
+            "inet4_range": "28.0.0.0/8",
+            "inet6_range": "f2b0::/18"
+        },
         "rules": [
             {
                 "inbound": "in-dns",
@@ -53,11 +60,6 @@
                 "disable_cache": false
             }
         ],
-        "fakeip": {
-            "enabled": true,
-            "inet4_range": "28.0.0.0/8",
-            "inet6_range": "f2b0::/18"
-        },
         "independent_cache": true,
         "disable_expire": false,
         "final": "localDns"
@@ -364,7 +366,6 @@
             "use_all_providers": true,
             "exclude": "Premium"
         },
-
         {
             "type": "selector",
             "tag": "🇭🇰 香港节点",
@@ -456,6 +457,9 @@
         }
     ],
     "route": {
+        "default_domain_resolver": {
+            "server": "nodedns"
+        },
         "final": "🚀 节点选择",
         "auto_detect_interface": true,
         "default_mark": 1,

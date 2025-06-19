@@ -22,8 +22,8 @@ socks-port: 7891
 # 混合端口 HTTP + SOCKS5
 # 启用后，这个端口同时支持 HTTP 和 SOCKS5 协议
 mixed-port: 7892
-# Redirect 模式端口 用于 Linux 下 iptables 的 TUN/透明代理
-redir-port: 7893
+# Redirect 模式端口 用于 Linux 下 iptables 的 TUN/透明代理 不要修改脚本需要通过这个端口进行转发
+redir-port: 7877
 # TPROXY 模式端口 Transparent Proxy 不要修改脚本需要通过这个端口进行转发
 # 也用于透明代理，但相比 redir-port，TPROXY 可以保留原始源地址
 tproxy-port: 7896
@@ -86,14 +86,9 @@ dns:
     - "*"
     - +.lan
   default-nameserver:
-    - 223.5.5.5
-    - 119.29.29.249
+    - 127.0.0.1:8888
   nameserver:
-    - 223.5.5.5
-    - 119.29.29.249
-    - https://223.5.5.5/resolve
-    - https://doh.pub/dns-query
-    - https://dns.alidns.com/dns-query
+    - 127.0.0.1:7777
 
 # 锚点 - 节点订阅的参数 [每小时更新一次订阅节点，每 6 秒一次健康检查]
 NodeParam: &NodeParam {type: http, interval: 3600, health-check: {enable: true, url: 'http://detectportal.firefox.com/success.txt', interval: 6}}

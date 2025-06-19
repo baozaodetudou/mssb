@@ -697,8 +697,7 @@ singbox_customize_settings() {
 
                 if [ "$valid" = true ]; then
                     echo -e "${green_text}✅ 已设置订阅链接地址：$suburls${reset}"
-                    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-                    cd "$script_dir"
+                    cd "$(dirname "$0")"
                     python3 update_sub.py -v "$suburls"
                     log "订阅链接处理完成"
                     break
@@ -979,91 +978,74 @@ EOF
     fi
     ################################写入nftables################################
     check_interfaces
-    echo "" > "/etc/nftables.conf"
-        cat <<EOF > "/etc/nftables.conf"
-#!/usr/sbin/nft -f
-flush ruleset
-table inet $core_name {
-  set local_ipv4 {
-    type ipv4_addr
-    flags interval
-    elements = {
-      10.0.0.0/8,
-      127.0.0.0/8,
-      169.254.0.0/16,
-      172.16.0.0/12,
-      192.168.0.0/16,
-      240.0.0.0/4
-    }
-  }
+    # 获取脚本所在目录的绝对路径
+    cd "$(dirname "$0")"
+    local nft_template="./nft/nft-tproxy-redirect.conf"
 
-  set local_ipv6 {
-    type ipv6_addr
-    flags interval
-    elements = {
-      ::ffff:0.0.0.0/96,
-      64:ff9b::/96,
-      100::/64,
-      2001::/32,
-      2001:10::/28,
-      2001:20::/28,
-      2001:db8::/32,
-      2002::/16,
-      fc00::/7,
-      fe80::/10
-    }
-  }
-
-  chain ${core_name}-tproxy {
-    fib daddr type { unspec, local, anycast, multicast } return
-    ip daddr @local_ipv4 return
-    ip6 daddr @local_ipv6 return
-    udp dport { 123 } return
-    udp dport { 53 } accept
-    meta l4proto { tcp, udp } meta mark set 1 tproxy to :7896 accept
-  }
-
-  chain ${core_name}-mark {
-    fib daddr type { unspec, local, anycast, multicast } return
-    ip daddr @local_ipv4 return
-    ip6 daddr @local_ipv6 return
-    udp dport { 123 } return
-    udp dport { 53 } accept
-    meta mark set 1
-  }
-
-  chain mangle-output {
-    type route hook output priority mangle; policy accept;
-    meta l4proto { tcp, udp } skgid != 1 ct direction original goto ${core_name}-mark
-  }
-
-  chain mangle-prerouting {
-    type filter hook prerouting priority mangle; policy accept;
-    iifname { wg0, lo, $selected_interface } meta l4proto { tcp, udp } ct direction original goto ${core_name}-tproxy
-  }
-}
-EOF
+    # 检查模板文件是否存在
+    if [ ! -f "$nft_template" ]; then
+        log "错误：nftables 模板文件 $nft_template 不存在！"
+        return 1
+    fi
+    rm /etc/nftables.conf
+    # 复制并替换模板中的网卡名
+    if cp "$nft_template" "/etc/nftables.conf"; then
+        log "成功复制 nftables 模板文件"
+        # 替换模板中的网卡名
+        if sed -i "s/eth0/${selected_interface}/g" "/etc/nftables.conf"; then
+            log "成功替换网卡名为: $selected_interface"
+        else
+            log "警告：替换网卡名失败，请手动检查 /etc/nftables.conf"
+        fi
+    else
+        log "错误：复制 nftables 模板文件失败！"
+        return 1
+    fi
 
     echo -e "${green_text}nftables规则写入完成${reset}"
     sleep 1
-    echo "清空 nftalbes 规则"
-    nft flush ruleset
-    sleep 1
-    echo "新规则生效"
-    sleep 1
-    nft -f /etc/nftables.conf
-    echo "启用相关服务"
-    systemctl enable --now nftables
+
+    # 验证配置文件语法
+    if nft -c -f /etc/nftables.conf; then
+        log "nftables 配置文件语法检查通过"
+
+        echo "清空 nftables 规则"
+        if nft flush ruleset; then
+            log "成功清空现有 nftables 规则"
+        else
+            log "警告：清空 nftables 规则失败，继续执行"
+        fi
+        sleep 1
+
+        echo "新规则生效"
+        if nft -f /etc/nftables.conf; then
+            log "成功加载新的 nftables 规则"
+        else
+            log "错误：加载 nftables 规则失败！"
+            return 1
+        fi
+        sleep 1
+
+        echo "启用相关服务"
+        if systemctl enable --now nftables; then
+            log "成功启用 nftables 服务"
+        else
+            log "警告：启用 nftables 服务失败"
+        fi
+    else
+        log "错误：nftables 配置文件语法检查失败！"
+        return 1
+    fi
     if [ "$core_name" = "sing-box" ]; then
       # 启用 sing-box-router，禁用 mihomo-router
       systemctl disable --now mihomo-router &>/dev/null
       rm -f /etc/systemd/system/mihomo-router.service
-      systemctl enable --now sing-box-router || { log "启用相关服务 失败！退出脚本。"; exit 1; }
+      systemctl enable --now sing-box-router || { log "启用相关服务 失败！"; }
     elif [ "$core_name" = "mihomo" ]; then
       # 启用 mihomo-router，禁用 sing-box-router
       systemctl disable --now sing-box-router &>/dev/null
       rm -f /etc/systemd/system/sing-box-router.service
-      systemctl enable --now mihomo-router || { log "启用相关服务 失败！退出脚本。"; exit 1; }
+      systemctl enable --now mihomo-router || { log "启用相关服务 失败！"; }
     else
       log "未识别的 core_name: $core_name，跳过 启用相关服务。"
     fi
@@ -2117,7 +2099,7 @@ install_adguardhome() {
 
 # 创建全局 mssb 命令
 create_mssb_command() {
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local script_dir="$(cd "$(dirname "$0")" && pwd)"
     local script_path="$script_dir/install.sh"
 
     # 创建 mssb 命令脚本
@@ -2179,7 +2161,7 @@ remove_mssb_command() {
 
 # 更新项目
 update_project() {
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local script_dir="$(cd "$(dirname "$0")" && pwd)"
     echo -e "${green_text}正在更新项目...${reset}"
     echo "项目目录：$script_dir"
 
