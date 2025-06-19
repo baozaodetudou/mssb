@@ -86,14 +86,11 @@ dns:
     - "*"
     - +.lan
   default-nameserver:
+    - 127.0.0.1:7777
     - 223.5.5.5
-    - 119.29.29.249
   nameserver:
+    - 127.0.0.1:8888
     - 223.5.5.5
-    - 119.29.29.249
-    - https://223.5.5.5/resolve
-    - https://doh.pub/dns-query
-    - https://dns.alidns.com/dns-query
 
 # 锚点 - 节点订阅的参数 [每小时更新一次订阅节点，每 6 秒一次健康检查]
 NodeParam: &NodeParam {type: http, interval: 3600, health-check: {enable: true, url: 'http://detectportal.firefox.com/success.txt', interval: 6}}
