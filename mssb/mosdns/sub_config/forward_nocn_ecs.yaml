@@ -22,10 +22,10 @@ plugins:
     type: udp_server
     args:
       entry: sequence_google_node
-      listen: 127.0.0.1:4444
+      listen: ":4444"
 
   - tag: tcp_google_ecs
     type: tcp_server
     args:
       entry: sequence_google_node
-      listen: 127.0.0.1:4444
+      listen: ":4444"

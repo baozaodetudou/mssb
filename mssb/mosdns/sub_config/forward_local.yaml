@@ -28,10 +28,10 @@ plugins:
     type: udp_server
     args:
       entry: sequence_local_in
-      listen: 127.0.0.1:2222
+      listen: ":2222"
 
   - tag: tcp_local
     type: tcp_server
     args:
       entry: sequence_local_in
-      listen: 127.0.0.1:2222
+      listen: ":2222"

@@ -7,9 +7,9 @@ plugins:
       concurrent: 2
       upstreams:
         - addr: "https://1.1.1.1/dns-query"
-          #socks5: "127.0.0.1:7891"
+          socks5: "127.0.0.1:7891"
         - addr: "https://8.8.8.8/dns-query"
-          #socks5: "127.0.0.1:7891"
+          socks5: "127.0.0.1:7891"
           upstream_query_timeout: 1000
 
 #国内域名 内部使用
@@ -29,10 +29,10 @@ plugins:
     type: udp_server
     args:
       entry: sequence_google_in
-      listen: 127.0.0.1:3333
+      listen: ":3333"
 
   - tag: tcp_google
     type: tcp_server
     args:
       entry: sequence_google_in
-      listen: 127.0.0.1:3333
+      listen: ":3333"
