@@ -39,17 +39,27 @@ download_file() {
     local temp_file="${destination}.tmp"
 
     log "正在更新 ${description}..."
-    # 如果代理变量非空，则设置 curl 命令使用代理
-    if [ -n "$proxy" ]; then
-        CURL_COMMAND="curl --progress-bar --show-error -x $proxy -o"
-    else
-        CURL_COMMAND="curl --progress-bar --show-error -o"
-    fi
     # 下载到临时文件
-    if $CURL_COMMAND "$temp_file" "$url"; then
+    if [ -n "$proxy" ]; then
+        # 使用代理下载
+        if wget --progress=bar:force --show-progress -e use_proxy=yes -e http_proxy="$proxy" -e https_proxy="$proxy" -O "$temp_file" "$url"; then
+            download_success=true
+        else
+            download_success=false
+        fi
+    else
+        # 不使用代理下载
+        if wget --progress=bar:force --show-progress -O "$temp_file" "$url"; then
+            download_success=true
+        else
+            download_success=false
+        fi
+    fi
+
+    if [ "$download_success" = true ]; then
         # 检查文件完整性
         if check_file_integrity "$temp_file"; then
-            rm "$destination"
+            rm -f "$destination"
             # 如果下载成功且文件完整，则移动到目标位置
             mv "$temp_file" "$destination"
             success_log "${description} 更新成功"
