@@ -667,8 +667,7 @@ singbox_customize_settings() {
 
                 if [ "$valid" = true ]; then
                     echo -e "${green_text}✅ 已设置订阅链接地址：$suburls${reset}"
-                    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-                    cd "$script_dir"
+                    cd "$(dirname "$0")"
                     python3 update_sub.py -v "$suburls"
                     log "订阅链接处理完成"
                     break
@@ -950,8 +949,8 @@ EOF
     ################################写入nftables################################
     check_interfaces
     # 获取脚本所在目录的绝对路径
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    local nft_template="$script_dir/nft/nft-tproxy-redirect.conf"
+    cd "$(dirname "$0")"
+    local nft_template="./nft/nft-tproxy-redirect.conf"
 
     # 检查模板文件是否存在
     if [ ! -f "$nft_template" ]; then
@@ -2085,7 +2084,7 @@ scan_lan_devices() {
 
 # 创建全局 mssb 命令
 create_mssb_command() {
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local script_dir="$(cd "$(dirname "$0")" && pwd)"
     local script_path="$script_dir/install.sh"
 
     # 创建 mssb 命令脚本
@@ -2147,7 +2146,7 @@ remove_mssb_command() {
 
 # 更新项目
 update_project() {
-    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local script_dir="$(cd "$(dirname "$0")" && pwd)"
     echo -e "${green_text}正在更新项目...${reset}"
     echo "项目目录：$script_dir"
 
