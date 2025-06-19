@@ -23,13 +23,15 @@
         "servers": [
             {
                 "tag": "localDns",
-                "type": "tls",
-                "server": "223.5.5.5"
+                "type": "udp",
+                "server": "127.0.0.1",
+                "server_port": 8888
             },
             {
                 "tag": "nodedns",
-                "type": "tls",
-                "server": "223.6.6.6"
+                "type": "udp",
+                "server": "127.0.0.1",
+                "server_port": 7777
             },
             {
                 "type": "fakeip",
@@ -348,7 +350,6 @@
             "use_all_providers": true,
             "exclude": "Premium"
         },
-
         {
             "type": "selector",
             "tag": "🇭🇰 香港节点",
@@ -441,7 +442,7 @@
     ],
     "route": {
         "default_domain_resolver": {
-            "server": "localDns"
+            "server": "nodedns"
         },
         "final": "🚀 节点选择",
         "auto_detect_interface": true,
