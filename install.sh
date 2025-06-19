@@ -950,27 +950,62 @@ EOF
     ################################写入nftables################################
     check_interfaces
     # 根据核心类型选择不同的防火墙模板
-    local nft_template=""
-    if [ "$core_name" == "mihomo" ]; then
-        nft_template="ntf/nft-tproxy.conf"
-    else
-        nft_template="ntf/nft-tproxy-redirect.conf"
+    local nft_template="ntf/nft-tproxy-redirect.conf"
+
+    # 检查模板文件是否存在
+    if [ ! -f "$nft_template" ]; then
+        log "错误：nftables 模板文件 $nft_template 不存在！"
+        return 1
     fi
 
     # 复制并替换模板中的网卡名
-    cp "$nft_template" "/etc/nftables.conf"
-    sed -i "s/eth0/${selected_interface}/g" "/etc/nftables.conf"
+    if cp "$nft_template" "/etc/nftables.conf"; then
+        log "成功复制 nftables 模板文件"
+        # 替换模板中的网卡名
+        if sed -i "s/eth0/${selected_interface}/g" "/etc/nftables.conf"; then
+            log "成功替换网卡名为: $selected_interface"
+        else
+            log "警告：替换网卡名失败，请手动检查 /etc/nftables.conf"
+        fi
+    else
+        log "错误：复制 nftables 模板文件失败！"
+        return 1
+    fi
 
     echo -e "${green_text}nftables规则写入完成${reset}"
     sleep 1
-    echo "清空 nftalbes 规则"
-    nft flush ruleset
-    sleep 1
-    echo "新规则生效"
-    sleep 1
-    nft -f /etc/nftables.conf
-    echo "启用相关服务"
-    systemctl enable --now nftables
+
+    # 验证配置文件语法
+    if nft -c -f /etc/nftables.conf; then
+        log "nftables 配置文件语法检查通过"
+
+        echo "清空 nftables 规则"
+        if nft flush ruleset; then
+            log "成功清空现有 nftables 规则"
+        else
+            log "警告：清空 nftables 规则失败，继续执行"
+        fi
+        sleep 1
+
+        echo "新规则生效"
+        if nft -f /etc/nftables.conf; then
+            log "成功加载新的 nftables 规则"
+        else
+            log "错误：加载 nftables 规则失败！"
+            return 1
+        fi
+        sleep 1
+
+        echo "启用相关服务"
+        if systemctl enable --now nftables; then
+            log "成功启用 nftables 服务"
+        else
+            log "警告：启用 nftables 服务失败"
+        fi
+    else
+        log "错误：nftables 配置文件语法检查失败！"
+        return 1
+    fi
     if [ "$core_name" = "sing-box" ]; then
       # 启用 sing-box-router，禁用 mihomo-router
       systemctl disable --now mihomo-router &>/dev/null
