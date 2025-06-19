@@ -957,7 +957,7 @@ EOF
         log "错误：nftables 模板文件 $nft_template 不存在！"
         return 1
     fi
-
+    rm /etc/nftables.conf
     # 复制并替换模板中的网卡名
     if cp "$nft_template" "/etc/nftables.conf"; then
         log "成功复制 nftables 模板文件"
