@@ -71,22 +71,22 @@ main() {
     log "开始更新 CN 规则文件..."
 
     # 设置需要下载的文件 URL
-    proxy_list_url="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt"
-    gfw_list_url="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt"
-    direct_list_url="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt"
-    cn_ip_cidr_url="https://raw.githubusercontent.com/Hackl0us/GeoIP2-CN/release/CN-ip-cidr.txt"
+    # https://github.com/MetaCubeX/meta-rules-dat/blob/sing/geo/geosite/cn.srs
+    # https://github.com/MetaCubeX/meta-rules-dat/blob/sing/geo/geosite/geolocation-!cn.srs
+    # https://github.com/MetaCubeX/meta-rules-dat/blob/sing/geo/geoip/cn.srs
+    proxy_list_url="https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo/geosite/geolocation-!cn.srs"
+    direct_list_url="https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo/geosite/cn.srs"
+    cn_ip_cidr_url="https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo/geoip/cn.srs"
 
     # 设置本地文件路径
-    geosite_geolocation_noncn_file="/mssb/mosdns/rule/geosite_geolocation_noncn.txt"
-    gfw_file="/mssb/mosdns/rule/gfw.txt"
-    geosite_cn_file="/mssb/mosdns/rule/geosite_cn.txt"
-    geoip_cn_file="/mssb/mosdns/rule/geoip_cn.txt"
+    geosite_geolocation_noncn_file="/mssb/mosdns/unpack/geolocation-!cn.srs"
+    geosite_cn_file="/mssb/mosdns/unpack/geosite-cn.srs"
+    geoip_cn_file="/mssb/mosdns/unpack/geoip-cn.srs"
     # 确保目录存在
     mkdir -p "$(dirname "$geosite_geolocation_noncn_file")"
 
     # 下载文件
     download_file "$proxy_list_url" "$geosite_geolocation_noncn_file" "代理列表" || exit 1
-    download_file "$gfw_list_url" "$gfw_file" "GFW 列表" || exit 1
     download_file "$direct_list_url" "$geosite_cn_file" "直连列表" || exit 1
     download_file "$cn_ip_cidr_url" "$geoip_cn_file" "CN IP CIDR" || exit 1
     # 重启 MosDNS 服务
