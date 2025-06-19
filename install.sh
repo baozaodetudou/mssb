@@ -1028,12 +1028,12 @@ EOF
       # 启用 sing-box-router，禁用 mihomo-router
       systemctl disable --now mihomo-router &>/dev/null
       rm -f /etc/systemd/system/mihomo-router.service
-      systemctl enable --now sing-box-router || { log "启用相关服务 失败！退出脚本。"; exit 1; }
+      systemctl enable --now sing-box-router || { log "启用相关服务 失败！"; }
     elif [ "$core_name" = "mihomo" ]; then
       # 启用 mihomo-router，禁用 sing-box-router
       systemctl disable --now sing-box-router &>/dev/null
       rm -f /etc/systemd/system/sing-box-router.service
-      systemctl enable --now mihomo-router || { log "启用相关服务 失败！退出脚本。"; exit 1; }
+      systemctl enable --now mihomo-router || { log "启用相关服务 失败！"; }
     else
       log "未识别的 core_name: $core_name，跳过 启用相关服务。"
     fi
