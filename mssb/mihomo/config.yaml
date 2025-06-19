@@ -22,8 +22,8 @@ socks-port: 7891
 # 混合端口 HTTP + SOCKS5
 # 启用后，这个端口同时支持 HTTP 和 SOCKS5 协议
 mixed-port: 7892
-# Redirect 模式端口 用于 Linux 下 iptables 的 TUN/透明代理
-redir-port: 7893
+# Redirect 模式端口 用于 Linux 下 iptables 的 TUN/透明代理 不要修改脚本需要通过这个端口进行转发
+redir-port: 7877
 # TPROXY 模式端口 Transparent Proxy 不要修改脚本需要通过这个端口进行转发
 # 也用于透明代理，但相比 redir-port，TPROXY 可以保留原始源地址
 tproxy-port: 7896
