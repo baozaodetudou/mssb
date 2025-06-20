@@ -16,6 +16,7 @@ plugins:
       file_rule: /mssb/mosdns/gen/realiprule.txt
       max_entries: 1000
       dump_interval: 36005
+      domain_set_url: "http://127.0.0.1:9099/plugins/my_realiprule/post"
 
 #访问过的fakeip的域名清单和生成规则
   - tag: my_fakeiplist
@@ -25,6 +26,7 @@ plugins:
       file_rule: /mssb/mosdns/gen/fakeiprule.txt
       max_entries: 1000
       dump_interval: 36010
+      domain_set_url: "http://127.0.0.1:9099/plugins/my_fakeiprule/post"
 
 #访问过的无v6 ip的域名清单和生成规则
   - tag: my_nov6list
@@ -34,6 +36,7 @@ plugins:
       file_rule: /mssb/mosdns/gen/nov6rule.txt
       max_entries: 100
       dump_interval: 36040
+      domain_set_url: "http://127.0.0.1:9099/plugins/my_nov6rule/post"
 
 #访问过的无v4 v6 ip的域名清单和生成规则
   - tag: my_nov4list
@@ -43,6 +46,7 @@ plugins:
       file_rule: /mssb/mosdns/gen/nov4rule.txt
       max_entries: 3
       dump_interval: 36030
+      domain_set_url: "http://127.0.0.1:9099/plugins/my_nov4rule/post"
 
 #节点域名无v6 ip的域名清单和生成规则
   - tag: my_nodenov6list
@@ -52,6 +56,7 @@ plugins:
       file_rule: /mssb/mosdns/gen/nodenov6rule.txt
       max_entries: 1000
       dump_interval: 36060
+      domain_set_url: "http://127.0.0.1:9099/plugins/my_nodenov6rule/post"
 
 #节点域名无v4 v6 ip的域名清单和生成规则
   - tag: my_nodenov4list
@@ -61,3 +66,4 @@ plugins:
       file_rule: /mssb/mosdns/gen/nodenov4rule.txt
       max_entries: 2
       dump_interval: 36080
+      domain_set_url: "http://127.0.0.1:9099/plugins/my_nodenov4rule/post"

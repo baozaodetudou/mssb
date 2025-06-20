@@ -75,7 +75,6 @@ plugins:
     args:
       files:
         - "/mssb/mosdns/rule/whitelist.txt"
-        - "/mssb/mosdns/mywhitelist.txt"
 
 #屏蔽域名列表
   - tag: blocklist

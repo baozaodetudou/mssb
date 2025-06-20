@@ -6,21 +6,21 @@ plugins:
   - tag: switch1
     type: switch1
     args:
-      initial_value: 'A'
+      initial_value: "/mssb/mosdns/rule/switch1.txt"
 
 #需要mosdns占用53端口并下发给客户端，按需要启用
 #是否启用指定client科学开关  'A'-启用  'B'-不启用
   - tag: switch2
     type: switch2
     args:
-      initial_value: 'A'
+      initial_value: "/mssb/mosdns/rule/switch2.txt"
 
 #强烈建议泄露版本
 #泄露版本/不泄露版本开关 'A'-泄露  'B'-不泄露
   - tag: switch3
     type: switch3
     args:
-      initial_value: 'A'
+      initial_value: "/mssb/mosdns/rule/switch3.txt"
 
 #强烈建议打开
 #是否启用过期缓存开关 'A'-打开  'B'-关闭  
@@ -28,5 +28,12 @@ plugins:
   - tag: switch4
     type: switch4
     args:
-      initial_value: 'A'
+      initial_value: "/mssb/mosdns/rule/switch4.txt"
+
+#强烈建议打开
+#是否阻止SOA PTR HTTPS类型的dns查询  'A'-打开  'B'-关闭  
+  - tag: switch5
+    type: switch5
+    args:
+      initial_value: "/mssb/mosdns/rule/switch5.txt"
 

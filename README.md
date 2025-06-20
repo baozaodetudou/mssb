@@ -121,8 +121,9 @@ git clone https://github.com/baozaodetudou/mssb.git && cd mssb && git checkout d
 
 * 安装完成后，将主路由的 DNS 设置为 Debian 主机的 IP；
 * mosdns可以选择是否启用指定client科学开关(默认启用)
+  * 规则文件switch1.txt-switch9.txt，在rule文件夹内
   * 配置文件在`/mssb/mosdns/sub_config/switch.yaml`中 switch2 'A'-启用  'B'-不启用
-  * UI界面也可修改但是目前重启后会失效被yaml配置文件覆盖
+  * UI界面也可修改,重启不会失效 /mssb/mosdns/rule/switch2.txt
   * 不启用的话全部设备都会走科学
   * 启用只有`client_ip.txt`文件里的内网设备走科学
     * 设备分流控制：将需要走代理的设备 IP 添加到 `client_ip.txt` 文件中，路径为：
@@ -130,17 +131,18 @@ git clone https://github.com/baozaodetudou/mssb.git && cd mssb && git checkout d
       /mssb/mosdns/client_ip.txt
       ```
     * 文件中未列出的 IP 只使用 mosdns 加速，不通过代理。
-* 由于mosdns存在缓存针对一下ddns域名需要加进 mywhitelist.txt 不然由于ip更新缓存不更新会导致访问失败
+* 白名单强制用国内dns解析，有过期缓存，ddns是自己的域名，没过期缓存。 
+* 由于mosdns存在缓存针对一下ddns域名需要加进 ddnslist.txt 不然由于ip更新缓存不更新会导致访问失败
   ```text
-  /mssb/mosdns/mywhitelist.txt
+  /mssb/mosdns/ddnslist.txt
   ```
 ---
 * 是否启用屏蔽无解析结果的A、AAAA请求及黑名单  'A'-启用  'B'-不启用
   * 配置文件在`/mssb/mosdns/sub_config/switch.yaml`中 switch1
-  * UI界面也可修改但是目前重启后会失效被yaml配置文件覆盖
+  * UI界面也可修改,重启不会失效 /mssb/mosdns/rule/switch1.txt
 * 泄露版本/不泄露版本开关 'A'-泄露  'B'-不泄露
   * 配置文件在`/mssb/mosdns/sub_config/switch.yaml`中 switch3
-  * UI界面也可修改但是目前重启后会失效被yaml配置文件覆盖
+  * UI界面也可修改,重启不会失效 /mssb/mosdns/rule/switch3.txt
 
 * PH佬在界面加了软启动，我这个项目会监听配置文件进行硬启动
 * 所以没啥特殊情况还是建议改配置文件稳妥UI只负责显示
