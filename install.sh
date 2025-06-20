@@ -220,7 +220,7 @@ install_mosdns() {
         # 获取当前版本信息
         current_version=$(/usr/local/bin/mosdns version 2>/dev/null | head -n1 | awk '{print $2}' || echo "未知版本")
         log "当前安装的版本：$current_version"
-        if [ "$install_update_mode" = "n" ]; then
+        if [ "$install_update_mode_mosdns" = "n" ]; then
             log "跳过 MosDNS 下载，使用现有版本：$current_version"
             return 0
         else
@@ -277,7 +277,7 @@ install_filebrower() {
         # 获取当前版本信息
         current_version=$(/usr/local/bin/filebrowser version 2>/dev/null | head -n1 | awk '{print $3}' || echo "未知版本")
         log "当前安装的版本：$current_version"
-        if [ "$install_update_mode" = "n" ]; then
+        if [ "$install_update_mode_filebrowser" = "n" ]; then
             log "跳过 Filebrowser 下载，使用现有版本：$current_version"
             return 0
         else
@@ -404,7 +404,7 @@ install_mihomo() {
         # 获取当前版本信息
         current_version=$(/usr/local/bin/mihomo -v 2>/dev/null | head -n1 | awk '{print $2}' || echo "未知版本")
         log "当前安装的版本：$current_version"
-        if [ "$install_update_mode" = "n" ]; then
+        if [ "$install_update_mode_mihomo" = "n" ]; then
             log "跳过 Mihomo 下载，使用现有版本：$current_version"
             return 0
         else
@@ -762,41 +762,50 @@ check_and_copy_folder() {
 
 # mosdns配置文件复制
 mosdns_configure_files() {
-    log "开始处理 mosdns 配置文件..."
-    #CONFIG_YAML="/mssb/mosdns/config.yaml"
+    echo -e "\n${green_text}=== MosDNS 配置设置 ===${reset}"
     forward_local_yaml="/mssb/mosdns/sub_config/forward_local.yaml"
     echo -e "\n${yellow}=== 运营商 DNS 配置 ===${reset}"
-    echo -e "默认已设置第一、第二解析为阿里公共 DNS：${green_text}223.5.5.5${reset}"
-    echo -e "当前第三解析配置的运营商 DNS 为：${green_text}221.130.33.60${reset}"
-    echo -e "建议修改为您所在运营商的 DNS 服务器地址，否则可能影响解析速度"
-    echo -e "常见运营商 DNS：可以参考 https://ipw.cn/doc/else/dns.html"
-    echo -e "  阿里：223.5.5.5, 223.6.6.6"
-    echo -e "  腾讯：119.29.29.29, 119.28.28.28"
-    echo -e "${green_text}------------------------${reset}"
-
-    read -p "请输入您的运营商 DNS 地址（直接回车使用腾讯作为第三解析 119.29.29.29）：" dns_addr
-    if [ -n "$dns_addr" ]; then
-        # 验证输入的 IP 地址格式
-        if [[ $dns_addr =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-            # 替换配置文件中的 DNS 地址
-            sed -i "s/addr: \"221.130.33.60\"/addr: \"$dns_addr\"/" "$forward_local_yaml"
-            log "已更新运营商 DNS 地址为：$dns_addr"
-        else
-            log "输入的 DNS 地址格式不正确，将使用默认值 119.29.29.29"
-            sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$forward_local_yaml"
-        fi
+    # 直接用 env 变量
+    local dns="${dns_addr:-119.29.29.29}"
+    # 校验格式
+    if [[ $dns =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        sed -i "s/addr: \"221.130.33.60\"/addr: \"$dns\"/" "$forward_local_yaml"
+        log "已更新运营商 DNS 地址为：$dns"
     else
-        log "使用默认 DNS 地址：119.29.29.29"
+        log "env 里的 DNS 地址格式不正确，将使用默认值 119.29.29.29"
         sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$forward_local_yaml"
+    fi
+
+    # 恢复 rule 目录
+    if [ -d "/mssb/mosdns.bak/rule" ]; then
+        mkdir -p /mssb/mosdns/rule
+        cp -r /mssb/mosdns.bak/rule/* /mssb/mosdns/rule/ 2>/dev/null
+        log "已恢复规则 /mssb/mosdns/rule 目录（如有同名文件已覆盖）"
+    else
+        log "/mssb/mosdns.bak/rule 目录不存在，无需恢复规则目录"
+    fi
+
+    # 恢复 client_ip.txt
+    if [ -f "/mssb/mosdns.bak/client_ip.txt" ]; then
+        cp /mssb/mosdns.bak/client_ip.txt /mssb/mosdns/
+        log "已恢复规则 /mssb/mosdns/client_ip.txt 文件"
+    else
+        if [ -n "$client_ip_list" ]; then
+            mkdir -p /mssb/mosdns
+            echo "$client_ip_list" | tr ' ' '\n' > /mssb/mosdns/client_ip.txt
+            log "已根据设置变量写入代理设备列表: $client_ip_list"
+        else
+            log "未设置代理设备列表，未写入 /mssb/mosdns/client_ip.txt 文件"
+        fi
     fi
 }
 
-# 复制 mssb/mosdns fb 配置文件
-cp_config_files() {
+copy_fb_folder() {
     log "复制 mssb/fb 目录..."
     check_and_copy_folder "fb"
+}
 
-    # 复制 mssb/mosdns 目录
+copy_mosdns_folder() {
     if [ -d "/mssb/mosdns" ]; then
         log "/mssb/mosdns 文件夹已存在，先备份再替换替换成功删除备份。"
         mv /mssb/mosdns /mssb/mosdns.bak
@@ -806,35 +815,7 @@ cp_config_files() {
             log "警告：复制 mssb/mosdns 目录失败，恢复备份"
             mv /mssb/mosdns.bak /mssb/mosdns
         fi
-        # 备份需要保留的文件
-        if [ -f "/mssb/mosdns/client_ip.txt" ]; then
-            cp "/mssb/mosdns/client_ip.txt" "/tmp/client_ip.txt.bak"
-        fi
-        if [ -f "/mssb/mosdns/mywhitelist.txt" ]; then
-            cp "/mssb/mosdns/mywhitelist.txt" "/tmp/mywhitelist.txt.bak"
-        fi
-
-        # 删除目标目录中的所有内容（除了备份的文件）
-        find /mssb/mosdns -mindepth 1 -not -path "/mssb/mosdns/client_ip.txt" -not -path "/mssb/mosdns/mywhitelist.txt" -exec rm -rf {} \; 2>/dev/null || log "清理 /mssb/mosdns 目录时出现警告，继续执行..."
-
-        # 复制新的文件
-        if cp -r mssb/mosdns/* /mssb/mosdns/ 2>/dev/null; then
-            log "成功复制 mssb/mosdns 目录内容"
-        else
-            log "警告：复制 mssb/mosdns 目录内容时出现错误，部分文件可能未成功复制"
-        fi
-
-        # 恢复备份的文件（如果备份文件存在）
-        if [ -f "/tmp/client_ip.txt.bak" ]; then
-            cp "/tmp/client_ip.txt.bak" "/mssb/mosdns/client_ip.txt" || log "警告：恢复 client_ip.txt 失败"
-            rm "/tmp/client_ip.txt.bak" 2>/dev/null
-        fi
-        if [ -f "/tmp/mywhitelist.txt.bak" ]; then
-            cp "/tmp/mywhitelist.txt.bak" "/mssb/mosdns/mywhitelist.txt" || log "警告：恢复 mywhitelist.txt 失败"
-            rm "/tmp/mywhitelist.txt.bak" 2>/dev/null
-        fi
-
-        log "已更新 /mssb/mosdns 目录（保留了 client_ip.txt 和 mywhitelist.txt）"
+        log "已更新 /mssb/mosdns 目录（原目录暂时备份/mssb/mosdns.bak）"
     else
         if cp -r "mssb/mosdns" "/mssb/" 2>/dev/null; then
             log "成功复制 mssb/mosdns 目录到 /mssb/"
@@ -842,71 +823,34 @@ cp_config_files() {
             log "警告：复制 mssb/mosdns 目录失败，将尝试继续执行"
         fi
     fi
+}
 
-    # 检查并恢复 mosdns 配置
-    echo -e "\n${green_text}=== MosDNS 配置设置 ===${reset}"
-    echo -e "1. 检查是否有备份配置"
-    echo -e "2. 使用默认配置"
-    echo -e "${green_text}------------------------${reset}"
-
-    read -p "请选择配置方式 (1/2): " mosdns_choice
-    
-    case "$mosdns_choice" in
-        1)
-            # 检查是否有备份配置
-            if check_and_restore_config "mosdns" ""; then
-                log "已从备份恢复 mosdns 配置"
-                mosdns_configure_files
-            else
-                log "未找到 mosdns 备份，将使用默认配置"
-                mosdns_configure_files
-            fi
-            ;;
-        2)
-            log "使用默认 MosDNS 配置..."
-            mosdns_configure_files
-            ;;
-        *)
-            echo -e "${red}无效选择，将使用默认配置${reset}"
-            mosdns_configure_files
-            ;;
-    esac
-
-    # Filebrowser 配置设置
+init_filebrowser_db() {
     if [ ! -f "/mssb/fb/fb.db" ]; then
         log "Filebrowser 数据库不存在，创建默认数据库..."
-        # 启动 filebrowser 到后台
         filebrowser -c /mssb/fb/fb.json -d /mssb/fb/fb.db &
-        # 记录进程 PID
         FB_PID=$!
-        # 等待 2 秒让它初始化数据库
         sleep 1
-        # 杀掉进程
         kill $FB_PID 2>/dev/null
-        # 确保进程被杀死
         wait $FB_PID 2>/dev/null
     fi
+}
 
+choose_filebrowser_login() {
     echo -e "\n${green_text}=== Filebrowser 配置设置 ===${reset}"
-    echo -e "1. 启用密码登录（默认， 默认用户密码安装完提示，进入后可自行修改）"
-    echo -e "2. 禁用密码登录（无需登录即可访问）"
-    echo -e "${green_text}------------------------${reset}"
-    
-    read -p "请选择 Filebrowser 登录方式 (1/2): " fb_choice
-    
-    case "$fb_choice" in
-        2)
-            log "正在配置 Filebrowser 为无密码登录模式..."
-            filebrowser config set --auth.method=noauth -c /mssb/fb/fb.json -d /mssb/fb/fb.db
-            log "Filebrowser 已配置为无密码登录模式"
-            ;;
-        *)
-            log "使用默认的密码登录模式..."
-            filebrowser config set --auth.method=json -c /mssb/fb/fb.json -d /mssb/fb/fb.db
-            log "Filebrowser 已配置为密码登录模式"
-            ;;
-    esac
+    # 直接用环境变量 fb_login_mode
+    if [ "$fb_login_mode" = "noauth" ]; then
+        log "正在配置 Filebrowser 为无密码登录模式..."
+        filebrowser config set --auth.method=noauth -c /mssb/fb/fb.json -d /mssb/fb/fb.db
+        log "Filebrowser 已配置为无密码登录模式"
+    else
+        log "使用默认的密码登录模式..."
+        filebrowser config set --auth.method=json -c /mssb/fb/fb.json -d /mssb/fb/fb.db
+        log "Filebrowser 已配置为密码登录模式"
+    fi
+}
 
+copy_supervisor_conf() {
     log "复制supervisor配置文件..."
     if [ "$core_name" = "sing-box" ]; then
         cp run_mssb/supervisord.conf /etc/supervisor/ || {
@@ -921,48 +865,27 @@ cp_config_files() {
     else
         log "未识别的 core_name: $core_name，跳过复制 supervisor 配置文件。"
     fi
+}
 
-    # Supervisor 配置设置
+choose_supervisor_auth() {
     echo -e "\n${green_text}=== Supervisor 管理配置设置 ===${reset}"
-    echo -e "1. 使用默认用户名密码（mssb/mssb123..）"
-    echo -e "2. 自定义用户名密码"
-    echo -e "3. 不设置用户名密码"
-    echo -e "${green_text}------------------------${reset}"
-    
-    read -p "请选择 Supervisor 管理配置方式 (1/2/3): " supervisor_choice
-    
-    case "$supervisor_choice" in
-        2)
-            read -p "请输入用户名: " supervisor_username
-            read -p "请输入密码: " supervisor_password
-            
-            if [ -n "$supervisor_username" ] && [ -n "$supervisor_password" ]; then
-                sed -i "s/^username=.*/username=$supervisor_username/" /etc/supervisor/supervisord.conf
-                sed -i "s/^password=.*/password=$supervisor_password/" /etc/supervisor/supervisord.conf
-                log "已设置自定义 Supervisor 用户名和密码"
-            else
-                log "用户名或密码为空，将使用默认设置"
-                sed -i "s/^username=.*/username=mssb/" /etc/supervisor/supervisord.conf
-                sed -i "s/^password=.*/password=mssb123../" /etc/supervisor/supervisord.conf
-            fi
-            ;;
-        3)
-            sed -i "s/^username=.*/username=/" /etc/supervisor/supervisord.conf
-            sed -i "s/^password=.*/password=/" /etc/supervisor/supervisord.conf
-            log "已清除 Supervisor 用户名和密码设置"
-            ;;
-        *)
-            sed -i "s/^username=.*/username=mssb/" /etc/supervisor/supervisord.conf
-            sed -i "s/^password=.*/password=mssb123../" /etc/supervisor/supervisord.conf
-            log "已设置默认 Supervisor 用户名和密码"
-            ;;
-    esac
+    # 直接用环境变量 supervisor_user 和 supervisor_pass
+    if [ -n "$supervisor_user" ] && [ -n "$supervisor_pass" ]; then
+        sed -i "s/^username=.*/username=$supervisor_user/" /etc/supervisor/supervisord.conf
+        sed -i "s/^password=.*/password=$supervisor_pass/" /etc/supervisor/supervisord.conf
+        log "已设置 Supervisor 用户名和密码: $supervisor_user/******"
+    else
+        sed -i "s/^username=.*/username=/" /etc/supervisor/supervisord.conf
+        sed -i "s/^password=.*/password=/" /etc/supervisor/supervisord.conf
+        log "已清除 Supervisor 用户名和密码设置（允许无密码登录）"
+    fi
+}
 
-    cp -r watch / || {
+copy_watch_and_set_permission() {
+    cp -rf watch / || {
         log "复制 watch 目录失败！退出脚本。"
         exit 1
     }
-
     log "设置脚本可执行权限..."
     chmod +x /watch/*.sh || {
         log "设置 /watch/*.sh 权限失败！退出脚本。"
@@ -970,16 +893,25 @@ cp_config_files() {
     }
 }
 
+cp_config_files() {
+    copy_fb_folder
+    copy_mosdns_folder
+    mosdns_configure_files
+    init_filebrowser_db
+    choose_filebrowser_login
+    copy_supervisor_conf
+    choose_supervisor_auth
+    copy_watch_and_set_permission
+}
+
 # singbox配置文件复制
 singbox_configure_files() {
     # 复制 mssb/sing-box 目录
     log "复制 mssb/sing-box 目录..."
     check_and_copy_folder "sing-box"
-    # 获取当前核心类型
-    detect_singbox_info
 
-    # 根据核心类型复制对应的配置文件
-    if [ "$core_type" == "sing-box-reF1nd" ]; then
+    # 直接使用环境变量 singbox_core_type
+    if [ "$singbox_core_type" = "reF1nd" ]; then
         log "检测到 R核心，复制 sing-box-r.json 配置文件"
         if [ -f "/mssb/sing-box/sing-box-r.json" ]; then
             cp /mssb/sing-box/sing-box-r.json /mssb/sing-box/config.json
@@ -987,8 +919,8 @@ singbox_configure_files() {
         else
             log "警告：找不到 sing-box-r.json 文件"
         fi
-    elif [ "$core_type" = "sing-box-yelnoo" ]; then
-        log "检测到 Y核心，复制 y.json 配置文件"
+    elif [ "$singbox_core_type" = "yelnoo" ]; then
+        log "检测到 Y核心，复制 sing-box-y.json 配置文件"
         if [ -f "/mssb/sing-box/sing-box-y.json" ]; then
             cp /mssb/sing-box/sing-box-y.json /mssb/sing-box/config.json
             log "已复制 sing-box-y.json 为 config.json"
@@ -996,7 +928,7 @@ singbox_configure_files() {
             log "警告：找不到 sing-box-y.json 文件"
         fi
     else
-        log "未知核心类型：$core_type，使用默认配置文件"
+        log "未知核心类型：$singbox_core_type，使用默认配置文件"
     fi
 }
 
@@ -1030,7 +962,7 @@ reload_service() {
         systemctl stop mihomo-router 2>/dev/null
         systemctl disable mihomo-router 2>/dev/null
         rm -f /etc/systemd/system/mihomo-router.service
-        
+
         # 启动 sing-box-router
         systemctl daemon-reload
         systemctl enable --now sing-box-router || { log "启用 sing-box-router 服务失败！"; exit 1; }
@@ -1040,7 +972,7 @@ reload_service() {
         systemctl stop sing-box-router 2>/dev/null
         systemctl disable sing-box-router 2>/dev/null
         rm -f /etc/systemd/system/sing-box-router.service
-        
+
         # 启动 mihomo-router
         systemctl daemon-reload
         systemctl enable --now mihomo-router || { log "启用 mihomo-router 服务失败！"; exit 1; }
@@ -1053,60 +985,26 @@ reload_service() {
 # 添加任务到 crontab
 add_cron_jobs() {
     echo -e "\n${green_text}=== 定时更新任务设置 ===${reset}"
-    
+
     # 先清除所有相关的定时任务
     (crontab -l | grep -v -e "# update_mosdns" -e "# update_sb" -e "# update_cn" -e "# update_mihomo") | crontab -
     log "已清除所有相关定时任务"
-    
-    # 询问是否更新 MosDNS
-    read -p "是否启用 MosDNS 自动更新？(y/n) [默认: y]: " update_mosdns
-    update_mosdns=${update_mosdns:-y}
-    
-    # 询问是否更新 CN 域名数据
-    read -p "是否启用 MosDNS CN 域名数据自动更新？(y/n) [默认: y]: " update_cn
-    update_cn=${update_cn:-y}
-    
-    # 根据核心类型询问相应的更新选项
-    if [ "$core_name" = "sing-box" ]; then
-        read -p "是否启用 Sing-box 自动更新？(y/n) [默认: y]: " update_core
-        update_core=${update_core:-y}
-        
-        cron_jobs=()
-        
-        # 根据用户选择添加任务
-        if [[ "$update_mosdns" =~ ^[Yy]$ ]]; then
-            cron_jobs+=("0 4 * * 1 /watch/update_mosdns.sh # update_mosdns")
-        fi
-        
-        if [[ "$update_cn" =~ ^[Yy]$ ]]; then
-            cron_jobs+=("15 4 * * 1 /watch/update_cn.sh # update_cn")
-        fi
-        
-        if [[ "$update_core" =~ ^[Yy]$ ]]; then
+
+    cron_jobs=()
+
+    # 根据环境变量决定是否添加任务
+    if [[ "$enable_mosdns_cron" =~ ^[Yy]$ ]]; then
+        cron_jobs+=("0 4 * * 1 /watch/update_mosdns.sh # update_mosdns")
+    fi
+    if [[ "$enable_cn_cron" =~ ^[Yy]$ ]]; then
+        cron_jobs+=("15 4 * * 1 /watch/update_cn.sh # update_cn")
+    fi
+    if [[ "$enable_core_cron" =~ ^[Yy]$ ]]; then
+        if [ "$core_name" = "sing-box" ]; then
             cron_jobs+=("10 4 * * 1 /watch/update_sb.sh # update_sb")
-        fi
-        
-    elif [ "$core_name" = "mihomo" ]; then
-        read -p "是否启用 Mihomo 自动更新？(y/n) [默认: y]: " update_core
-        update_core=${update_core:-y}
-        
-        cron_jobs=()
-        
-        # 根据用户选择添加任务
-        if [[ "$update_mosdns" =~ ^[Yy]$ ]]; then
-            cron_jobs+=("0 4 * * 1 /watch/update_mosdns.sh # update_mosdns")
-        fi
-        
-        if [[ "$update_cn" =~ ^[Yy]$ ]]; then
-            cron_jobs+=("15 4 * * 1 /watch/update_cn.sh # update_cn")
-        fi
-        
-        if [[ "$update_core" =~ ^[Yy]$ ]]; then
+        elif [ "$core_name" = "mihomo" ]; then
             cron_jobs+=("10 4 * * 1 /watch/update_mihomo.sh # update_mihomo")
         fi
-    else
-        log "未识别的 core_name（$core_name），跳过定时任务设置。"
-        return
     fi
 
     # 如果没有选择任何更新任务
@@ -1129,30 +1027,30 @@ add_cron_jobs() {
 # 停止所有服务
 stop_all_services() {
     log "正在停止所有服务..."
-    
+
     # 停止 supervisor 管理的服务
     if command -v supervisorctl &>/dev/null; then
         supervisorctl stop all 2>/dev/null || true
     fi
-    
+
     # 停止并禁用 sing-box-router
     if systemctl is-active sing-box-router &>/dev/null; then
         systemctl stop sing-box-router
         systemctl disable sing-box-router
     fi
-    
+
     # 停止并禁用 mihomo-router
     if systemctl is-active mihomo-router &>/dev/null; then
         systemctl stop mihomo-router
         systemctl disable mihomo-router
     fi
-    
+
     # 停止并禁用 nftables
     if systemctl is-active nftables &>/dev/null; then
         systemctl stop nftables
         systemctl disable nftables
     fi
-    
+
     systemctl daemon-reload
     log "所有服务已停止。"
 }
@@ -1191,7 +1089,7 @@ check_and_set_local_dns() {
 # 启动所有服务
 start_all_services() {
     log "正在启动所有服务..."
-    
+
     # 检查并启动 nftables
     if [ -f "/etc/nftables.conf" ]; then
         # 检查 nft 命令路径
@@ -1219,60 +1117,60 @@ start_all_services() {
             cp /etc/nftables.conf.bak /etc/nftables.conf
         fi
     fi
-    
+
     # 检查并启动对应的路由服务
     if [ -f "/etc/systemd/system/sing-box-router.service" ]; then
         systemctl enable --now sing-box-router || log "sing-box-router 服务启动失败"
     elif [ -f "/etc/systemd/system/mihomo-router.service" ]; then
         systemctl enable --now mihomo-router || log "mihomo-router 服务启动失败"
     fi
-    
+
     # 启动 supervisor 管理的服务
     if command -v supervisorctl &>/dev/null; then
         supervisorctl start all || log "supervisor 服务启动失败"
     fi
-    
+
     log "所有服务启动完成。"
 }
 
 # 卸载所有服务
 uninstall_all_services() {
     log "正在卸载所有服务..."
-    
+
     # 停止所有服务
     stop_all_services
     # 备份所有重要文件
-    backup_env
+    backup_all_config
     # 获取当前版本和核心类型信息
     detect_singbox_info
-    
+
     # 删除服务文件
     rm -f /etc/systemd/system/sing-box-router.service
     rm -f /etc/systemd/system/mihomo-router.service
     rm -f /etc/nftables.conf
-    
+
     # 删除程序文件
     rm -f /usr/local/bin/mosdns
     rm -f /usr/local/bin/sing-box
     rm -f /usr/local/bin/mihomo
     rm -f /usr/local/bin/filebrowser
-    
+
     # 删除配置目录（保留备份目录）
     find /mssb -mindepth 1 -maxdepth 1 -not -name "backup" -exec rm -rf {} +
-    
+
     # 删除 supervisor 配置
     rm -f /etc/supervisor/supervisord.conf
-    
+
     # 卸载 supervisor
     if command -v apt-get &>/dev/null; then
         apt-get remove -y supervisor >/dev/null 2>&1
         apt-get purge -y supervisor >/dev/null 2>&1
     fi
-    
+
     # 清理定时任务
     log "清理定时任务..."
     (crontab -l | grep -v -e "# update_mosdns" -e "# update_sb" -e "# update_cn" -e "# update_mihomo") | crontab -
-    
+
     systemctl daemon-reload
     log "所有服务已卸载完成。配置文件已备份到 $backup_dir 目录"
     log "卸载的核心类型：$core_type"
@@ -1321,13 +1219,30 @@ singbox_r_install() {
 
         # 获取当前版本和核心类型信息
         detect_singbox_info
-        if [ "$install_update_mode" = "n" ]; then
-            log "跳过 Sing-box reF1nd R核心 下载，使用现有版本"
-            record_singbox_core "sing-box-reF1nd"
-            return 0
-        else
-            log "选择更新 Sing-box reF1nd R核心 到最新版本"
-        fi
+
+        echo -e "\n${green_text}=== Sing-box reF1nd R核心 安装选项 ===${reset}"
+        echo -e "1. 跳过下载，使用现有版本"
+        echo -e "2. 下载最新版本并更新"
+        echo -e "${green_text}------------------------${reset}"
+
+        read -p "请选择操作 (1/2): " singbox_r_choice
+
+        case "$singbox_r_choice" in
+            1)
+                log "跳过 Sing-box reF1nd R核心 下载，使用现有版本"
+                # 确保记录正确的核心类型
+                record_singbox_core "sing-box-reF1nd"
+                return 0
+                ;;
+            2)
+                log "选择更新 Sing-box reF1nd R核心 到最新版本"
+                ;;
+            *)
+                log "无效选择，默认跳过下载使用现有版本"
+                record_singbox_core "sing-box-reF1nd"
+                return 0
+                ;;
+        esac
     fi
 
     # 下载并安装 reF1nd R核心
@@ -1362,13 +1277,30 @@ singbox_s_install() {
 
         # 获取当前版本和核心类型信息
         detect_singbox_info
-        if [ "$install_update_mode" = "n" ]; then
-            log "跳过 Sing-box S佬Y核心 下载，使用现有版本"
-            record_singbox_core "sing-box-yelnoo"
-            return 0
-        else
-            log "选择更新 Sing-box S佬Y核心 到最新版本"
-        fi
+
+        echo -e "\n${green_text}=== Sing-box S佬Y核心 安装选项 ===${reset}"
+        echo -e "1. 跳过下载，使用现有版本"
+        echo -e "2. 下载最新版本并更新"
+        echo -e "${green_text}------------------------${reset}"
+
+        read -p "请选择操作 (1/2): " singbox_s_choice
+
+        case "$singbox_s_choice" in
+            1)
+                log "跳过 Sing-box S佬Y核心 下载，使用现有版本"
+                # 确保记录正确的核心类型
+                record_singbox_core "sing-box-yelnoo"
+                return 0
+                ;;
+            2)
+                log "选择更新 Sing-box S佬Y核心 到最新版本"
+                ;;
+            *)
+                log "无效选择，默认跳过下载使用现有版本"
+                record_singbox_core "sing-box-yelnoo"
+                return 0
+                ;;
+        esac
     fi
 
     # 下载并安装 S佬Y核心
@@ -1539,7 +1471,7 @@ modify_service_config() {
 check_dns_settings() {
     # 获取当前 DNS 设置
     current_dns=$(cat /etc/resolv.conf | grep -E "^nameserver" | head -n 1 | awk '{print $2}')
-    
+
     if [ "$current_dns" = "$local_ip" ]; then
         echo -e "\n${yellow}警告：检测到当前 DNS 设置为本地 IP ($local_ip)${reset}"
         echo -e "${yellow}建议在停止服务前修改 DNS 设置，否则可能导致无法访问网络${reset}"
@@ -1997,26 +1929,7 @@ install_update_server() {
     reload_service
 
     # 定时任务自动化
-    cron_jobs=()
-    if [[ "$enable_mosdns_cron" =~ ^[Yy]$ ]]; then
-        cron_jobs+=("0 4 * * 1 /watch/update_mosdns.sh # update_mosdns")
-    fi
-    if [[ "$enable_cn_cron" =~ ^[Yy]$ ]]; then
-        cron_jobs+=("15 4 * * 1 /watch/update_cn.sh # update_cn")
-    fi
-    if [[ "$enable_core_cron" =~ ^[Yy]$ ]]; then
-        if [ "$core_name" = "sing-box" ]; then
-            cron_jobs+=("10 4 * * 1 /watch/update_sb.sh # update_sb")
-        else
-            cron_jobs+=("10 4 * * 1 /watch/update_mihomo.sh # update_mihomo")
-        fi
-    fi
-    # 清除旧任务并添加新任务
-    (crontab -l | grep -v -e "# update_mosdns" -e "# update_sb" -e "# update_cn" -e "# update_mihomo") | crontab -
-    for job in "${cron_jobs[@]}"; do
-        (crontab -l; echo "$job") | crontab -
-    done
-    log "定时任务已自动设置"
+    add_cron_jobs
 
     # 自动写入代理设备列表
     if [ -n "$client_ip_list" ]; then
@@ -2095,7 +2008,14 @@ load_or_init_env() {
         core_name="mihomo"
         singbox_core_type=""
     fi
-
+    echo -e "\n${yellow}=== 运营商 DNS 配置 ===${reset}"
+    echo -e "默认已设置第一、第二解析为阿里公共 DNS：${green_text}223.5.5.5${reset}"
+    echo -e "当前第三解析配置的运营商 DNS 为：${green_text}221.130.33.60${reset}"
+    echo -e "建议修改为您所在运营商的 DNS 服务器地址，否则可能影响解析速度"
+    echo -e "常见运营商 DNS：可以参考 https://ipw.cn/doc/else/dns.html"
+    echo -e "  阿里：223.5.5.5, 223.6.6.6"
+    echo -e "  腾讯：119.29.29.29, 119.28.28.28"
+    echo -e "${green_text}------------------------${reset}"
     read -p "请输入运营商DNS地址（默认119.29.29.29）: " dns_addr
     dns_addr=${dns_addr:-119.29.29.29}
     read -p "Supervisor用户名（默认mssb，留空不需要登录）: " supervisor_user
@@ -2134,9 +2054,15 @@ load_or_init_env() {
         read -p "请输入需要代理的设备IP（多个用空格分隔）: " client_ip_list
     fi
 
-    # 安装/更新模式
-    read -p "安装/更新核心程序时，是否自动更新到最新版？(y/n, 默认y): " install_update_mode
-    install_update_mode=${install_update_mode:-y}
+    # 安装/更新模式（分功能）
+    read -p "安装/更新 Sing-box 时是否自动更新？(y/n, 默认y): " install_update_mode_singbox
+    install_update_mode_singbox=${install_update_mode_singbox:-y}
+    read -p "安装/更新 MosDNS 时是否自动更新？(y/n, 默认y): " install_update_mode_mosdns
+    install_update_mode_mosdns=${install_update_mode_mosdns:-y}
+    read -p "安装/更新 Filebrowser 时是否自动更新？(y/n, 默认y): " install_update_mode_filebrowser
+    install_update_mode_filebrowser=${install_update_mode_filebrowser:-y}
+    read -p "安装/更新 Mihomo 时是否自动更新？(y/n, 默认y): " install_update_mode_mihomo
+    install_update_mode_mihomo=${install_update_mode_mihomo:-y}
 
     # 保存到env文件
     cat > "$env_file" <<EOF
@@ -2152,7 +2078,10 @@ enable_mosdns_cron=$enable_mosdns_cron
 enable_cn_cron=$enable_cn_cron
 enable_core_cron=$enable_core_cron
 client_ip_list="$client_ip_list"
-install_update_mode=$install_update_mode
+install_update_mode_singbox=$install_update_mode_singbox
+install_update_mode_mosdns=$install_update_mode_mosdns
+install_update_mode_filebrowser=$install_update_mode_filebrowser
+install_update_mode_mihomo=$install_update_mode_mihomo
 EOF
     source "$env_file"
 }
