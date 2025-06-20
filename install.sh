@@ -220,27 +220,12 @@ install_mosdns() {
         # 获取当前版本信息
         current_version=$(/usr/local/bin/mosdns version 2>/dev/null | head -n1 | awk '{print $2}' || echo "未知版本")
         log "当前安装的版本：$current_version"
-
-        echo -e "\n${green_text}=== MosDNS 安装选项 ===${reset}"
-        echo -e "1. 跳过下载，使用现有版本"
-        echo -e "2. 下载最新版本并更新"
-        echo -e "${green_text}------------------------${reset}"
-
-        read -p "请选择操作 (1/2): " mosdns_choice
-
-        case "$mosdns_choice" in
-            1)
-                log "跳过 MosDNS 下载，使用现有版本：$current_version"
-                return 0
-                ;;
-            2)
-                log "选择更新 MosDNS 到最新版本"
-                ;;
-            *)
-                log "无效选择，默认跳过下载使用现有版本"
-                return 0
-                ;;
-        esac
+        if [ "$install_update_mode" = "n" ]; then
+            log "跳过 MosDNS 下载，使用现有版本：$current_version"
+            return 0
+        else
+            log "选择更新 MosDNS 到最新版本"
+        fi
     fi
 
     # 下载并安装 MosDNS
@@ -292,27 +277,12 @@ install_filebrower() {
         # 获取当前版本信息
         current_version=$(/usr/local/bin/filebrowser version 2>/dev/null | head -n1 | awk '{print $3}' || echo "未知版本")
         log "当前安装的版本：$current_version"
-
-        echo -e "\n${green_text}=== Filebrowser 安装选项 ===${reset}"
-        echo -e "1. 跳过下载，使用现有版本"
-        echo -e "2. 下载最新版本并更新"
-        echo -e "${green_text}------------------------${reset}"
-
-        read -p "请选择操作 (1/2): " filebrowser_choice
-
-        case "$filebrowser_choice" in
-            1)
-                log "跳过 Filebrowser 下载，使用现有版本：$current_version"
-                return 0
-                ;;
-            2)
-                log "选择更新 Filebrowser 到最新版本"
-                ;;
-            *)
-                log "无效选择，默认跳过下载使用现有版本"
-                return 0
-                ;;
-        esac
+        if [ "$install_update_mode" = "n" ]; then
+            log "跳过 Filebrowser 下载，使用现有版本：$current_version"
+            return 0
+        else
+            log "选择更新 Filebrowser 到最新版本"
+        fi
     fi
 
     # 下载并安装 Filebrowser
@@ -354,269 +324,6 @@ install_filebrower() {
     rm -f /tmp/filebrowser.tar.gz
 }
 
-# 自动检查并恢复配置文件（无用户交互）
-auto_restore_config() {
-    local config_type=$1
-    local config_path=$2
-    local backup_dir="/mssb/backup"
-
-    if [ -d "$backup_dir" ]; then
-        case "$config_type" in
-            "sing-box")
-                # 获取当前核心类型
-                detect_singbox_info
-
-                # 根据核心类型选择对应的备份文件
-                if [[ "$core_type" == "sing-box-reF1nd" ]]; then
-                    latest_backup=$(ls -t "$backup_dir"/sing-box-r-config-*.json 2>/dev/null | head -n1)
-                else
-                    latest_backup=$(ls -t "$backup_dir"/sing-box-y-config-*.json 2>/dev/null | head -n1)
-                fi
-
-                if [ -n "$latest_backup" ]; then
-                    log "发现 sing-box 的备份配置文件：$latest_backup"
-                    mkdir -p "$(dirname "$config_path")"
-                    cp "$latest_backup" "$config_path"
-                    log "sing-box 配置文件已从备份自动恢复"
-                    return 0
-                fi
-                ;;
-            "mihomo")
-                latest_backup=$(ls -t "$backup_dir"/mihomo-config-*.yaml 2>/dev/null | head -n1)
-
-                if [ -n "$latest_backup" ]; then
-                    log "发现 mihomo 的备份配置文件：$latest_backup"
-                    mkdir -p "$(dirname "$config_path")"
-                    cp "$latest_backup" "$config_path"
-                    log "mihomo 配置文件已从备份自动恢复"
-                    return 0
-                fi
-                ;;
-            "mosdns")
-                # mosdns 需要恢复多个文件
-                local mosdns_dir="/mssb/mosdns"
-                local restored_count=0
-
-                # 恢复 client_ip.txt
-                latest_backup=$(ls -t "$backup_dir"/mosdns-client_ip-*.txt 2>/dev/null | head -n1)
-                if [ -n "$latest_backup" ]; then
-                    mkdir -p "$mosdns_dir"
-                    cp "$latest_backup" "$mosdns_dir/client_ip.txt"
-                    log "已恢复 mosdns client_ip.txt"
-                    ((restored_count++))
-                fi
-
-                # 恢复 mywhitelist.txt
-                latest_backup=$(ls -t "$backup_dir"/mosdns-mywhitelist-*.txt 2>/dev/null | head -n1)
-                if [ -n "$latest_backup" ]; then
-                    mkdir -p "$mosdns_dir"
-                    cp "$latest_backup" "$mosdns_dir/mywhitelist.txt"
-                    log "已恢复 mosdns mywhitelist.txt"
-                    ((restored_count++))
-                fi
-
-                if [ $restored_count -gt 0 ]; then
-                    log "mosdns 配置文件已从备份自动恢复（共恢复 $restored_count 个文件）"
-                    return 0
-                fi
-                ;;
-        esac
-    fi
-    return 1
-}
-
-# 备份配置文件
-backup_config() {
-    local config_type=$1
-    local config_path=$2
-    local backup_dir="/mssb/backup"
-
-    # 创建备份目录
-    mkdir -p "$backup_dir"
-
-    case "$config_type" in
-        "sing-box")
-            # 检查配置文件是否存在
-            if [ ! -f "$config_path" ]; then
-                log "sing-box 配置文件不存在，跳过备份"
-                return 1
-            fi
-
-            # 获取当前核心类型
-            detect_singbox_info
-
-            if [[ "$core_type" == "sing-box-reF1nd" ]]; then
-                backup_file="$backup_dir/sing-box-r-config-$(date +%Y%m%d-%H%M%S).json"
-            else
-                backup_file="$backup_dir/sing-box-y-config-$(date +%Y%m%d-%H%M%S).json"
-            fi
-
-            # 执行备份
-            if cp "$config_path" "$backup_file"; then
-                log "sing-box 配置文件已备份到：$backup_file"
-                return 0
-            else
-                log "sing-box 配置文件备份失败"
-                return 1
-            fi
-            ;;
-        "mihomo")
-            # 检查配置文件是否存在
-            if [ ! -f "$config_path" ]; then
-                log "mihomo 配置文件不存在，跳过备份"
-                return 1
-            fi
-
-            backup_file="$backup_dir/mihomo-config-$(date +%Y%m%d-%H%M%S).yaml"
-
-            # 执行备份
-            if cp "$config_path" "$backup_file"; then
-                log "mihomo 配置文件已备份到：$backup_file"
-                return 0
-            else
-                log "mihomo 配置文件备份失败"
-                return 1
-            fi
-            ;;
-        "mosdns")
-            # mosdns 需要备份多个文件
-            local mosdns_dir="/mssb/mosdns"
-            local timestamp=$(date +%Y%m%d-%H%M%S)
-            local backup_count=0
-            # 备份 client_ip.txt
-            if [ -f "$mosdns_dir/client_ip.txt" ]; then
-                backup_file="$backup_dir/mosdns-client_ip-$timestamp.txt"
-                if cp "$mosdns_dir/client_ip.txt" "$backup_file"; then
-                    log "mosdns client_ip.txt 已备份到：$backup_file"
-                    ((backup_count++))
-                fi
-            fi
-
-            # 备份 mywhitelist.txt
-            if [ -f "$mosdns_dir/mywhitelist.txt" ]; then
-                backup_file="$backup_dir/mosdns-mywhitelist-$timestamp.txt"
-                if cp "$mosdns_dir/mywhitelist.txt" "$backup_file"; then
-                    log "mosdns mywhitelist.txt 已备份到：$backup_file"
-                    ((backup_count++))
-                fi
-            fi
-
-            if [ $backup_count -gt 0 ]; then
-                log "mosdns 配置文件备份完成（共备份 $backup_count 个文件）"
-                return 0
-            else
-                log "mosdns 没有配置文件需要备份"
-                return 1
-            fi
-            ;;
-        *)
-            log "未知的配置类型：$config_type"
-            return 1
-            ;;
-    esac
-}
-
-# 备份所有重要文件
-backup_all_config() {
-    backup_config "sing-box" "/mssb/sing-box/config.json"
-    backup_config "mihomo" "/mssb/mihomo/config.yaml"
-    backup_config "mosdns" ""
-}
-
-# 检查并恢复配置文件（保留原有交互功能，用于其他地方）
-check_and_restore_config() {
-    local config_type=$1
-    local config_path=$2
-    local backup_dir="/mssb/backup"
-
-    if [ -d "$backup_dir" ]; then
-        case "$config_type" in
-            "sing-box")
-                # 获取当前版本和核心类型信息
-                detect_singbox_info
-
-                # 根据核心类型选择对应的备份文件
-                if [[ "$core_type" == "sing-box-reF1nd" ]]; then
-                    latest_backup=$(ls -t "$backup_dir"/sing-box-r-config-*.json 2>/dev/null | head -n1)
-                else
-                    latest_backup=$(ls -t "$backup_dir"/sing-box-y-config-*.json 2>/dev/null | head -n1)
-                fi
-                if [ -n "$latest_backup" ]; then
-                    echo -e "${green_text}发现 sing-box 的备份配置文件：${reset}"
-                    echo -e "备份文件：$latest_backup"
-                    read -p "是否恢复此备份？(y/n): " restore_choice
-                    if [ "$restore_choice" = "y" ]; then
-                        mkdir -p "$(dirname "$config_path")"
-                        cp "$latest_backup" "$config_path"
-                        log "sing-box 配置文件已从备份恢复"
-                        return 0
-                    fi
-                fi
-                ;;
-            "mihomo")
-                latest_backup=$(ls -t "$backup_dir"/mihomo-config-*.yaml 2>/dev/null | head -n1)
-                if [ -n "$latest_backup" ]; then
-                    echo -e "${green_text}发现 mihomo 的备份配置文件：${reset}"
-                    echo -e "备份文件：$latest_backup"
-                    read -p "是否恢复此备份？(y/n): " restore_choice
-                    if [ "$restore_choice" = "y" ]; then
-                        mkdir -p "$(dirname "$config_path")"
-                        cp "$latest_backup" "$config_path"
-                        log "mihomo 配置文件已从备份恢复"
-                        return 0
-                    fi
-                fi
-                ;;
-            "mosdns")
-                # mosdns 需要检查多个备份文件
-                local mosdns_dir="/mssb/mosdns"
-                local proxy_backup=$(ls -t "$backup_dir"/mosdns-client_ip-*.txt 2>/dev/null | head -n1)
-                local whitelist_backup=$(ls -t "$backup_dir"/mosdns-mywhitelist-*.txt 2>/dev/null | head -n1)
-
-                if [ -n "$proxy_backup" ] || [ -n "$whitelist_backup" ]; then
-                    echo -e "${green_text}发现 mosdns 的备份配置文件：${reset}"
-                    [ -n "$proxy_backup" ] && echo -e "client_ip.txt: $proxy_backup"
-                    [ -n "$whitelist_backup" ] && echo -e "mywhitelist.txt: $whitelist_backup"
-
-                    read -p "是否恢复这些备份？(y/n): " restore_choice
-                    if [ "$restore_choice" = "y" ]; then
-                        mkdir -p "$mosdns_dir"
-                        local restored_count=0
-
-                        if [ -n "$proxy_backup" ]; then
-                            cp "$proxy_backup" "$mosdns_dir/client_ip.txt"
-                            log "已恢复 mosdns client_ip.txt"
-                            ((restored_count++))
-                        fi
-
-                        if [ -n "$whitelist_backup" ]; then
-                            cp "$whitelist_backup" "$mosdns_dir/mywhitelist.txt"
-                            log "已恢复 mosdns mywhitelist.txt"
-                            ((restored_count++))
-                        fi
-
-                        log "mosdns 配置文件已从备份恢复（共恢复 $restored_count 个文件）"
-                        return 0
-                    fi
-                fi
-                ;;
-        esac
-
-        # 对于 sing-box 和 mihomo 的单文件恢复
-        if [ "$config_type" != "mosdns" ] && [ -n "$latest_backup" ]; then
-            echo -e "${green_text}发现 $config_type 的备份配置文件：${reset}"
-            echo -e "备份文件：$latest_backup"
-            read -p "是否恢复此备份？(y/n): " restore_choice
-            if [ "$restore_choice" = "y" ]; then
-                mkdir -p "$(dirname "$config_path")"
-                cp "$latest_backup" "$config_path"
-                log "$config_type 配置文件已从备份恢复"
-                return 0
-            fi
-        fi
-    fi
-    return 1
-}
 
 # singbox用户自定义设置（用于配置设置）
 singbox_customize_settings() {
@@ -697,27 +404,12 @@ install_mihomo() {
         # 获取当前版本信息
         current_version=$(/usr/local/bin/mihomo -v 2>/dev/null | head -n1 | awk '{print $2}' || echo "未知版本")
         log "当前安装的版本：$current_version"
-
-        echo -e "\n${green_text}=== Mihomo 安装选项 ===${reset}"
-        echo -e "1. 跳过下载，使用现有版本"
-        echo -e "2. 下载最新版本并更新"
-        echo -e "${green_text}------------------------${reset}"
-
-        read -p "请选择操作 (1/2): " mihomo_choice
-
-        case "$mihomo_choice" in
-            1)
-                log "跳过 Mihomo 下载，使用现有版本：$current_version"
-                return 0
-                ;;
-            2)
-                log "选择更新 Mihomo 到最新版本"
-                ;;
-            *)
-                log "无效选择，默认跳过下载使用现有版本"
-                return 0
-                ;;
-        esac
+        if [ "$install_update_mode" = "n" ]; then
+            log "跳过 Mihomo 下载，使用现有版本：$current_version"
+            return 0
+        else
+            log "选择更新 Mihomo 到最新版本"
+        fi
     fi
 
     # 下载并安装 Mihomo
@@ -867,7 +559,6 @@ git_ui(){
 
         # 清理可能存在的临时文件
         rm -rf "$temp_ui_path" 2>/dev/null
-        return 1
     fi
 }
 
@@ -1035,6 +726,7 @@ EOF
 
 # 网卡检测或者手动输入
 check_interfaces() {
+    echo -e "\n${green_text}=== 网卡选择 ===${reset}"
     interfaces=$(ip -o link show | awk -F': ' '{print $2}')
     # 输出物理网卡名称
     for interface in $interfaces; do
@@ -1106,7 +798,14 @@ cp_config_files() {
 
     # 复制 mssb/mosdns 目录
     if [ -d "/mssb/mosdns" ]; then
-        log "/mssb/mosdns 文件夹已存在，保留 client_ip.txt 和 mywhitelist.txt，替换其他文件。"
+        log "/mssb/mosdns 文件夹已存在，先备份再替换替换成功删除备份。"
+        mv /mssb/mosdns /mssb/mosdns.bak
+        if cp -r "mssb/mosdns" "/mssb/" 2>/dev/null; then
+            log "成功复制 mssb/mosdns 目录到 /mssb/"
+        else
+            log "警告：复制 mssb/mosdns 目录失败，恢复备份"
+            mv /mssb/mosdns.bak /mssb/mosdns
+        fi
         # 备份需要保留的文件
         if [ -f "/mssb/mosdns/client_ip.txt" ]; then
             cp "/mssb/mosdns/client_ip.txt" "/tmp/client_ip.txt.bak"
@@ -1543,7 +1242,7 @@ uninstall_all_services() {
     # 停止所有服务
     stop_all_services
     # 备份所有重要文件
-    backup_all_config
+    backup_env
     # 获取当前版本和核心类型信息
     detect_singbox_info
     
@@ -1622,30 +1321,13 @@ singbox_r_install() {
 
         # 获取当前版本和核心类型信息
         detect_singbox_info
-
-        echo -e "\n${green_text}=== Sing-box reF1nd R核心 安装选项 ===${reset}"
-        echo -e "1. 跳过下载，使用现有版本"
-        echo -e "2. 下载最新版本并更新"
-        echo -e "${green_text}------------------------${reset}"
-
-        read -p "请选择操作 (1/2): " singbox_r_choice
-
-        case "$singbox_r_choice" in
-            1)
-                log "跳过 Sing-box reF1nd R核心 下载，使用现有版本"
-                # 确保记录正确的核心类型
-                record_singbox_core "sing-box-reF1nd"
-                return 0
-                ;;
-            2)
-                log "选择更新 Sing-box reF1nd R核心 到最新版本"
-                ;;
-            *)
-                log "无效选择，默认跳过下载使用现有版本"
-                record_singbox_core "sing-box-reF1nd"
-                return 0
-                ;;
-        esac
+        if [ "$install_update_mode" = "n" ]; then
+            log "跳过 Sing-box reF1nd R核心 下载，使用现有版本"
+            record_singbox_core "sing-box-reF1nd"
+            return 0
+        else
+            log "选择更新 Sing-box reF1nd R核心 到最新版本"
+        fi
     fi
 
     # 下载并安装 reF1nd R核心
@@ -1680,30 +1362,13 @@ singbox_s_install() {
 
         # 获取当前版本和核心类型信息
         detect_singbox_info
-
-        echo -e "\n${green_text}=== Sing-box S佬Y核心 安装选项 ===${reset}"
-        echo -e "1. 跳过下载，使用现有版本"
-        echo -e "2. 下载最新版本并更新"
-        echo -e "${green_text}------------------------${reset}"
-
-        read -p "请选择操作 (1/2): " singbox_s_choice
-
-        case "$singbox_s_choice" in
-            1)
-                log "跳过 Sing-box S佬Y核心 下载，使用现有版本"
-                # 确保记录正确的核心类型
-                record_singbox_core "sing-box-yelnoo"
-                return 0
-                ;;
-            2)
-                log "选择更新 Sing-box S佬Y核心 到最新版本"
-                ;;
-            *)
-                log "无效选择，默认跳过下载使用现有版本"
-                record_singbox_core "sing-box-yelnoo"
-                return 0
-                ;;
-        esac
+        if [ "$install_update_mode" = "n" ]; then
+            log "跳过 Sing-box S佬Y核心 下载，使用现有版本"
+            record_singbox_core "sing-box-yelnoo"
+            return 0
+        else
+            log "选择更新 Sing-box S佬Y核心 到最新版本"
+        fi
     fi
 
     # 下载并安装 S佬Y核心
@@ -1981,14 +1646,8 @@ format_route_rules() {
 scan_lan_devices() {
     echo -e "\n${green_text}=== 局域网设备扫描 ===${reset}"
     echo -e "此功能将扫描局域网中的设备，让您选择需要代理的设备"
-    echo -e "${yellow}注意：此操作会清空并重写 /mssb/mosdns/client_ip.txt 文件${reset}"
+    echo -e "${yellow}注意：此操作会清空并重写 client_ip${reset}"
     echo -e "${green_text}------------------------${reset}"
-
-    read -p "是否继续扫描局域网设备？(y/n): " scan_choice
-    if [[ "$scan_choice" != "y" && "$scan_choice" != "Y" ]]; then
-        log "已取消局域网设备扫描"
-        return 0
-    fi
 
     # 检查必要工具
     if ! command -v arp-scan &> /dev/null; then
@@ -1996,6 +1655,7 @@ scan_lan_devices() {
         apt update && apt install -y arp-scan
         if ! command -v arp-scan &> /dev/null; then
             log "arp-scan 安装失败，无法进行设备扫描"
+            scanned_ip_list=""
             return 1
         fi
     fi
@@ -2007,8 +1667,9 @@ scan_lan_devices() {
     else
         interface=$(ip route | grep default | awk '{print $5}' | head -n1)
         if [ -z "$interface" ]; then
-            log "无法自动检测网络接口，请手动指定"
-            read -p "请输入网络接口名称（如 eth0, ens18）: " interface
+            log "无法自动检测网络接口"
+            scanned_ip_list=""
+            return 1
         fi
     fi
 
@@ -2020,18 +1681,17 @@ scan_lan_devices() {
     raw_result=$(arp-scan --interface="$interface" --localnet 2>/dev/null | grep -E "^([0-9]{1,3}\.){3}[0-9]{1,3}")
 
     if [ -z "$raw_result" ]; then
-        log "⚠️ 未找到设备，请检查网络接口或网络连接"
+        log "未找到设备"
+        scanned_ip_list=""
         return 1
     fi
 
-    # 保存完整设备信息到数组
+    # 解析设备
     local devices=()
     local device_ips=()
     while IFS= read -r line; do
         devices+=("$line")
-        # 提取IP地址用于后续处理
-        local ip=$(echo "$line" | awk '{print $1}')
-        device_ips+=("$ip")
+        device_ips+=("$(echo "$line" | awk '{print $1}')")
     done < <(echo "$raw_result")
 
     # 显示设备列表
@@ -2058,53 +1718,24 @@ scan_lan_devices() {
         printf "${green_text}│ %3d │ %-15s │ %-17s │ %-48s │${reset}\n" "$((i+1))" "$ip" "$mac" "$desc"
     done
     echo -e "${green_text}└─────┴─────────────────┴───────────────────┴──────────────────────────────────────────────────┘${reset}"
-
     # 用户选择设备
     echo ""
-    echo -e "${yellow}提示：可以选择多个设备，用英文逗号分隔（如 1,3,5）${reset}"
-    read -p "👉 请输入要添加到代理列表的设备编号： " selected_ids
+    echo -e "${yellow}请输入要添加到代理列表的设备编号（如 1,3,5）：${reset}"
+    read -p "编号: " selected_ids
 
-    if [ -z "$selected_ids" ]; then
-        log "未选择任何设备，操作已取消"
-        return 0
-    fi
-
-    # 创建输出目录
-    mkdir -p "/mssb/mosdns"
-    local output_file="/mssb/mosdns/client_ip.txt"
-
-    # 清空输出文件
-    > "$output_file"
-
-    # 处理选择结果
-    local valid_count=0
+    scanned_ip_list=""
     IFS=',' read -ra ids <<< "$selected_ids"
     for id in "${ids[@]}"; do
         # 去除空格
         id=$(echo "$id" | tr -d ' ')
-        local idx=$((id-1))
-
+        idx=$((id-1))
         if [ "$idx" -ge 0 ] && [ "$idx" -lt "${#device_ips[@]}" ]; then
-            local ip="${device_ips[$idx]}"
-            echo "$ip" >> "$output_file"
-            log "已添加设备 IP：$ip"
-            ((valid_count++))
-        else
-            log "⚠️ 无效编号: $id，跳过"
+            scanned_ip_list="$scanned_ip_list ${device_ips[$idx]}"
         fi
     done
-
-    if [ $valid_count -gt 0 ]; then
-        echo ""
-        echo -e "${green_text}✅ 已将 $valid_count 个设备的IP地址写入 $output_file${reset}"
-        echo -e "${green_text}当前代理设备列表：${reset}"
-        cat "$output_file" | while read -r ip; do
-            echo -e "  📱 $ip"
-        done
-    else
-        log "未成功添加任何设备"
-        return 1
-    fi
+    scanned_ip_list=$(echo "$scanned_ip_list" | xargs) # 去除首尾空格
+    log "最终选择的设备IP: $scanned_ip_list"
+    return 0
 }
 
 # 创建全局 mssb 命令
@@ -2330,89 +1961,68 @@ install_update_server() {
     log "请注意：本脚本支持 Debian/Ubuntu，安装前请确保系统未安装其他代理软件。参考：https://github.com/herozmy/StoreHouse/tree/latest"
     echo -e "当前机器地址:${green_text}${local_ip}${reset}"
     echo -e "${green_text}-------------------------------------------------${reset}"
-    echo -e "${green_text}备份所有重要文件到/mssb/backup ${reset}"
-    # 备份所有重要文件
-    backup_all_config
-    echo -e "${green_text}-------------------------------------------------${reset}"
     echo
 
-    echo -e "${green_text}请选择安装方案：${reset}"
-    echo "1) 方案1：Sing-box(魔改内核支持订阅) + MosDNS"
-    echo "2) 方案2：Mihomo(原生就支持订阅) + MosDNS"
-    echo -e "${green_text}-------------------------------------------------${reset}"
-    read -p "请输入选项 (1/2): " choice
-    case "$choice" in
-        1)
-            core_name="sing-box"
-            log "你选择了方案1：Sing-box (支持订阅) + MosDNS"
-
-            # 显示 Sing-box 核心版本选择
-            echo -e "\n${green_text}请选择 Sing-box 核心版本：${reset}"
-            echo -e "${yellow}1. Sing-box reF1nd佬 R核心${reset} <支持订阅> ${green_text}推荐${reset}"
-            echo -e "${yellow}2. Sing-box S佬Y核心${reset} <支持订阅> ${green_text}推荐${reset}"
-            echo -e "${yellow}说明: Sing-box Puer喵佬核心${reset} <支持订阅> ${green_text}停更不再支持${reset}"
-            echo -e "${yellow}说明: Sing-box 曦灵X核心${reset} <支持订阅> ${green_text}停更不在支持${reset}"
-            echo -e "${green_text}-------------------------------------------------${reset}"
-            read -p "请输入选项 (1/2): " singbox_choice
-            install_filebrower
-            install_mosdns
-            case "$singbox_choice" in
-                1)
-                    log "你选择了 Sing-box reF1nd佬 R核心"
-                    singbox_r_install
-                    ;;
-                2)
-                    log "你选择了 Sing-box S佬Y核心"
-                    singbox_s_install
-                    ;;
-                *)
-                    log "无效选项，将使用默认的 reF1nd佬 R核心"
-                    singbox_r_install
-                    ;;
-            esac
-            cp_config_files
-            singbox_configure_files
-            singbox_customize_settings
-            check_ui
-            install_tproxy
-            reload_service
-            ;;
-        2)
-            core_name="mihomo"
-            log "你选择了方案2：Mihomo + MosDNS"
-            install_filebrower
-            install_mosdns
-            install_mihomo
-            cp_config_files
-            mihomo_configure_files
-            check_ui
-            install_tproxy
-            mihomo_customize_settings
-            reload_service
-            ;;
-        *)
-            log "无效选项，退出安装。"
-            exit 1
-            ;;
-    esac
-
-    echo
-    echo -e "${green_text}-------------------------------------------------${reset}"
-    echo "是否添加以下定时更新任务？每周一凌晨执行："
-    echo "- 4:00 更新 MosDNS"
+    # 自动选择方案
     if [ "$core_name" = "sing-box" ]; then
-        echo "- 4:10 更新 Sing-box"
-        echo "- 4:15 更新 CN 域名数据"
+        install_filebrower
+        install_mosdns
+        if [ "$singbox_core_type" = "reF1nd" ]; then
+            singbox_r_install
+        else
+            singbox_s_install
+        fi
+        cp_config_files
+        singbox_configure_files
+        # 自动写入订阅链接
+        if [ -n "$sub_urls" ]; then
+            cd "$(dirname "$0")"
+            python3 update_sub.py -v $sub_urls
+            log "订阅链接处理完成"
+        fi
     else
-        echo "- 4:10 更新 Mihomo"
-        echo "- 4:15 更新 CN 域名数据"
+        install_filebrower
+        install_mosdns
+        install_mihomo
+        cp_config_files
+        mihomo_configure_files
+        # 自动写入订阅链接
+        if [ -n "$sub_urls" ]; then
+            sed -i "s|url: '机场订阅'|url: '$sub_urls'|" /mssb/mihomo/config.yaml
+            log "订阅链接已写入"
+        fi
     fi
-    echo -e "${green_text}-------------------------------------------------${reset}"
-    read -p "是否添加定时任务？(y/n): " enable_cron
-    if [[ "$enable_cron" == "y" || "$enable_cron" == "Y" ]]; then
-        add_cron_jobs
-    else
-        log "用户选择不添加定时任务。"
+    check_ui
+    install_tproxy
+    reload_service
+
+    # 定时任务自动化
+    cron_jobs=()
+    if [[ "$enable_mosdns_cron" =~ ^[Yy]$ ]]; then
+        cron_jobs+=("0 4 * * 1 /watch/update_mosdns.sh # update_mosdns")
+    fi
+    if [[ "$enable_cn_cron" =~ ^[Yy]$ ]]; then
+        cron_jobs+=("15 4 * * 1 /watch/update_cn.sh # update_cn")
+    fi
+    if [[ "$enable_core_cron" =~ ^[Yy]$ ]]; then
+        if [ "$core_name" = "sing-box" ]; then
+            cron_jobs+=("10 4 * * 1 /watch/update_sb.sh # update_sb")
+        else
+            cron_jobs+=("10 4 * * 1 /watch/update_mihomo.sh # update_mihomo")
+        fi
+    fi
+    # 清除旧任务并添加新任务
+    (crontab -l | grep -v -e "# update_mosdns" -e "# update_sb" -e "# update_cn" -e "# update_mihomo") | crontab -
+    for job in "${cron_jobs[@]}"; do
+        (crontab -l; echo "$job") | crontab -
+    done
+    log "定时任务已自动设置"
+
+    # 自动写入代理设备列表
+    if [ -n "$client_ip_list" ]; then
+        mkdir -p /mssb/mosdns
+        echo "$client_ip_list" | tr ' ' '\n' > /mssb/mosdns/client_ip.txt
+        log "已写入代理设备列表: $client_ip_list"
     fi
 
     # 检查并设置本地 DNS
@@ -2426,18 +2036,11 @@ install_update_server() {
     echo -e "🌐 Mosdns 统计界面：${green_text}http://${local_ip}:9099/graphic${reset}"
     echo
     echo -e "📦 Supervisor 管理界面：${green_text}http://${local_ip}:9001${reset}"
-    if [ "$supervisor_choice" = "3" ]; then
-        echo -e "   - 无需登录"
-    elif [ "$supervisor_choice" = "2" ] && [ -n "$supervisor_username" ] && [ -n "$supervisor_password" ]; then
-        echo -e "   - 用户名：$supervisor_username"
-        echo -e "   - 密码：$supervisor_password"
-    else
-        echo -e "   - 用户名：mssb"
-        echo -e "   - 密码：mssb123.."
-    fi
+    echo -e "   - 用户名：${supervisor_user}"
+    echo -e "   - 密码：${supervisor_pass}"
     echo
     echo -e "🗂️  文件管理服务 Filebrowser：${green_text}http://${local_ip}:8088${reset}"
-    if [ "$fb_choice" = "2" ]; then
+    if [ "$fb_login_mode" = "noauth" ]; then
         echo -e "   - 无需登录"
     else
         echo -e "   - 用户名：admin"
@@ -2447,26 +2050,6 @@ install_update_server() {
     echo -e "🕸️  Sing-box/Mihomo 面板 UI：${green_text}http://${local_ip}:9090/ui${reset}"
     echo -e "${green_text}-------------------------------------------------${reset}"
 
-    # 代理设备列表配置
-    echo -e "\n${green_text}=== Mosdns代理设备列表配置 ===${reset}"
-    echo -e "1. 扫描局域网设备并选择"
-    echo -e "2. 跳过配置（使用现有或默认列表）"
-    echo -e "${green_text}------------------------${reset}"
-
-    read -p "请选择代理设备配置方式 (1/2): " device_choice
-
-    case "$device_choice" in
-        1)
-            scan_lan_devices
-            ;;
-        2)
-            log "跳过代理设备列表配置，使用现有配置"
-            ;;
-        *)
-            log "无效选择，跳过代理设备列表配置"
-            ;;
-    esac
-
     # 创建全局 mssb 命令
     echo -e "\n${green_text}正在创建全局 mssb 命令...${reset}"
     create_mssb_command
@@ -2474,7 +2057,124 @@ install_update_server() {
     log "脚本执行完成。"
 }
 
-# 主函数
+# ========== 环境变量管理函数 ==========
+load_or_init_env() {
+    local env_file="/mssb/mssb.env"
+    mkdir -p /mssb
+    if [ -f "$env_file" ]; then
+        echo "检测到已有配置文件 $env_file"
+        read -p "是否直接使用已有配置？(y/n): " use_env
+        if [ "$use_env" = "y" ]; then
+            source "$env_file"
+            return
+        fi
+    else
+        # 检查是否有备份
+        local latest_backup=$(ls -t /mssb/backup/mssb.env.* 2>/dev/null | head -n1)
+        if [ -n "$latest_backup" ]; then
+            echo "未检测到当前配置，但发现有备份：$latest_backup"
+            read -p "是否恢复该备份？(y/n): " restore_env_choice
+            if [ "$restore_env_choice" = "y" ]; then
+                cp "$latest_backup" "$env_file"
+                source "$env_file"
+                return
+            fi
+        fi
+    fi
+
+    # 检查并选择网卡
+    check_interfaces
+    log "您选择的网卡是: $selected_interface"
+
+    read -p "请选择安装方案 (1-Sing-box, 2-Mihomo): " core_choice
+    if [ "$core_choice" = "1" ]; then
+        core_name="sing-box"
+        read -p "请选择Sing-box核心 (1-reF1nd, 2-S佬Y): " sb_core
+        singbox_core_type=$([ "$sb_core" = "1" ] && echo "reF1nd" || echo "yelnoo")
+    else
+        core_name="mihomo"
+        singbox_core_type=""
+    fi
+
+    read -p "请输入运营商DNS地址（默认119.29.29.29）: " dns_addr
+    dns_addr=${dns_addr:-119.29.29.29}
+    read -p "Supervisor用户名（默认mssb，留空不需要登录）: " supervisor_user
+    supervisor_user=${supervisor_user:-mssb}
+    read -p "Supervisor密码（默认mssb123..）: " supervisor_pass
+    supervisor_pass=${supervisor_pass:-mssb123..}
+    read -p "Filebrowser登录方式（1-密码 2-免密，默认1）: " fb_login
+    fb_login_mode=$([ "$fb_login" = "2" ] && echo "noauth" || echo "auth")
+
+    # 订阅链接
+    if [ "$core_name" = "sing-box" ]; then
+        read -p "请输入订阅链接（多个用空格分隔）: " sub_urls
+    else
+        read -p "请输入订阅链接: " sub_urls
+    fi
+
+    # 定时任务细分
+    read -p "是否启用 MosDNS 自动更新？(y/n, 默认y): " enable_mosdns_cron
+    enable_mosdns_cron=${enable_mosdns_cron:-y}
+    read -p "是否启用 MosDNS CN 域名IP数据库自动更新？(y/n, 默认y): " enable_cn_cron
+    enable_cn_cron=${enable_cn_cron:-y}
+    read -p "是否启用singbo/mihomo核心自动更新？(y/n, 默认y): " enable_core_cron
+    enable_core_cron=${enable_core_cron:-y}
+
+    # 代理设备列表配置
+    echo -e "\n${green_text}=== Mosdns代理设备列表配置 ===${reset}"
+    echo -e "1. 扫描局域网设备并选择"
+    echo -e "2. 手动输入（多个用空格分隔）"
+    echo -e "${green_text}------------------------${reset}"
+    read -p "请选择代理设备配置方式 (1/2): " device_choice
+    if [ "$device_choice" = "1" ]; then
+        scan_lan_devices
+        # scan_lan_devices 会将结果写入全局变量 scanned_ip_list
+        client_ip_list="$scanned_ip_list"
+    else
+        read -p "请输入需要代理的设备IP（多个用空格分隔）: " client_ip_list
+    fi
+
+    # 安装/更新模式
+    read -p "安装/更新核心程序时，是否自动更新到最新版？(y/n, 默认y): " install_update_mode
+    install_update_mode=${install_update_mode:-y}
+
+    # 保存到env文件
+    cat > "$env_file" <<EOF
+selected_interface=$selected_interface
+core_name=$core_name
+singbox_core_type=$singbox_core_type
+dns_addr=$dns_addr
+supervisor_user=$supervisor_user
+supervisor_pass=$supervisor_pass
+fb_login_mode=$fb_login_mode
+sub_urls="$sub_urls"
+enable_mosdns_cron=$enable_mosdns_cron
+enable_cn_cron=$enable_cn_cron
+enable_core_cron=$enable_core_cron
+client_ip_list="$client_ip_list"
+install_update_mode=$install_update_mode
+EOF
+    source "$env_file"
+}
+
+backup_env() {
+    echo -e "${green_text}备份env到/mssb/backup ${reset}"
+    # 备份env文件
+    mkdir -p /mssb/backup
+    cp /mssb/mssb.env /mssb/backup/mssb.env.$(date +%Y%m%d-%H%M%S)
+    # 只保留最近7份备份
+    local backups=( $(ls -1t /mssb/backup/mssb.env.* 2>/dev/null) )
+    local count=${#backups[@]}
+    if [ $count -gt 7 ]; then
+        for ((i=7; i<$count; i++)); do
+            rm -f "${backups[$i]}"
+        done
+    fi
+    echo -e "${green_text}-------------------------------------------------${reset}"
+}
+# ========== END 环境变量管理 ==========
+
+# ========== 主流程重构 ==========
 main() {
     # 主菜单
     echo -e "${green_text}------------------------⚠️注意：请使用 root 用户安装！！！-------------------------${reset}"
@@ -2489,7 +2189,7 @@ main() {
     echo -e "${red}3) 停止所有服务并卸载 + 删除所有相关文件（重要文件自动备份）${reset}"
     echo -e "${green_text}4) 启用所有服务${reset}"
     echo -e "${green_text}5) 修改服务配置${reset}"
-    echo -e "${green_text}6) 备份所有重要文件${reset}"
+    echo -e "${green_text}6) 备份自定义的设置${reset}"
     echo -e "${green_text}7) 扫描局域网设备并配置mosdns代理列表${reset}"
     echo -e "${green_text}8) 显示服务信息${reset}"
     echo -e "${green_text}9) 显示路由规则提示${reset}"
@@ -2533,10 +2233,8 @@ main() {
             main
             ;;
         6)
-            echo -e "${green_text}备份所有重要文件到/mssb/backup ${reset}"
             # 备份所有重要文件
-            backup_all_config
-            echo -e "${green_text}-------------------------------------------------${reset}"
+            backup_env
             echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
             read -n 1
             main
@@ -2601,6 +2299,11 @@ main() {
             ;;
         1)
             echo -e "${green_text}✅ 继续安装/更新代理服务...${reset}"
+            # 备份env
+            backup_env
+            # 加载/初始化环境变量
+            load_or_init_env
+            # 开始安装
             install_update_server
             echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
             read -n 1
@@ -2614,5 +2317,6 @@ main() {
 
 }
 
+update_project
 
 main
