@@ -1315,6 +1315,21 @@ modify_supervisor_config() {
         echo -e "${red}Supervisor 配置文件不存在${reset}"
         return 1
     fi
+
+    # 同步到env文件
+    local env_file="/mssb/mssb.env"
+    if [ -f "$env_file" ]; then
+        if grep -q "^supervisor_user=" "$env_file" 2>/dev/null; then
+            sed -i "s|^supervisor_user=.*|supervisor_user=$supervisor_username|" "$env_file"
+        else
+            echo "supervisor_user=$supervisor_username" >> "$env_file"
+        fi
+        if grep -q "^supervisor_pass=" "$env_file" 2>/dev/null; then
+            sed -i "s|^supervisor_pass=.*|supervisor_pass=$supervisor_password|" "$env_file"
+        else
+            echo "supervisor_pass=$supervisor_password" >> "$env_file"
+        fi
+    fi
 }
 
 # 修改 Filebrowser 配置
@@ -1325,8 +1340,10 @@ modify_filebrowser_config() {
     echo -e "${green_text}-------------------------------------------------${reset}"
     read -p "请输入选项 (1/2): " fb_choice
 
+    local fb_login_mode_new="auth"
     case $fb_choice in
         1)
+            fb_login_mode_new="auth"
             # 使用密码登录
             if [ -f "/mssb/fb/fb.db" ]; then
                 echo -e "\n${green_text}请选择密码设置方式：${reset}"
@@ -1368,6 +1385,7 @@ modify_filebrowser_config() {
             fi
             ;;
         2)
+            fb_login_mode_new="noauth"
             # 禁用密码登录
             if [ -f "/mssb/fb/fb.db" ]; then
                 supervisorctl stop filebrowser
@@ -1384,11 +1402,21 @@ modify_filebrowser_config() {
             return 1
             ;;
     esac
+
+    # 同步到env文件
+    local env_file="/mssb/mssb.env"
+    if [ -f "$env_file" ]; then
+        if grep -q "^fb_login_mode=" "$env_file" 2>/dev/null; then
+            sed -i "s|^fb_login_mode=.*|fb_login_mode=$fb_login_mode_new|" "$env_file"
+        else
+            echo "fb_login_mode=$fb_login_mode_new" >> "$env_file"
+        fi
+    fi
 }
 
 # 修改服务配置
 modify_service_config() {
-    echo -e "\n${green_text}请选择要修改的配置：${reset}"
+    echo -e "\n${green_text}请选择要修改的配置(成功后会更新env文件)：${reset}"
     echo -e "${green_text}1) 修改 Supervisor 管理界面配置${reset}"
     echo -e "${green_text}2) 修改 Filebrowser 登录方式${reset}"
     echo -e "${green_text}-------------------------------------------------${reset}"
