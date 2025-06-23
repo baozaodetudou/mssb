@@ -508,14 +508,13 @@ check_ui() {
     ui_path="/mssb/${core_name}/ui"
 
     if [ -d "$ui_path" ]; then
-      # 选择是否更新
-      read -p "检测到已有 UI，是否更新？(y/n): " update_ui
-      if [[ "$update_ui" == "y" || "$update_ui" == "Y" ]]; then
-          echo "正在更新 UI..."
-          git_ui
-      else
-          echo "已取消 UI 更新。"
-      fi
+        # 选择是否更新
+        if [ "$update_ui_mode" = "y" ]; then
+            echo "正在更新 UI..."
+            git_ui
+        else
+            echo "已取消 UI 更新。"
+        fi
     else
         echo "未检测到 UI，首次安装 WEBUI..."
         git_ui
@@ -638,7 +637,6 @@ EOF
     echo "警告：${core_name}-router 服务文件已存在，无需创建"
     fi
     ################################写入nftables################################
-    check_interfaces
     # 获取脚本所在目录的绝对路径
     cd "$(dirname "$0")"
     local nft_template="./nft/nft-tproxy-redirect.conf"
@@ -1057,6 +1055,12 @@ stop_all_services() {
 
 # 检查并设置本地 DNS
 check_and_set_local_dns() {
+    # 优先使用dns_after_install变量
+    if [ -n "$dns_after_install" ]; then
+        echo "nameserver $dns_after_install" > /etc/resolv.conf
+        echo -e "${green_text}已设置 DNS 为 $dns_after_install${reset}"
+        return
+    fi
     # 获取当前 DNS 设置
     current_dns=$(cat /etc/resolv.conf | grep -E "^nameserver" | head -n 1 | awk '{print $2}')
 
@@ -1139,8 +1143,6 @@ uninstall_all_services() {
 
     # 停止所有服务
     stop_all_services
-    # 备份所有重要文件
-    backup_all_config
     # 获取当前版本和核心类型信息
     detect_singbox_info
 
@@ -1155,8 +1157,9 @@ uninstall_all_services() {
     rm -f /usr/local/bin/mihomo
     rm -f /usr/local/bin/filebrowser
 
-    # 删除配置目录（保留备份目录）
-    find /mssb -mindepth 1 -maxdepth 1 -not -name "backup" -exec rm -rf {} +
+    # 删除配置目录（保留备份目录和mssb.env）
+    find /mssb -mindepth 1 -maxdepth 1 -not -name "backup" -not -name "mssb.env" -exec rm -rf {} +
+    log "/mssb/mssb.env 环境变量文件已保留，如需彻底清理请手动删除。"
 
     # 删除 supervisor 配置
     rm -f /etc/supervisor/supervisord.conf
@@ -1174,6 +1177,12 @@ uninstall_all_services() {
     systemctl daemon-reload
     log "所有服务已卸载完成。配置文件已备份到 $backup_dir 目录"
     log "卸载的核心类型：$core_type"
+
+    # 卸载后恢复DNS
+    if [ -n "$dns_after_uninstall" ]; then
+        echo "nameserver $dns_after_uninstall" > /etc/resolv.conf
+        log "卸载后已恢复 DNS 为 $dns_after_uninstall"
+    fi
 }
 
 # 智能检测 Sing-box 核心类型和版本
@@ -1181,34 +1190,8 @@ detect_singbox_info() {
     # 获取版本输出
     version_output=$(/usr/local/bin/sing-box version 2>/dev/null | head -n1)
     current_version=$(echo "$version_output" | awk '{print $3}' || echo "未知版本")
-
-    # 优先从文件获取核心类型，如果文件不存在则从命令输出智能识别
-    if [ -f "/mssb/.core_type" ]; then
-        core_type=$(cat "/mssb/.core_type")
-        detection_source="类型文件/mssb/.core_type"
-    else
-        # 从版本输出中智能识别核心类型
-        if echo "$version_output" | grep -q "reF1nd"; then
-            core_type="sing-box-reF1nd"
-            detection_source="版本识别"
-        else
-            # 如果没有特殊标识，可能是Y核心或其他版本
-            core_type="sing-box-yelnoo"
-            detection_source="推测可能是Y核心或其他版本"
-        fi
-    fi
-
-    # 输出检测结果
     log "当前安装的版本: $current_version"
-    log "当前安装的版本: (核心类型：$core_type，来源：$detection_source)"
-}
-
-# 记录 Sing-box 核心版本
-record_singbox_core() {
-    local core_type=$1
-    mkdir -p "/mssb"
-    echo "$core_type" > /mssb/.core_type
-    log "已记录 Sing-box 核心类型：$core_type 在/mssb/.core_type 文件不可删除"
+    log "当前核心类型: $singbox_core_type (来源：/mssb/mssb.env)"
 }
 
 # reF1nd佬 R核心安装函数
@@ -1219,30 +1202,12 @@ singbox_r_install() {
 
         # 获取当前版本和核心类型信息
         detect_singbox_info
-
-        echo -e "\n${green_text}=== Sing-box reF1nd R核心 安装选项 ===${reset}"
-        echo -e "1. 跳过下载，使用现有版本"
-        echo -e "2. 下载最新版本并更新"
-        echo -e "${green_text}------------------------${reset}"
-
-        read -p "请选择操作 (1/2): " singbox_r_choice
-
-        case "$singbox_r_choice" in
-            1)
-                log "跳过 Sing-box reF1nd R核心 下载，使用现有版本"
-                # 确保记录正确的核心类型
-                record_singbox_core "sing-box-reF1nd"
-                return 0
-                ;;
-            2)
-                log "选择更新 Sing-box reF1nd R核心 到最新版本"
-                ;;
-            *)
-                log "无效选择，默认跳过下载使用现有版本"
-                record_singbox_core "sing-box-reF1nd"
-                return 0
-                ;;
-        esac
+        if [ "$install_update_mode_singbox" = "n" ]; then
+            log "跳过 Sing-box reF1nd R核心 下载，使用现有版本"
+            return 0
+        else
+            log "选择更新 Sing-box reF1nd R核心 到最新版本"
+        fi
     fi
 
     # 下载并安装 reF1nd R核心
@@ -1261,46 +1226,25 @@ singbox_r_install() {
     chmod +x /usr/local/bin/sing-box
     rm -f sing-box.tar.gz
 
-    # 记录核心类型
-    record_singbox_core "sing-box-reF1nd"
-
     # 显示安装完成的版本信息
     new_version=$(/usr/local/bin/sing-box version 2>/dev/null | head -n1 | awk '{print $3}' || echo "未知版本")
     log "Sing-box reF1nd R核心 安装完成，版本：$new_version"
 }
 
-# S核安装函数
-singbox_s_install() {
+# Y核安装函数
+singbox_y_install() {
     # 检查是否已安装 Sing-box
     if [ -f "/usr/local/bin/sing-box" ]; then
         log "检测到已安装的 Sing-box"
 
         # 获取当前版本和核心类型信息
         detect_singbox_info
-
-        echo -e "\n${green_text}=== Sing-box S佬Y核心 安装选项 ===${reset}"
-        echo -e "1. 跳过下载，使用现有版本"
-        echo -e "2. 下载最新版本并更新"
-        echo -e "${green_text}------------------------${reset}"
-
-        read -p "请选择操作 (1/2): " singbox_s_choice
-
-        case "$singbox_s_choice" in
-            1)
-                log "跳过 Sing-box S佬Y核心 下载，使用现有版本"
-                # 确保记录正确的核心类型
-                record_singbox_core "sing-box-yelnoo"
-                return 0
-                ;;
-            2)
-                log "选择更新 Sing-box S佬Y核心 到最新版本"
-                ;;
-            *)
-                log "无效选择，默认跳过下载使用现有版本"
-                record_singbox_core "sing-box-yelnoo"
-                return 0
-                ;;
-        esac
+        if [ "$install_update_mode_singbox" = "n" ]; then
+            log "跳过 Sing-box S佬Y核心 下载，使用现有版本"
+            return 0
+        else
+            log "选择更新 Sing-box S佬Y核心 到最新版本"
+        fi
     fi
 
     # 下载并安装 S佬Y核心
@@ -1318,9 +1262,6 @@ singbox_s_install() {
     mv sing-box /usr/local/bin/
     chmod +x /usr/local/bin/sing-box
     rm -f sing-box.tar.gz
-
-    # 记录核心类型
-    record_singbox_core "sing-box-yelnoo"
 
     # 显示安装完成的版本信息
     new_version=$(/usr/local/bin/sing-box version 2>/dev/null | head -n1 | awk '{print $3}' || echo "未知版本")
@@ -1468,48 +1409,12 @@ modify_service_config() {
 }
 
 # 检查 DNS 设置
-check_dns_settings() {
-    # 获取当前 DNS 设置
-    current_dns=$(cat /etc/resolv.conf | grep -E "^nameserver" | head -n 1 | awk '{print $2}')
-
-    if [ "$current_dns" = "$local_ip" ]; then
-        echo -e "\n${yellow}警告：检测到当前 DNS 设置为本地 IP ($local_ip)${reset}"
-        echo -e "${yellow}建议在停止服务前修改 DNS 设置，否则可能导致无法访问网络${reset}"
-        echo -e "${green_text}请选择操作：${reset}"
-        echo -e "1) 使用阿里 DNS (223.5.5.5)"
-        echo -e "2) 使用腾讯 DNS (119.29.29.29)"
-        echo -e "3) 自定义 DNS"
-        echo -e "4) 保持当前设置"
-        echo -e "${green_text}-------------------------------------------------${reset}"
-        read -p "请输入选项 (1/2/3/4): " dns_choice
-
-        case $dns_choice in
-            1)
-                echo "nameserver 223.5.5.5" > /etc/resolv.conf
-                echo -e "${green_text}已设置 DNS 为 223.5.5.5${reset}"
-                ;;
-            2)
-                echo "nameserver 119.29.29.29" > /etc/resolv.conf
-                echo -e "${green_text}已设置 DNS 为 119.29.29.29${reset}"
-                ;;
-            3)
-                read -p "请输入自定义 DNS 地址: " custom_dns
-                if [[ $custom_dns =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-                    echo "nameserver $custom_dns" > /etc/resolv.conf
-                    echo -e "${green_text}已设置 DNS 为 $custom_dns${reset}"
-                else
-                    echo -e "${red}无效的 DNS 地址格式，将使用默认的阿里 DNS${reset}"
-                    echo "nameserver 223.5.5.5" > /etc/resolv.conf
-                fi
-                ;;
-            4)
-                echo -e "${yellow}保持当前 DNS 设置 ($current_dns)${reset}"
-                ;;
-            *)
-                echo -e "${red}无效选项，将使用默认的阿里 DNS${reset}"
-                echo "nameserver 223.5.5.5" > /etc/resolv.conf
-                ;;
-        esac
+uninstall_dns_settings() {
+    if [ -n "$dns_after_uninstall" ]; then
+        echo "nameserver $dns_after_uninstall" > /etc/resolv.conf
+        echo -e "${green_text}已恢复 DNS 为 $dns_after_uninstall${reset}"
+    else
+        echo -e "${yellow}未设置卸载后DNS恢复变量，未做更改${reset}"
     fi
 }
 
@@ -1667,6 +1572,24 @@ scan_lan_devices() {
     done
     scanned_ip_list=$(echo "$scanned_ip_list" | xargs) # 去除首尾空格
     log "最终选择的设备IP: $scanned_ip_list"
+
+    # 覆盖写入env（仅当文件已存在时才写入）
+    env_file="/mssb/mssb.env"
+    if [ -f "$env_file" ]; then
+        if grep -q "^client_ip_list=" "$env_file" 2>/dev/null; then
+            sed -i "s|^client_ip_list=.*|client_ip_list=\"$scanned_ip_list\"|" "$env_file"
+        else
+            echo "client_ip_list=\"$scanned_ip_list\"" >> "$env_file"
+        fi
+    fi
+
+    # 覆盖写入txt（仅当文件已存在时才写入）
+    if [ -f /mssb/mosdns/client_ip.txt ]; then
+        echo "$scanned_ip_list" | tr ' ' '\n' > /mssb/mosdns/client_ip.txt
+        log "已覆盖写入代理设备列表到 $env_file 和 /mssb/mosdns/client_ip.txt"
+    else
+        log "已覆盖写入代理设备列表到 $env_file，未写入 /mssb/mosdns/client_ip.txt（文件不存在）"
+    fi
     return 0
 }
 
@@ -1899,10 +1822,10 @@ install_update_server() {
     if [ "$core_name" = "sing-box" ]; then
         install_filebrower
         install_mosdns
-        if [ "$singbox_core_type" = "reF1nd" ]; then
-            singbox_r_install
+        if [ "$singbox_core_type" = "yelnoo" ]; then
+            singbox_y_install
         else
-            singbox_s_install
+            singbox_r_install
         fi
         cp_config_files
         singbox_configure_files
@@ -2002,7 +1925,7 @@ load_or_init_env() {
     read -p "请选择安装方案 (1-Sing-box, 2-Mihomo): " core_choice
     if [ "$core_choice" = "1" ]; then
         core_name="sing-box"
-        read -p "请选择Sing-box核心 (1-reF1nd, 2-S佬Y): " sb_core
+        read -p "请选择Sing-box核心 (1-风佬R核心, 2-S佬核心): " sb_core
         singbox_core_type=$([ "$sb_core" = "1" ] && echo "reF1nd" || echo "yelnoo")
     else
         core_name="mihomo"
@@ -2064,26 +1987,68 @@ load_or_init_env() {
     read -p "安装/更新 Mihomo 时是否自动更新？(y/n, 默认y): " install_update_mode_mihomo
     install_update_mode_mihomo=${install_update_mode_mihomo:-y}
 
-    # 保存到env文件
+    # UI自动更新模式
+    read -p "UI 是否自动更新？(y/n, 默认y): " update_ui_mode
+    update_ui_mode=${update_ui_mode:-y}
+
+    # DNS设置
+    read -p "安装完成后本机DNS设置为（默认127.0.0.1）: " dns_after_install
+    dns_after_install=${dns_after_install:-127.0.0.1}
+    read -p "卸载后本机DNS恢复为（默认223.5.5.5）: " dns_after_uninstall
+    dns_after_uninstall=${dns_after_uninstall:-223.5.5.5}
+
+    # 保存到env文件（带注释）
     cat > "$env_file" <<EOF
+# 选中的物理网卡
 selected_interface=$selected_interface
+# 代理核心名称（sing-box或mihomo）
 core_name=$core_name
+# sing-box核心类型（reF1nd或yelnoo）
 singbox_core_type=$singbox_core_type
+# 运营商DNS地址
 dns_addr=$dns_addr
+# Supervisor用户名
 supervisor_user=$supervisor_user
+# Supervisor密码
 supervisor_pass=$supervisor_pass
+# Filebrowser登录方式（auth=密码，noauth=免密）
 fb_login_mode=$fb_login_mode
+# 机场订阅链接
 sub_urls="$sub_urls"
+# 是否启用MosDNS自动更新（y/n）
 enable_mosdns_cron=$enable_mosdns_cron
+# 是否启用MosDNS CN域名IP数据库自动更新（y/n）
 enable_cn_cron=$enable_cn_cron
+# 是否启用核心自动更新（y/n）
 enable_core_cron=$enable_core_cron
+# 需要代理的设备IP列表
 client_ip_list="$client_ip_list"
+# 安装/更新Sing-box时是否自动更新（y/n）
 install_update_mode_singbox=$install_update_mode_singbox
+# 安装/更新MosDNS时是否自动更新（y/n）
 install_update_mode_mosdns=$install_update_mode_mosdns
+# 安装/更新Filebrowser时是否自动更新（y/n）
 install_update_mode_filebrowser=$install_update_mode_filebrowser
+# 安装/更新Mihomo时是否自动更新（y/n）
 install_update_mode_mihomo=$install_update_mode_mihomo
+# UI是否自动更新（y/n）
+update_ui_mode=$update_ui_mode
+# 安装完成后本机DNS设置
+dns_after_install=$dns_after_install
+# 卸载后本机DNS恢复
+dns_after_uninstall=$dns_after_uninstall
 EOF
     source "$env_file"
+}
+
+source_env() {
+    local env_file="/mssb/mssb.env"
+    if [ -f "$env_file" ]; then
+        source "$env_file"
+        log "已加载环境变量文件 $env_file"
+    else
+        log "未找到环境变量文件 $env_file，选择1进行安装的时候会首次初始化。"
+    fi
 }
 
 backup_env() {
@@ -2105,6 +2070,7 @@ backup_env() {
 
 # ========== 主流程重构 ==========
 main() {
+    source_env
     # 主菜单
     echo -e "${green_text}------------------------⚠️注意：请使用 root 用户安装！！！-------------------------${reset}"
     echo -e "${green_text}⚠️注意：本脚本支持 Debian/Ubuntu，安装前请确保系统未安装其他代理软件。${reset}"
@@ -2133,7 +2099,7 @@ main() {
         2)
             stop_all_services
             # 检查 DNS 设置
-            check_dns_settings
+            uninstall_dns_settings
             echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
             read -n 1
             main
@@ -2141,7 +2107,7 @@ main() {
         3)
             uninstall_all_services
             # 检查 DNS 设置
-            check_dns_settings
+            uninstall_dns_settings
             echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
             read -n 1
             main
@@ -2170,8 +2136,6 @@ main() {
             ;;
         7)
             echo -e "${green_text}扫描局域网设备并配置代理列表${reset}"
-            # 检查网络接口
-            check_interfaces
             # 扫描局域网设备
             scan_lan_devices
             echo -e "${green_text}-------------------------------------------------${reset}"
@@ -2216,7 +2180,7 @@ main() {
             main
             ;;
         13)
-            echo -e "${green_text}更新内核版本(mosdns/singbox/mihomo)${reset}"
+            echo -e "${green_text}手动更新内核版本(mosdns/singbox/mihomo)${reset}"
             update_cores_menu
             echo -e "\n${yellow}(按键 Ctrl + C 终止运行脚本, 键入任意值返回主菜单)${reset}"
             read -n 1
@@ -2247,5 +2211,4 @@ main() {
 }
 
 update_project
-
 main
