@@ -2237,6 +2237,11 @@ main() {
     esac
 
 }
-
+# 版本提示
+echo -e "${yellow}=================================================${reset}"
+echo -e "${yellow}⚠️ 重要提示：${reset}"
+echo -e "${yellow}2025.6.23 之前的是 v1 版本，现在是 v2 版本。${reset}"
+echo -e "${yellow}如果你当前使用的是 v1 版本，建议使用3先停止并删除/mssb文件后重新安装本脚本。${reset}"
+echo -e "${yellow}=================================================${reset}"
 update_project
 main
