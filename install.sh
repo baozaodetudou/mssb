@@ -1941,11 +1941,11 @@ load_or_init_env() {
     echo -e "${green_text}------------------------${reset}"
     read -p "请输入运营商DNS地址（默认119.29.29.29）: " dns_addr
     dns_addr=${dns_addr:-119.29.29.29}
-    read -p "Supervisor用户名（默认mssb，留空不需要登录）: " supervisor_user
-    supervisor_user=${supervisor_user:-mssb}
-    read -p "Supervisor密码（默认mssb123..）: " supervisor_pass
-    supervisor_pass=${supervisor_pass:-mssb123..}
-    read -p "Filebrowser登录方式（1-密码 2-免密，默认1）: " fb_login
+    read -p "Supervisor用户名（留空不需要登录）: " supervisor_user
+    # 不再设置默认值
+    read -p "Supervisor密码（留空不需要登录）: " supervisor_pass
+    # 不再设置默认值
+    read -p "Filebrowser登录方式（1-密码(admin/admin) 2-免密，默认1）: " fb_login
     fb_login_mode=$([ "$fb_login" = "2" ] && echo "noauth" || echo "auth")
 
     # 订阅链接
