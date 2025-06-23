@@ -1925,7 +1925,7 @@ load_or_init_env() {
     read -p "请选择安装方案 (1-Sing-box, 2-Mihomo): " core_choice
     if [ "$core_choice" = "1" ]; then
         core_name="sing-box"
-        read -p "请选择Sing-box核心 (1-风佬R核心, 2-S佬核心): " sb_core
+        read -p "请选择Sing-box核心 (1-风佬R核心, 2-S佬Y核心): " sb_core
         singbox_core_type=$([ "$sb_core" = "1" ] && echo "reF1nd" || echo "yelnoo")
     else
         core_name="mihomo"
