@@ -116,14 +116,14 @@ proxy-groups:
   - {name: 网络测试, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Speedtest.png', proxies: [ 全球直连, 节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 机场节点]}
   - {name: 人工智能, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/AI.png', proxies: [香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 全球直连, 机场节点]}
   - {name: 游戏平台, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Game.png', proxies: [ 节点选择, 全球直连, 高级节点, 游戏节点]}
-  - {name: Netflix, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Netflix.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 全球直连, 机场节点]}
-  - {name: YouTube, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/YouTube.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 全球直连, 机场节点]}
+  - {name: Netflix, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Netflix.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 机场节点]}
+  - {name: YouTube, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/YouTube.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 机场节点]}
   - {name: 苹果服务, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Apple.png', proxies: [全球直连, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 手动切换]}
-  - {name: Google, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Google_Search.png', proxies: [香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 手动切换]}
+  - {name: Google, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Google_Search.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 手动切换]}
   - {name: 微软服务, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Microsoft.png', proxies: [全球直连, 节点选择]}
-  - {name: GitHub, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/GitHub.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 全球直连, 机场节点]}
-  - {name: TikTok, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/TikTok.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 全球直连, 机场节点]}
-  - {name: Spotify, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Spotify.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 全球直连, 机场节点]}
+#  - {name: GitHub, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/GitHub.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 机场节点]}
+  - {name: TikTok, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/TikTok.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 机场节点]}
+  - {name: Spotify, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Spotify.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 机场节点]}
   - {name: PT站点, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Media.png', proxies: [ 全球直连, 节点选择]}
   - {name: Telegram, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Telegram_X.png', proxies: [节点选择, 香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点]}
   - {name: 高级节点, !!merge <<: *UrlTest, filter: *FilterVIP, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/VIP.png'}
@@ -188,13 +188,18 @@ rules:
   - RULE-SET,Spotify,Spotify
   - RULE-SET,Docker,节点选择
   - RULE-SET,Telegram,Telegram
+  - RULE-SET,AIChatCN,全球直连
   - RULE-SET,OpenAI,人工智能
   - RULE-SET,Gemini,人工智能
   - RULE-SET,AIChat,人工智能
-  - RULE-SET,AIChatCN,全球直连
+
   - RULE-SET,YouTube,YouTube
-  - RULE-SET,Google,Google
-  - RULE-SET,GitHub,GitHub
+  
+  - RULE-SET,Google,节点选择
+  - RULE-SET,GitHub,节点选择
+  # - RULE-SET,Google,Google
+  # - RULE-SET,GitHub,GitHub  
+  
   - RULE-SET,AppleCN,全球直连
   - RULE-SET,Apple,苹果服务
   - RULE-SET,Microsoft,微软服务
