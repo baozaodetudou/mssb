@@ -187,6 +187,7 @@ rules:
   # 域名路由
   - RULE-SET,Spotify,Spotify
   - RULE-SET,Docker,节点选择
+  - RULE-SET,GitHub,节点选择
   - RULE-SET,Telegram,Telegram
   - RULE-SET,Microsoft,微软服务
   - RULE-SET,AIChatCN,全球直连
@@ -197,7 +198,7 @@ rules:
   - RULE-SET,YouTube,YouTube
   
   - RULE-SET,Google,节点选择
-  - RULE-SET,GitHub,节点选择
+
   # - RULE-SET,Google,Google
   # - RULE-SET,GitHub,GitHub  
   
