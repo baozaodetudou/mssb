@@ -188,6 +188,7 @@ rules:
   - RULE-SET,Spotify,Spotify
   - RULE-SET,Docker,节点选择
   - RULE-SET,Telegram,Telegram
+  - RULE-SET,Microsoft,微软服务
   - RULE-SET,AIChatCN,全球直连
   - RULE-SET,OpenAI,人工智能
   - RULE-SET,Gemini,人工智能
@@ -202,7 +203,7 @@ rules:
   
   - RULE-SET,AppleCN,全球直连
   - RULE-SET,Apple,苹果服务
-  - RULE-SET,Microsoft,微软服务
+
   - RULE-SET,TikTok,TikTok
 #  - RULE-SET,China,全球直连
   - RULE-SET,ChinaSpeedtest,全球直连
