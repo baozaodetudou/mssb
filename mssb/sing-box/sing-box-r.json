@@ -492,7 +492,10 @@
                 "domain_suffix": [
                     "test-ipv6.com",
                     "test-ipv6.com",
-                    "ipv6-test.com"
+                    "ipv6-test.com",
+                    "ifconfig.me",
+                    "api64.ipify.org",
+                    "myexternalip.com"
                 ],
                 "outbound": "自定义规则"
             },
