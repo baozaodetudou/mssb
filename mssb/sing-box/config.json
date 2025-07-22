@@ -494,7 +494,11 @@
                 "domain_suffix": [
                     "test-ipv6.com",
                     "test-ipv6.com",
-                    "ipv6-test.com"
+                    "ipv6-test.com",
+                    "ifconfig.me",
+                    "api64.ipify.orab",
+                    "myexternalip.com",
+                    "api64.ipify.org"
                 ],
                 "outbound": "自定义规则"
             },
@@ -550,7 +554,8 @@
                     "agsvpt.com",
                     "azusa.wiki",
                     "discfan.net",
-                    "playletpt.xyz"
+                    "playletpt.xyz",
+                    "hdsky.my"
                 ],
                 "outbound": "🎬 PT站点"
             },
