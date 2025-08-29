@@ -167,11 +167,17 @@ rule-providers:
 rules:
   # 常用必备
   - DST-PORT,123,DIRECT
-  # 自定义域名
+ 
+  # 自定义代理
   - DOMAIN-SUFFIX,test-ipv6.com,全球直连
   - DOMAIN-SUFFIX,ipv6ready.me,全球直连
-  # 自定义代理
+  - DOMAIN-SUFFIX,ipv6-test.com,全球直连
+  - DOMAIN-SUFFIX,ifconfig.me,全球直连
+  - DOMAIN-SUFFIX,api64.ipify.orab,全球直连
+  - DOMAIN-SUFFIX,myexternalip.com,全球直连
+  - DOMAIN-SUFFIX,api64.ipify.org,全球直连
   - DOMAIN-SUFFIX,u2.dmhy.org,香港节点
+  
   # IPTV
   - DOMAIN-SUFFIX,dnsany.com,全球直连
   - DOMAIN-SUFFIX,cmvideo.cn,全球直连
@@ -193,18 +199,24 @@ rules:
   - RULE-SET,OpenAI,人工智能
   - RULE-SET,Gemini,人工智能
   - RULE-SET,AIChat,人工智能
-
-  - RULE-SET,YouTube,节点选择 
+  - RULE-SET,YouTube,节点选择
   - RULE-SET,Google,节点选择
   - RULE-SET,AppleCN,全球直连
   - RULE-SET,Apple,苹果服务
-
   - RULE-SET,TikTok,TikTok
-#  - RULE-SET,China,全球直连
+  #  - RULE-SET,China,全球直连
   - RULE-SET,ChinaSpeedtest,全球直连
-#  - RULE-SET,Foreign,节点选择
+  #  - RULE-SET,Foreign,节点选择
   - RULE-SET,ForeignSpeedtest,网络测试
+  
+  #PT站点规则补全
   - RULE-SET,PT,PT站点
+  - DOMAIN-SUFFIX,agsvpt.com,PT站点
+  - DOMAIN-SUFFIX,azusa.wiki,PT站点
+  - DOMAIN-SUFFIX,discfan.net,PT站点
+  - DOMAIN-SUFFIX,playletpt.xyz,PT站点
+  - DOMAIN-SUFFIX,hdsky.my,PT站点
+  
   - RULE-SET,SteamCN,全球直连
   - RULE-SET,Steam,游戏平台
   - RULE-SET,Private,全球直连
@@ -215,7 +227,6 @@ rules:
   # tracker都走直连
   - DOMAIN-KEYWORD,tracker,DIRECT
   - MATCH,漏网之鱼
-
 # 节点订阅
 proxy-providers:
   机场名称1:
