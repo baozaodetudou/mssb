@@ -11,7 +11,7 @@ local_ip=$(hostname -I | awk '{print $1}')
 
 # 日志输出函数
 log() {
-    echo "[$(date +"%F %T")] $1"
+    echo -e "[$(date +"%F %T")] $1"
 }
 
 # 系统更新和安装必要软件
