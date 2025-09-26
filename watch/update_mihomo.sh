@@ -2,7 +2,6 @@
 
 # 颜色变量
 yellow="\033[33m"
-green_text="\033[32m"
 reset="\033[0m"
 
 # 日志函数
@@ -26,10 +25,64 @@ detect_architecture() {
     esac
 }
 
+# 检查 AMD64 架构是否支持 v3 指令集 (x86-64-v3)
+check_amd64_v3_support() {
+    local arch
+    arch=$(detect_architecture)
+
+    # 只有 AMD64 架构才需要检查 v3 支持
+    if [ "$arch" != "amd64" ]; then
+        return 1
+    fi
+
+    # v3 要求的指令集
+    local required_flags=("sse4_2" "avx" "avx2" "bmi1" "bmi2" "fma" "abm")
+
+    # 获取 CPU flags
+    local cpu_flags
+    cpu_flags=$(grep -m1 -o -E 'sse4_2|avx2|avx|bmi1|bmi2|fma|abm' /proc/cpuinfo | sort -u)
+
+    # 检查每一个必须的指令集
+    for flag in "${required_flags[@]}"; do
+        if ! grep -qw "$flag" <<< "$cpu_flags"; then
+            log "AMD64 架构缺少指令集: $flag → 不支持 v3"
+            return 1
+        fi
+    done
+
+    log "检测到 AMD64 架构支持完整 v3 指令集"
+    return 0
+}
+
+# 加载环境变量
+load_env() {
+    local env_file="/mssb/mssb.env"
+    if [ -f "$env_file" ]; then
+        # shellcheck source=/mssb/mssb.env
+        source "$env_file"
+        log "已加载环境变量文件 $env_file"
+    else
+        log "未找到环境变量文件 $env_file，使用默认配置"
+        amd64v3_enabled="false"
+    fi
+}
+
 # 安装 Mihomo 核心
 mihomo_install() {
+    # 加载环境变量
+    load_env
+    
     arch=$(detect_architecture)
-    download_url="https://github.com/herozmy/StoreHouse/releases/download/mihomo/mihomo-meta-linux-${arch}.tar.gz"
+    
+    # 根据 v3 支持情况选择下载链接
+    if [ "$amd64v3_enabled" = "true" ] && check_amd64_v3_support; then
+        download_url="https://github.com/baozaodetudou/mssb/releases/download/mihomo/mihomo-meta-linux-amd64v3.tar.gz"
+        log "使用 AMD64 v3 优化版本"
+    else
+        download_url="https://github.com/baozaodetudou/mssb/releases/download/mihomo/mihomo-meta-linux-${arch}.tar.gz"
+        log "使用标准版本"
+    fi
+    
     log "开始下载 Mihomo 核心：$download_url"
 
     if ! wget -O /tmp/mihomo.tar.gz "$download_url"; then
@@ -46,7 +99,10 @@ mihomo_install() {
 
     chmod +x /usr/local/bin/mihomo || log "警告：未能设置 Mihomo 执行权限"
     rm -f /tmp/mihomo.tar.gz
-    log "Mihomo 安装完成，临时文件已清理"
+    
+    # 显示安装完成的版本信息
+    new_version=$(/usr/local/bin/mihomo -v 2>/dev/null | head -n1 | awk '{print $2}' || echo "未知版本")
+    log "Mihomo 安装完成，版本：$new_version，临时文件已清理"
 }
 
 # 主逻辑
