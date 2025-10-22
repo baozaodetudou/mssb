@@ -160,6 +160,10 @@ jobs:
           - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
           - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
           - { name: windows-arm64, goos: windows, goarch: arm64 }
+          # macOS
+          - { name: darwin-amd64, goos: darwin, goarch: amd64, goamd64: v1 }
+          - { name: darwin-amd64-v3, goos: darwin, goarch: amd64, goamd64: v3 }
+          - { name: darwin-arm64, goos: darwin, goarch: arm64 }
 
       fail-fast: false
     runs-on: ubuntu-latest
@@ -226,11 +230,20 @@ jobs:
           mkdir -p ./tmp-sing-box/compress/
           archs=(amd64 amd64-v3 armv5 armv6 armv7 arm64 mips-softfloat mipsle-hardfloat mipsle-softfloat)
           new_name=(amd64 amd64v3 armv5 armv6 armv7 arm64 mips-softfloat mipsle-hardfloat mipsle-softfloat)
-          # `YelNoo-dev` cores
+          # `YelNoo-dev` cores for Linux
           for ((i = 0; i < 9; i++)); do
             mv -f "./tmp-sing-box/sing-box-yelnoo-dev-linux-${archs[i]}/sing-box" ./tmp-sing-box/sing-box
             chmod +x ./tmp-sing-box/sing-box
             tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-yelnoo-dev-linux-${new_name[i]}.tar.gz" -C ./tmp-sing-box/ ./sing-box
+          done
+
+          # `YelNoo-dev` cores for macOS
+          darwin_archs=(amd64 amd64-v3 arm64)
+          darwin_new_name=(amd64 amd64v3 arm64)
+          for ((i = 0; i < 3; i++)); do
+            mv -f "./tmp-sing-box/sing-box-yelnoo-dev-darwin-${darwin_archs[i]}/sing-box" ./tmp-sing-box/sing-box
+            chmod +x ./tmp-sing-box/sing-box
+            tar --no-same-owner -czf "./tmp-sing-box/compress/sing-box-yelnoo-dev-darwin-${darwin_new_name[i]}.tar.gz" -C ./tmp-sing-box/ ./sing-box
           done
 
       - name: Move `sing-box` cores

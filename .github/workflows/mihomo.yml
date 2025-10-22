@@ -56,6 +56,10 @@ jobs:
           - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
           - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
           - { name: windows-arm64, goos: windows, goarch: arm64 }
+          # macOS
+          - { name: darwin-amd64, goos: darwin, goarch: amd64, goamd64: v1 }
+          - { name: darwin-amd64-v3, goos: darwin, goarch: amd64, goamd64: v3 }
+          - { name: darwin-arm64, goos: darwin, goarch: arm64 }
 
       fail-fast: false
     runs-on: ubuntu-latest
@@ -134,6 +138,10 @@ jobs:
           - { name: windows-amd64, goos: windows, goarch: amd64, goamd64: v1 }
           - { name: windows-amd64-v3, goos: windows, goarch: amd64, goamd64: v3 }
           - { name: windows-arm64, goos: windows, goarch: arm64 }
+          # macOS
+          - { name: darwin-amd64, goos: darwin, goarch: amd64, goamd64: v1 }
+          - { name: darwin-amd64-v3, goos: darwin, goarch: amd64, goamd64: v3 }
+          - { name: darwin-arm64, goos: darwin, goarch: arm64 }
 
       fail-fast: false
     runs-on: ubuntu-latest
@@ -204,18 +212,34 @@ jobs:
           mkdir -p ./tmp-mihomo/compress/
           archs=(amd64 amd64-v3 armv5 armv6 armv7 arm64 mips-softfloat mipsle-hardfloat mipsle-softfloat)
           new_name=(amd64 amd64v3 armv5 armv6 armv7 arm64 mips-softfloat mipsle-hardfloat mipsle-softfloat)
-          # `Meta` cores
+          # `Meta` cores for Linux
           for ((i = 0; i < 9; i++)); do
             mv -f "./tmp-mihomo/mihomo-meta-linux-${archs[i]}/meta" ./tmp-mihomo/mihomo
             chmod +x ./tmp-mihomo/mihomo
             tar --no-same-owner -czf "./tmp-mihomo/compress/mihomo-meta-linux-${new_name[i]}.tar.gz" -C ./tmp-mihomo/ ./mihomo
           done
 
-          # `Alpha` cores
+          # `Alpha` cores for Linux
           for ((i = 0; i < 9; i++)); do
             mv -f "./tmp-mihomo/mihomo-alpha-linux-${archs[i]}/meta" ./tmp-mihomo/mihomo
             chmod +x ./tmp-mihomo/mihomo
             tar --no-same-owner -czf "./tmp-mihomo/compress/mihomo-alpha-linux-${new_name[i]}.tar.gz" -C ./tmp-mihomo/ ./mihomo
+          done
+
+          # `Meta` cores for macOS
+          darwin_archs=(amd64 amd64-v3 arm64)
+          darwin_new_name=(amd64 amd64v3 arm64)
+          for ((i = 0; i < 3; i++)); do
+            mv -f "./tmp-mihomo/mihomo-meta-darwin-${darwin_archs[i]}/meta" ./tmp-mihomo/mihomo
+            chmod +x ./tmp-mihomo/mihomo
+            tar --no-same-owner -czf "./tmp-mihomo/compress/mihomo-meta-darwin-${darwin_new_name[i]}.tar.gz" -C ./tmp-mihomo/ ./mihomo
+          done
+
+          # `Alpha` cores for macOS
+          for ((i = 0; i < 3; i++)); do
+            mv -f "./tmp-mihomo/mihomo-alpha-darwin-${darwin_archs[i]}/meta" ./tmp-mihomo/mihomo
+            chmod +x ./tmp-mihomo/mihomo
+            tar --no-same-owner -czf "./tmp-mihomo/compress/mihomo-alpha-darwin-${darwin_new_name[i]}.tar.gz" -C ./tmp-mihomo/ ./mihomo
           done
 
       - name: Move `mihomo` cores
