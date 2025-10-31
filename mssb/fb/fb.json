@@ -1,6 +1,6 @@
 {
     "address": "0.0.0.0",
-    "port": 8088,
+    "port": 8080,
     "database": "/mssb/fb/fb.db",
     "root": "/mssb",
     "baseURL": "/mssb",
