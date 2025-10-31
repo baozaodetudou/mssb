@@ -1993,7 +1993,7 @@ display_service_info() {
         echo
         echo -e "📦 Supervisor 管理界面：${green_text}http://${local_ip}:9001${reset}"
         echo
-        echo -e "🗂️  文件管理服务 Filebrowser：${green_text}http://${local_ip}:8088${reset}"
+        echo -e "🗂️  文件管理服务 Filebrowser：${green_text}http://${local_ip}:8080${reset}"
         echo
         echo -e "🕸️  Sing-box/Mihomo 面板 UI：${green_text}http://${local_ip}:9090/ui${reset}"
         echo -e "${green_text}-------------------------------------------------${reset}"
@@ -2107,7 +2107,7 @@ install_update_server() {
     echo -e "   - 用户名：${supervisor_user}"
     echo -e "   - 密码：${supervisor_pass}"
     echo
-    echo -e "🗂️  文件管理服务 Filebrowser：${green_text}http://${local_ip}:8088${reset}"
+    echo -e "🗂️  文件管理服务 Filebrowser：${green_text}http://${local_ip}:8080${reset}"
     if [ "$fb_login_mode" = "noauth" ]; then
         echo -e "   - 无需登录"
     else
