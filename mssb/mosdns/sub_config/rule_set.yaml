@@ -1,4 +1,12 @@
 plugins:
+#重定向
+  - tag: rewrite
+    type: rewrite
+    args:
+      files:
+        - "/mssb/mosdns/rule/rewrite.txt"
+      dns: 127.0.0.1:2222
+
 #生成的realip规则
   - tag: my_realiprule
     type: domain_set
@@ -110,13 +118,6 @@ plugins:
     args:
       files:
         - "/mssb/mosdns/rule/greylist.txt"
-
-#自定义hosts域名列表
-  - tag: hosts
-    type: hosts
-    args:
-      files:
-        - "/mssb/mosdns/rule/hosts.txt"
 
 #ddns域名列表
   - tag: ddnslist

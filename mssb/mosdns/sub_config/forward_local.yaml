@@ -8,19 +8,19 @@ plugins:
       upstreams:
         - addr: "223.5.5.5"
         - addr: "221.130.33.60"
-          upstream_query_timeout: 500
+          upstream_query_timeout: 300
 
-##阿里私有doh使用示例
+#转发请求到国内dns-运营商dns+阿里云dns私有doh配置示例
 #  - tag: forward_local
 #    type: aliapi
 #    args:
 #      concurrent: 2
-#      account_id: ""
-#      access_key_id: ""
-#      access_key_secret: ""
+#      account_id: " "
+#      access_key_id: " "
+#      access_key_secret: " "
 #      server_addr: "223.5.5.5"
-##      ecs_client_ip: "123.233.176.139"
-##      ecs_client_mask: 24
+#      ecs_client_ip: "27.211.149.114"
+#      ecs_client_mask: 32
 #      upstreams:
 #        - tag: alidns
 #          type: aliapi  

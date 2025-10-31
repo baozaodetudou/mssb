@@ -30,6 +30,9 @@
     "flush_rules": [
       "http://127.0.0.1:9099/plugins/cache_all/flush",
       "http://127.0.0.1:9099/plugins/cache_all_noleak/flush",
+      "http://127.0.0.1:9099/plugins/cache_cn/flush",
+      "http://127.0.0.1:9099/plugins/cache_google/flush",
+      "http://127.0.0.1:9099/plugins/cache_google_node/flush",
       "http://127.0.0.1:9099/plugins/my_fakeiplist/flush",
       "http://127.0.0.1:9099/plugins/my_realiplist/flush",
       "http://127.0.0.1:9099/plugins/my_nov4list/flush",
@@ -38,7 +41,7 @@
   },
   "scheduler": {
     "enabled": true,
-    "start_datetime": "2025-10-14T20:00:00.000Z",
+    "start_datetime": "2025-10-14T20:30:00.000Z",
     "interval_minutes": 1440
   },
   "execution_settings": {
@@ -48,12 +51,12 @@
   },
   "status": {
     "task_state": "idle",
-    "last_run_start_time": "2025-10-15T09:26:55.769103605Z",
-    "last_run_end_time": "2025-10-15T09:37:59.497923258Z",
-    "last_run_domain_count": 6631,
+    "last_run_start_time": "2025-10-28T20:30:00.000181611Z",
+    "last_run_end_time": "2025-10-28T20:43:51.301098814Z",
+    "last_run_domain_count": 8305,
     "progress": {
-      "processed": 6631,
-      "total": 6631
+      "processed": 8305,
+      "total": 8305
     }
   }
 }

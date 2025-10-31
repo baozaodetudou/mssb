@@ -2,12 +2,12 @@
   {
     "name": "geosite_no_cn",
     "type": "geositenocn",
-    "files": "/cus/mosdns/srs/geolocation-!cn.srs",
+    "files": "/mssb/mosdns/srs/geolocation-!cn.srs",
     "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/sing/geo/geosite/geolocation-!cn.srs",
     "enabled": true,
     "auto_update": false,
     "update_interval_hours": 24,
-    "rule_count": 31229,
-    "last_updated": "2025-07-24T11:32:02.722469288+08:00"
+    "rule_count": 31521,
+    "last_updated": "2025-10-15T17:26:24.067487467+08:00"
   }
 ]

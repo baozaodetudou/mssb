@@ -2,12 +2,12 @@
   {
     "name": "geoip_cn",
     "type": "geoipcn",
-    "files": "/cus/mosdns/srs/geoip-cn.srs",
+    "files": "/mssb/mosdns/srs/geoip-cn.srs",
     "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/sing/geo/geoip/cn.srs",
     "enabled": true,
     "auto_update": false,
     "update_interval_hours": 24,
-    "rule_count": 19263,
-    "last_updated": "2025-07-24T11:45:36.245938591+08:00"
+    "rule_count": 18098,
+    "last_updated": "2025-10-15T17:26:08.098886695+08:00"
   }
 ]

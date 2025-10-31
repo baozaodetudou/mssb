@@ -3,13 +3,27 @@ plugins:
   - tag: sequence_main
     type: sequence
     args:
-      - exec: $hosts
+      - exec: $rewrite
       - matches: has_resp
         exec: accept
       - matches: "!qtype 1 28"
+        exec: mark 66
+      - matches:
+        - "mark 66"
+        - "qname $geosite_cn"
+        exec: mark 99
+      - matches: mark 99
+        exec: $sequence_local
+      - matches:
+        - "mark 66"
+        - "!mark 99"
         exec: $sequence_google
-      - matches: "!qtype 1 28"
+      - matches: mark 66
         exec: accept
+#      - matches: "!qtype 1 28"
+#        exec: $sequence_google
+#      - matches: "!qtype 1 28"
+#        exec: accept
       - matches: qname $greylist
         exec: mark 22
       - matches: mark 22

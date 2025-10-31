@@ -2,12 +2,12 @@
   {
     "name": "geosite_cn",
     "type": "geositecn",
-    "files": "/cus/mosdns/srs/geosite-cn.srs",
+    "files": "/mssb/mosdns/srs/geosite-cn.srs",
     "url": "https://github.com/MetaCubeX/meta-rules-dat/raw/sing/geo/geosite/cn.srs",
     "enabled": true,
     "auto_update": false,
     "update_interval_hours": 24,
-    "rule_count": 118688,
-    "last_updated": "2025-07-24T11:31:55.132480017+08:00"
+    "rule_count": 116362,
+    "last_updated": "2025-10-15T17:26:16.640389022+08:00"
   }
 ]

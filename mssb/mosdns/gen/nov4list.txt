@@ -1,0 +1,4 @@
+0000000001 ipv6.msftncsi.com
+0000000004 ipv6.msftconnecttest.com
+0000000001 ipv6check-http.steamserver.net
+0000000001 t-ring-fdv2.msedge.net

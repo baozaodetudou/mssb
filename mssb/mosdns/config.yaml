@@ -8,7 +8,7 @@ api:
 
 #子配置，不要调整顺序
 include:
-  - "/mssb/mosdns/sub_config/adguard.yaml"
+  - "/mssb/mosdns/sub_config/adguard.yaml"              #Adguard插件
   - "/mssb/mosdns/sub_config/domain_output.yaml"        #域名规则生成输出插件定义
   - "/mssb/mosdns/sub_config/rule_set.yaml"                    #数据插件定义
   - "/mssb/mosdns/sub_config/cache.yaml"                       #缓存插件定义
@@ -98,8 +98,8 @@ plugins:
         exec: reject 3
 #当mosdns占用53直面客户端，只有client_ip.txt中指定的IP才科学
       - matches:
-        - "!client_ip $client_ip"
         - switch2 'A'
+        - "!client_ip $client_ip"
         exec: mark 3
       - matches: mark 3
         exec: $sequence_local
@@ -137,6 +137,7 @@ plugins:
 #      listen: 127.0.0.1:6666
       enable_audit: true
       idle_timeout: 720
+
   #刷新服务器
   - tag: udp_requery
     type: udp_server

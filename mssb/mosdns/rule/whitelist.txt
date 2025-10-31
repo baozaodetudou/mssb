@@ -1,5 +1,10 @@
+full:localhost.pan.baidu.com
+domain:wocloud.cn
+domain:wo.cn
+domain:10086.cn
+full:www.dingtalkcs.com
 domain:vegslb.com
-domain:idouyinvod.com
+domain:sealaly.net
 domain:tracker.m-team.io
 domain:tracker.hdsky.me
 domain:steamcontent.com

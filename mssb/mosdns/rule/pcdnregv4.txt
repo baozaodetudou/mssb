@@ -1,19 +1,43 @@
-#ï¿½Éµï¿½V4ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğ©ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½v6ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½v4
-#é›¾å‡ºäº‘ pcdn (smtcdns.com & smtcdns.net - 48-char hex)
-regexp:^[0-9a-f]{48}\.v\.smtcdns\.com$
-regexp:^[0-9a-f]{48}\.v\.smtcdns\.net$
+#¸ÉµôV4ÇëÇó£¬ÕâĞ©ÓòÃûÖ»ÓĞv6½á¹û£¬²»ĞèÒªÇëÇóv4
+# ÌÚÑ¶CDN (smtcdns.com & smtcdns.net - 48-char hex)
+regexp:^[0-9a-f]{48}\.[a-z0-9]+\.smtcdns\.com$
+regexp:^[0-9a-f]{48}\.[a-z0-9]+\.smtcdns\.net$
 
-# ï¿½ï¿½Ñ¶P2P (ahdohpiechei.com - 32-char hex)
+# ÌÚÑ¶P2P (ahdohpiechei.com - 32-char hex)
 regexp:^[0-9a-f]{32}\.ahdohpiechei\.com$
 
-# ï¿½ï¿½Ñ¶P2P (homeborn.cn - IP-as-hostname)
+# ÌÚÑ¶P2P (homeborn.cn - IP-as-hostname)
 regexp:^([0-9a-f]{1,4}-){7}[0-9a-f]{1,4}-[0-9a-f]+\.erer\.homeborn\.cn$
 
-# ï¿½Ö½ï¿½ï¿½ï¿½ï¿½ï¿½CDN (bsgslb.cn - long string)
-regexp:^[a-z0-9]{50,}\.tt\.x\.bsgslb\.cn$
+# ×Ö½ÚÌø¶¯CDN (bsgslb.cn - ¹Ì¶¨³¤¶È59)
+# ×¢Òâ: ÒÑ½«³¤¶ÈĞŞÕıÎª¾«È·µÄ {59}
+regexp:^[a-z0-9]{40,60}\.tt\.x\.bsgslb\.cn$
 
-# Ğ¡ï¿½ï¿½CDN (siomxity.net - long string)
-regexp:^[a-z0-9]{50,}\.siomxity\.(net|com)$
+# Ğ¡Ã×CDN (siomxity.net & siomxity.com - ¹Ì¶¨³¤¶È59)
+# ×¢Òâ: ÒÑ½«³¤¶ÈĞŞÕıÎª¾«È·µÄ {59}
+regexp:^[a-z0-9]{40,60}\.siomxity\.(net|com)$
 
-# ï¿½ï¿½ï¿½ï¿½Í°ï¿½CDN (sealaly.net - long string)
-regexp:^[a-z0-9]{50,}\.sealaly\.net$
+# °¢Àï°Í°ÍCDN (sealaly.net - ¹Ì¶¨³¤¶È59)
+# ×¢Òâ: ÒÑ½«³¤¶ÈĞŞÕıÎª¾«È·µÄ {59}
+regexp:^[a-z0-9]{59}\.sealaly\.net$
+
+# ĞÂÔö: °¢Àï°Í°Í/ÌÔ±¦ CDN (tbcache.com - ¹Ì¶¨³¤¶È52)
+regexp:^[a-z0-9]{40,60}\.mobgslb\.tbcache\.com$
+
+# HyperCacheNode CDN (hypercachenode.com - ¹Ì¶¨³¤¶È43)
+# ×¢Òâ: ÒÑ½«³¤¶ÈĞŞÕıÎª¾«È·µÄ {43}
+regexp:^[a-z0-9]{43}\.hypercachenode\.com$
+
+# ĞÂÔö: ×Ö½ÚÌø¶¯ P2P/CDN (IPv6-in-Hostname)
+regexp:^([0-9a-f]{1,4}_){7}[0-9a-f]{1,4}\.bytefcdnrd\.com$
+
+# ĞÂÔö: ndcpp.com (IPv6ÓÅÑ¡)
+# ½ö´¦Àí°üº¬ -v6 µÄ×ÓÓòÃû£¬ÕâÊÇÃ÷È·µÄÇ¿ĞÅºÅ
+regexp:^.*-v6.*\.ndcpp\.com$
+
+# ĞÂÔö: NexusEdgeIO (Ç¿ÖÆIPv6, ¹Ì¶¨ºó×º)
+# Æ¥Åä42Î»¶¯Ì¬²¿·Ö + ¹Ì¶¨µÄ "888888" ºó×º
+regexp:^[a-z0-9]{42}888888\.nexusedgeio\.com$
+
+# ÏÂÔØÀàCDN (cdntips.net - 32-char MD5)
+regexp:^[0-9a-f]{32}\.dlied1\.cdntips\.net$
