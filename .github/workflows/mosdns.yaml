@@ -131,6 +131,8 @@ jobs:
           sed -i "s|VERSION = subprocess.check_output.*|VERSION = os.environ.get('CUSTOM_VERSION', 'dev/unknown')|" release.py
           # 跳过每个矩阵重复生成 config 的开销（使用预生成的 mosdns/release/config.yaml）
           sed -i "s|go run ../ config gen config.yaml|echo gen-config-skipped|" release.py
+          # 修复 upstream 脚本的小问题：index=0 时未进入分支，导致打包全部目标
+          sed -i "s|if args.i:|if args.i is not None:|" release.py
           python ./release.py -i ${{ matrix.index }}
         env:
           CGO_ENABLED: '0'
