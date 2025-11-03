@@ -20,6 +20,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       commit_hash: ${{ steps.version.outputs.commit_hash }}
       commit_date: ${{ steps.version.outputs.commit_date }}
+      cfg_uploaded: ${{ steps.upload_cfg.outputs.artifact-id }}
     steps:
       - name: Clone mosdns repository
         uses: actions/checkout@v4
@@ -59,6 +60,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Go (for cfg gen)
+        if: steps.check_release.outputs.should_build == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          check-latest: true
+          cache: true
+          cache-dependency-path: mosdns/go.sum
+
+      - name: Generate config.yaml once
+        if: steps.check_release.outputs.should_build == 'true'
+        run: |
+          cd mosdns
+          mkdir -p release
+          # 只生成一次，供所有矩阵任务复用
+          go run . config gen release/config.yaml
+
+      - name: Upload config.yaml artifact
+        if: steps.check_release.outputs.should_build == 'true'
+        id: upload_cfg
+        uses: actions/upload-artifact@v4
+        with:
+          name: mosdns-config
+          path: mosdns/release/config.yaml
+          if-no-files-found: error
+          compression-level: 1
+
   # 并行构建：一次只构建一个目标，加速总体用时
   build:
     name: build target ${{ matrix.index }}
@@ -75,7 +103,7 @@ jobs:
         with:
           repository: yyysuo/mosdns
           path: mosdns
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -83,17 +111,26 @@ jobs:
           go-version: '1.22'
           check-latest: true
           cache: true
+          cache-dependency-path: mosdns/go.sum
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      - name: Download config.yaml
+        uses: actions/download-artifact@v4
+        with:
+          name: mosdns-config
+          path: mosdns/release
+
       - name: Build one target
         run: |
           cd mosdns
           # 覆盖 release.py 的版本号来源，使其读取环境变量 CUSTOM_VERSION
           sed -i "s|VERSION = subprocess.check_output.*|VERSION = os.environ.get('CUSTOM_VERSION', 'dev/unknown')|" release.py
+          # 跳过每个矩阵重复生成 config 的开销（使用预生成的 mosdns/release/config.yaml）
+          sed -i "s|go run ../ config gen config.yaml|echo gen-config-skipped|" release.py
           python ./release.py -i ${{ matrix.index }}
         env:
           CGO_ENABLED: '0'
@@ -105,6 +142,7 @@ jobs:
           name: mosdns-${{ matrix.index }}
           path: ./mosdns/release/mosdns*.zip
           if-no-files-found: error
+          compression-level: 1
 
   release:
     runs-on: ubuntu-latest
