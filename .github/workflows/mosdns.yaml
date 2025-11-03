@@ -12,8 +12,14 @@ on:
       - ".github/workflows/mosdns.yaml"
 
 jobs:
-  build-release:
+  # 预检查：生成版本信息，并判断是否需要构建
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check_release.outputs.should_build }}
+      version: ${{ steps.version.outputs.version }}
+      commit_hash: ${{ steps.version.outputs.commit_hash }}
+      commit_date: ${{ steps.version.outputs.commit_date }}
     steps:
       - name: Clone mosdns repository
         uses: actions/checkout@v4
@@ -42,22 +48,36 @@ jobs:
           if gh release view "mosdns" >/dev/null 2>&1; then
             LATEST_COMMIT=$(gh release view "mosdns" --json body -q .body | grep -o 'Commit: [a-f0-9]*' | cut -d' ' -f2)
             CURRENT_COMMIT=$(cd mosdns && git rev-parse HEAD)
-            if [ "$LATEST_COMMIT" == "$CURRENT_COMMIT" ]; then
-              echo "Release for this commit already exists. Skipping build."
-              echo "exists=true" >> $GITHUB_OUTPUT
-            else
-              echo "New commit found. Proceeding with build."
-              echo "exists=false" >> $GITHUB_OUTPUT
+            if [ "$LATEST_COMMIT" = "$CURRENT_COMMIT" ]; then
+              echo "Release for this commit already exists. Skip."
+              echo "should_build=false" >> $GITHUB_OUTPUT
+              exit 0
             fi
-          else
-            echo "No previous release found. Proceeding with build."
-            echo "exists=false" >> $GITHUB_OUTPUT
           fi
+          echo "New commit found or no release. Build."
+          echo "should_build=true" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # 并行构建：一次只构建一个目标，加速总体用时
+  build:
+    name: build target ${{ matrix.index }}
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.should_build == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        index: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    steps:
+      - name: Clone mosdns repository
+        uses: actions/checkout@v4
+        with:
+          repository: yyysuo/mosdns
+          path: mosdns
+          fetch-depth: 0
+
       - name: Set up Go
-        if: steps.check_release.outputs.exists == 'false'
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
@@ -65,39 +85,48 @@ jobs:
           cache: true
 
       - name: Set up Python
-        if: steps.check_release.outputs.exists == 'false'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Build
-        if: steps.check_release.outputs.exists == 'false'
+      - name: Build one target
         run: |
           cd mosdns
-          # 关键修复：用 sed "重写" release.py 中获取版本号的逻辑。
-          # 将 VERSION = subprocess.check_output(...) 这一行
-          # 替换为 VERSION = os.environ.get('CUSTOM_VERSION', 'dev/unknown')
-          # 这样脚本就会从我们定义的环境变量 CUSTOM_VERSION 中读取版本号。
+          # 覆盖 release.py 的版本号来源，使其读取环境变量 CUSTOM_VERSION
           sed -i "s|VERSION = subprocess.check_output.*|VERSION = os.environ.get('CUSTOM_VERSION', 'dev/unknown')|" release.py
-          
-          # 现在，运行被我们修改过的脚本
-          python ./release.py
+          python ./release.py -i ${{ matrix.index }}
         env:
           CGO_ENABLED: '0'
-          # 将我们生成的版本号通过 CUSTOM_VERSION 环境变量传递进去
-          CUSTOM_VERSION: ${{ steps.version.outputs.version }}
+          CUSTOM_VERSION: ${{ needs.prepare.outputs.version }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mosdns-${{ matrix.index }}
+          path: ./mosdns/release/mosdns*.zip
+          if-no-files-found: error
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [prepare, build]
+    if: needs.prepare.outputs.should_build == 'true'
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          merge-multiple: true
 
       - name: Publish
-        if: steps.check_release.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: mosdns
           name: "MosDNS"
           body: |
-            源码时间: ${{ steps.version.outputs.commit_date }}
-            版本号: ${{ steps.version.outputs.version }}
-            Commit: ${{ steps.version.outputs.commit_hash }}
-          files: './mosdns/release/mosdns*.zip'
+            源码时间: ${{ needs.prepare.outputs.commit_date }}
+            版本号: ${{ needs.prepare.outputs.version }}
+            Commit: ${{ needs.prepare.outputs.commit_hash }}
+          files: './artifacts/mosdns*.zip'
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
