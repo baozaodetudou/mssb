@@ -158,6 +158,7 @@ rule-providers:
   ForeignSpeedtest: {<<: *DomainMrs, path: ./rules/category-speedtest.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-speedtest.mrs}
   SteamCN: {<<: *DomainMrs, path: ./rules/steam@cn.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam@cn.mrs}
   Steam: {<<: *DomainMrs, path: ./rules/steam.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam.mrs}
+  Nintendo: {<<: *DomainMrs, path: ./rules/nintendo.mrs, url: 'https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nintendo.mrs'}
   Private: {<<: *DomainMrs, path: ./rules/private.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs}
   # IP规则
   NetflixIP: {<<: *IPcidrMrs, path: ./rules/netflixip.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/netflix.mrs}
@@ -219,6 +220,7 @@ rules:
   
   - RULE-SET,SteamCN,全球直连
   - RULE-SET,Steam,游戏平台
+  - RULE-SET,Nintendo,游戏平台
   - RULE-SET,Private,全球直连
   # IP 路由
   - RULE-SET,NetflixIP,Netflix,no-resolve
