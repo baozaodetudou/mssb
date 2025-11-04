@@ -1,0 +1,172 @@
+name: Release PH mosdns
+permissions:
+  contents: write
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 20 * * *"
+  push:
+    branches:
+      - latest
+    paths:
+      - ".github/workflows/ph-mosdns.yaml"
+
+jobs:
+  # 预检查：生成版本信息，并判断是否需要构建
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check_release.outputs.should_build }}
+      version: ${{ steps.version.outputs.version }}
+      commit_hash: ${{ steps.version.outputs.commit_hash }}
+      commit_date: ${{ steps.version.outputs.commit_date }}
+      cfg_uploaded: ${{ steps.upload_cfg.outputs.artifact-id }}
+    steps:
+      - name: Clone mosdns repository
+        uses: actions/checkout@v4
+        with:
+          repository: yyysuo/mosdns
+          path: mosdns
+          fetch-depth: 0 # fetch-depth: 0 is needed for git describe
+
+      - name: Generate version and commit info
+        id: version
+        run: |
+          cd mosdns
+          COMMIT_HASH_FULL=$(git rev-parse HEAD)
+          COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)
+          COMMIT_DATE_FULL=$(git log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M:%S')
+          COMMIT_DATE_ONLY=$(git log -1 --format=%cd --date=format:'%Y%m%d')
+          VERSION="ph-yyds-${COMMIT_DATE_ONLY}-${COMMIT_HASH_SHORT}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "commit_hash=${COMMIT_HASH_FULL}" >> $GITHUB_OUTPUT
+          echo "commit_date=${COMMIT_DATE_FULL}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${VERSION}"
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          if gh release view "ph-mosdns" >/dev/null 2>&1; then
+            LATEST_COMMIT=$(gh release view "ph-mosdns" --json body -q .body | grep -o 'Commit: [a-f0-9]*' | cut -d' ' -f2)
+            CURRENT_COMMIT=$(cd mosdns && git rev-parse HEAD)
+            if [ "$LATEST_COMMIT" = "$CURRENT_COMMIT" ]; then
+              echo "Release for this commit already exists. Skip."
+              echo "should_build=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+          echo "New commit found or no release. Build."
+          echo "should_build=true" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go (for cfg gen)
+        if: steps.check_release.outputs.should_build == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          check-latest: true
+          cache: true
+          cache-dependency-path: mosdns/go.sum
+
+      - name: Generate config.yaml once
+        if: steps.check_release.outputs.should_build == 'true'
+        run: |
+          cd mosdns
+          mkdir -p release
+          # 只生成一次，供所有矩阵任务复用
+          go run . config gen release/config.yaml
+
+      - name: Upload config.yaml artifact
+        if: steps.check_release.outputs.should_build == 'true'
+        id: upload_cfg
+        uses: actions/upload-artifact@v4
+        with:
+          name: mosdns-config
+          path: mosdns/release/config.yaml
+          if-no-files-found: error
+          compression-level: 1
+
+  # 并行构建：一次只构建一个目标，加速总体用时
+  build:
+    name: build target ${{ matrix.index }}
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.should_build == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        index: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+    steps:
+      - name: Clone mosdns repository
+        uses: actions/checkout@v4
+        with:
+          repository: yyysuo/mosdns
+          path: mosdns
+          fetch-depth: 1
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          check-latest: true
+          cache: true
+          cache-dependency-path: mosdns/go.sum
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Download config.yaml
+        uses: actions/download-artifact@v4
+        with:
+          name: mosdns-config
+          path: mosdns/release
+
+      - name: Build one target
+        run: |
+          cd mosdns
+          # 覆盖 release.py 的版本号来源，使其读取环境变量 CUSTOM_VERSION
+          sed -i "s|VERSION = subprocess.check_output.*|VERSION = os.environ.get('CUSTOM_VERSION', 'dev/unknown')|" release.py
+          # 跳过每个矩阵重复生成 config 的开销（使用预生成的 mosdns/release/config.yaml）
+          sed -i "s|go run ../ config gen config.yaml|echo gen-config-skipped|" release.py
+          # 修复 upstream 脚本的小问题：index=0 时未进入分支，导致打包全部目标
+          sed -i "s|if args.i:|if args.i is not None:|" release.py
+          python ./release.py -i ${{ matrix.index }}
+        env:
+          CGO_ENABLED: '0'
+          CUSTOM_VERSION: ${{ needs.prepare.outputs.version }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mosdns-${{ matrix.index }}
+          path: ./mosdns/release/mosdns*.zip
+          if-no-files-found: error
+          compression-level: 1
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [prepare, build]
+    if: needs.prepare.outputs.should_build == 'true'
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          merge-multiple: true
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ph-mosdns
+          name: "PH MosDNS"
+          body: |
+            源码时间: ${{ needs.prepare.outputs.commit_date }}
+            版本号: ${{ needs.prepare.outputs.version }}
+            Commit: ${{ needs.prepare.outputs.commit_hash }}
+          files: './artifacts/mosdns*.zip'
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
