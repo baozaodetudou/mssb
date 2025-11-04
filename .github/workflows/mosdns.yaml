@@ -25,7 +25,7 @@ jobs:
       - name: Clone mosdns repository
         uses: actions/checkout@v4
         with:
-          repository: yyysuo/mosdns
+          repository: baozaodetudou/mosdns
           path: mosdns
           fetch-depth: 0 # fetch-depth: 0 is needed for git describe
 
@@ -101,7 +101,7 @@ jobs:
       - name: Clone mosdns repository
         uses: actions/checkout@v4
         with:
-          repository: yyysuo/mosdns
+          repository: baozaodetudou/mosdns
           path: mosdns
           fetch-depth: 1
 
