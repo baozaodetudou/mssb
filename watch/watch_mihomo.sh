@@ -5,10 +5,18 @@ sleep 60
 CONFIG_DIR="/mssb/mihomo"
 
 # 使用 inotifywait 仅监听 config.yaml 的变动
-while true; do
-  inotifywait -e modify,create,delete -r $CONFIG_DIR --include 'config\.yaml$'
-  echo "mihomo 配置文件发生变化，重启 mihomo 服务..."
-
-  # 通过 supervisorctl 重启 mihomo 服务
-  supervisorctl restart mihomo
-done
+while read -r EVENT FILE; do
+  case "$FILE" in
+    "$CONFIG_DIR"/config.yaml)
+      echo "mihomo 配置文件发生变化，重启 mihomo 服务..."
+      supervisorctl restart mihomo
+      ;;
+    *)
+      continue
+      ;;
+  esac
+done < <(
+  inotifywait -q -m -e modify,create,delete,move -r "$CONFIG_DIR" \
+    --exclude '/ui(/|$)' \
+    --format '%e %w%f'
+)

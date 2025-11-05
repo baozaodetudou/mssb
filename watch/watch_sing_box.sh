@@ -17,6 +17,6 @@ while read -r EVENT FILE; do
   esac
 done < <(
   inotifywait -q -m -e modify,create,delete,move -r "$CONFIG_DIR" \
-    --exclude '/(adguard|gen|genblank|rule|srs|unpack|webinfo)(/|$)' \
+    --exclude '/(adguard|gen|genblank|rule|srs|unpack|webinfo|ui)(/|$)' \
     --format '%e %w%f'
 )
