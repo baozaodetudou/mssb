@@ -8,7 +8,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') 启动 MosDNS 配置文件监控..."
 
 while read -r EVENT FILE; do
   # 只处理特定扩展名文件
-  if [[ "$FILE" =~ \.(txt|yaml|yml|json|srs)$ ]]; then
+  if [[ "$FILE" =~ \.(yaml|yml)$ ]]; then
     CURRENT_TIME=$(date +%s)
     if (( CURRENT_TIME - LAST_RESTART >= DEBOUNCE_TIME )); then
       echo "$(date '+%Y-%m-%d %H:%M:%S') 有效变更: [$EVENT] $FILE"
@@ -25,7 +25,8 @@ while read -r EVENT FILE; do
     fi
   fi
 done < <(
-  inotifywait -q -m -e modify,create,delete,move -r "$CONFIG_DIR" \
+inotifywait -q -m -e modify,create,delete,move -r "$CONFIG_DIR" \
     --exclude '/mssb/mosdns/gen' \
+    --include "(^|/)(config\\.ya?ml|sub_config/.*\\.ya?ml)$" \
     --format '%e %w%f'
 )
