@@ -30,6 +30,6 @@ while read -r EVENT FILE; do
   esac
 done < <(
   inotifywait -q -m -e modify,create,delete,move -r "$CONFIG_DIR" \
-    --exclude '/mssb/mosdns/gen' \
+    --exclude '/(adguard|gen|genblank|rule|srs|unpack|webinfo)(/|$)' \
     --format '%e %w%f'
 )
