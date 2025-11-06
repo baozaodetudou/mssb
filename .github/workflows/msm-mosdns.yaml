@@ -1,4 +1,4 @@
-name: Release PH mosdns
+name: Release msm mosdns
 permissions:
   contents: write
 on:
@@ -9,7 +9,7 @@ on:
     branches:
       - latest
     paths:
-      - ".github/workflows/ph-mosdns.yaml"
+      - ".github/workflows/msm-mosdns.yaml"
 
 jobs:
   # 预检查：生成版本信息，并判断是否需要构建
@@ -25,7 +25,7 @@ jobs:
       - name: Clone mosdns repository
         uses: actions/checkout@v4
         with:
-          repository: yyysuo/mosdns
+          repository: baozaodetudou/mosdns
           path: mosdns
           fetch-depth: 0 # fetch-depth: 0 is needed for git describe
 
@@ -46,8 +46,8 @@ jobs:
       - name: Check if release exists
         id: check_release
         run: |
-          if gh release view "ph-mosdns" >/dev/null 2>&1; then
-            LATEST_COMMIT=$(gh release view "ph-mosdns" --json body -q .body | grep -o 'Commit: [a-f0-9]*' | cut -d' ' -f2)
+          if gh release view "msm-mosdns" >/dev/null 2>&1; then
+            LATEST_COMMIT=$(gh release view "msm-mosdns" --json body -q .body | grep -o 'Commit: [a-f0-9]*' | cut -d' ' -f2)
             CURRENT_COMMIT=$(cd mosdns && git rev-parse HEAD)
             if [ "$LATEST_COMMIT" = "$CURRENT_COMMIT" ]; then
               echo "Release for this commit already exists. Skip."
@@ -101,7 +101,7 @@ jobs:
       - name: Clone mosdns repository
         uses: actions/checkout@v4
         with:
-          repository: yyysuo/mosdns
+          repository: baozaodetudou/mosdns
           path: mosdns
           fetch-depth: 1
 
@@ -160,8 +160,8 @@ jobs:
       - name: Publish
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ph-mosdns
-          name: "PH MosDNS"
+          tag_name: msm-mosdns
+          name: "msm MosDNS"
           body: |
             源码时间: ${{ needs.prepare.outputs.commit_date }}
             版本号: ${{ needs.prepare.outputs.version }}
