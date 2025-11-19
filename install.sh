@@ -1583,18 +1583,18 @@ edit_mihomo_proxy_providers() {
         if [ $yq_no_escape -eq 0 ]; then
             yq -i --no-escape ".proxy-providers.\"$tag\".url = \"$url\"" "$config_file"
             yq -i --no-escape ".proxy-providers.\"$tag\".type = \"http\"" "$config_file"
-            yq -i --no-escape ".proxy-providers.\"$tag\".interval = 300" "$config_file"
+            yq -i --no-escape ".proxy-providers.\"$tag\".interval = 3600" "$config_file"
             yq -i --no-escape ".proxy-providers.\"$tag\".health-check.enable = true" "$config_file"
             yq -i --no-escape ".proxy-providers.\"$tag\".health-check.url = \"http://detectportal.firefox.com/success.txt\"" "$config_file"
-            yq -i --no-escape ".proxy-providers.\"$tag\".health-check.interval = 6" "$config_file"
+            yq -i --no-escape ".proxy-providers.\"$tag\".health-check.interval = 120" "$config_file"
             yq -i --no-escape ".proxy-providers.\"$tag\".path = \"./proxy_providers/${tag}.yaml\"" "$config_file"
         else
             yq -i ".proxy-providers.\"$tag\".url = \"$url\"" "$config_file"
             yq -i ".proxy-providers.\"$tag\".type = \"http\"" "$config_file"
-            yq -i ".proxy-providers.\"$tag\".interval = 300" "$config_file"
+            yq -i ".proxy-providers.\"$tag\".interval = 3600" "$config_file"
             yq -i ".proxy-providers.\"$tag\".health-check.enable = true" "$config_file"
             yq -i ".proxy-providers.\"$tag\".health-check.url = \"http://detectportal.firefox.com/success.txt\"" "$config_file"
-            yq -i ".proxy-providers.\"$tag\".health-check.interval = 6" "$config_file"
+            yq -i ".proxy-providers.\"$tag\".health-check.interval = 120" "$config_file"
             yq -i ".proxy-providers.\"$tag\".path = \"./proxy_providers/${tag}.yaml\"" "$config_file"
         fi
         echo "[yq] 已写入 $tag 到 proxy-providers"

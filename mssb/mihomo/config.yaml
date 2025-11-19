@@ -234,9 +234,9 @@ proxy-providers:
   机场名称1:
     url: '机场订阅'
     type: http
-    interval: 300
+    interval: 3600
     health-check:
       enable: true
       url: http://detectportal.firefox.com/success.txt
-      interval: 6
+      interval: 120
     path: './proxy_providers/sub.yaml'
