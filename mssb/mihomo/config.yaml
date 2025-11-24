@@ -106,8 +106,6 @@ dns:
     - +.lan
   default-nameserver:
     - 127.0.0.1:8888
-  nameserver:
-    - 127.0.0.1:7777
 
 proxy-groups:
   - {name: 节点选择, type: select, icon: 'https://raw.githubusercontent.com/Koolson/Qure/refs/heads/master/IconSet/Color/Filter.png', proxies: [香港节点, 新加坡节点, 韩国节点, 台湾节点, 日本节点, 美国节点, 省流节点, 高级节点, 手动切换, 全球直连, 机场节点]}
