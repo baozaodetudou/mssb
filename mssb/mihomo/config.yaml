@@ -1,5 +1,5 @@
 # 锚点 - 筛选组
-FilterHK: &FilterHK '^(?=.*(?i)(港|🇭🇰|HK|Hong|HKG)).*$'
+FilterHK: &FilterHK "^(?=.*(?<!深)(港|HK|(?i)Hong))(?!(.*(台|本|坡|美))).*$"
 FilterSG: &FilterSG '^(?=.*(?i)(坡|🇸🇬|SG|Sing|SIN|XSP)).*$'
 FilterJP: &FilterJP '^(?=.*(?i)(日|🇯🇵|JP|Japan|NRT|HND|KIX|CTS|FUK)).*$'
 FilterKR: &FilterKR '^(?=.*(?i)(韩|🇰🇷|韓|首尔|南朝鲜|KR|KOR|Korea|South)).*$'
@@ -153,11 +153,14 @@ rule-providers:
 #  Foreign: {<<: *DomainMrs, path: ./rules/geolocation-!cn.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/geolocation-!cn.mrs}
   PT: {<<: *DomainMrs, path: ./rules/category-pt.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-pt.mrs}
   ChinaSpeedtest: {<<: *DomainMrs, path: ./rules/category-speedtest@cn.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-speedtest@cn.mrs}
-  ForeignSpeedtest: {<<: *DomainMrs, path: ./rules/category-speedtest.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-speedtest.mrs}
+#  ForeignSpeedtest: {<<: *DomainMrs, path: ./rules/category-speedtest.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/category-speedtest.mrs}
+#替换新的speedtest规则.
+  ForeignSpeedtest: {<<: *DomainMrs, path: ./rules/category-speedtest.mrs, url: https://cdn.jsdelivr.net/gh/666OS/rules@refs/heads/release/mihomo/domain/Speedtest.mrs}  
   SteamCN: {<<: *DomainMrs, path: ./rules/steam@cn.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam@cn.mrs}
   Steam: {<<: *DomainMrs, path: ./rules/steam.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/steam.mrs}
-  Nintendo: {<<: *DomainMrs, path: ./rules/nintendo.mrs, url: 'https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nintendo.mrs'}
+  Nintendo: {<<: *DomainMrs, path: ./rules/nintendo.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/nintendo.mrs}
   Private: {<<: *DomainMrs, path: ./rules/private.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geosite/private.mrs}
+  Netflix: {<<: *DomainMrs, path: ./rules/Netflix.mrs, url: https://cdn.jsdelivr.net/gh/666OS/rules@refs/heads/release/mihomo/domain/Netflix.mrs}  
   # IP规则
   NetflixIP: {<<: *IPcidrMrs, path: ./rules/netflixip.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/netflix.mrs}
   TelegramIP: {<<: *IPcidrMrs, path: ./rules/telegramip.mrs, url: https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo/geoip/telegram.mrs}
@@ -220,6 +223,7 @@ rules:
   - RULE-SET,Steam,游戏平台
   - RULE-SET,Nintendo,游戏平台
   - RULE-SET,Private,全球直连
+  - RULE-SET,Netflix,Netflix
   # IP 路由
   - RULE-SET,NetflixIP,Netflix,no-resolve
   - RULE-SET,TelegramIP,Telegram,no-resolve
