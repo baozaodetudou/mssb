@@ -2,5 +2,5 @@ plugins:
   - tag: adguard
     type: adguard_rule
     args:
-      dir: "/mssb/mosdns/adguard/"
+      dir: "adguard/"
       socks5: "127.0.0.1:7891"

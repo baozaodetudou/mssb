@@ -1,4 +1,0 @@
-full:ipv6.msftncsi.com
-full:ipv6.msftconnecttest.com
-full:ipv6check-http.steamserver.net
-full:t-ring-fdv2.msedge.net

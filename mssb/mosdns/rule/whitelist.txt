@@ -1,4 +1,5 @@
 full:localhost.pan.baidu.com
+domain:alibabachengdun.com
 domain:wocloud.cn
 domain:wo.cn
 domain:10086.cn

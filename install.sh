@@ -819,11 +819,11 @@ mosdns_configure_files() {
     local dns="${dns_addr:-119.29.29.29}"
     # 校验格式
     if [[ $dns =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        sed -i "s/addr: \"221.130.33.60\"/addr: \"$dns\"/" "$forward_local_yaml"
+        sed -i "s/addr: \"114.114.114.114\"/addr: \"$dns\"/" "$forward_local_yaml"
         log "已更新运营商 DNS 地址为：$dns"
     else
         log "env 里的 DNS 地址格式不正确，将使用默认值 119.29.29.29"
-        sed -i "s/addr: \"221.130.33.60\"/addr: \"119.29.29.29\"/" "$forward_local_yaml"
+        sed -i "s/addr: \"114.114.114.114\"/addr: \"119.29.29.29\"/" "$forward_local_yaml"
     fi
 
     # 恢复 rule 目录
@@ -2183,7 +2183,7 @@ load_or_init_env() {
     fi
     echo -e "\n${yellow}=== 运营商 DNS 配置 ===${reset}"
     echo -e "默认已设置第一、第二解析为阿里公共 DNS：${green_text}223.5.5.5${reset}"
-    echo -e "当前第三解析配置的运营商 DNS 为：${green_text}221.130.33.60${reset}"
+    echo -e "当前第三解析配置的运营商 DNS 为：${green_text}114.114.114.114${reset}"
     echo -e "建议修改为您所在运营商的 DNS 服务器地址，否则可能影响解析速度"
     echo -e "常见运营商 DNS：可以参考 https://ipw.cn/doc/else/dns.html"
     echo -e "  阿里：223.5.5.5, 223.6.6.6"

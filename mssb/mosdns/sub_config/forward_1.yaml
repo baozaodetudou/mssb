@@ -8,34 +8,33 @@ plugins:
       upstreams:
         - addr: "udp://127.0.0.1:6666"
 
-#使用内部的国内dns服务器
-  - tag: forward_local_in
+#向mihomo请求国内的fakeip
+  - tag: forward_mihomo
     type: forward
     args:
       concurrent: 1
       upstreams:
-        - addr: "udp://127.0.0.1:2222"
+        - addr: "udp://127.0.0.1:1053"
 
-#转发国外请求到内部带过期缓存的服务
-  - tag: forward_google_in
-    type: forward
+#向mihomo请求国内的fakeip序列
+  - tag: sequence_local_fake
+    type: sequence
     args:
-      concurrent: 1
-      upstreams:
-        - addr: "udp://127.0.0.1:3333"
+      - exec: drop_resp      #丢弃用于标记的blackhole ip
+      - exec: $forward_mihomo
+      - exec: ttl 5
 
-#缓存序列-国内域名
+#缓存序列-国内域名realip
   - tag: sequence_local
     type: sequence
     args:
       - exec: drop_resp      #丢弃用于标记的blackhole ip
       - matches: switch4 'A'
         exec: $cache_cn
-      - matches:
-        - switch4 'A'
-        - has_resp
-        exec: accept
-      - exec: $forward_local
+      - matches: switch11 'A'
+        exec: $forward_local_alidoh
+      - matches: switch11 'B'
+        exec: $forward_local
       - exec: cname_remover
 
 #单次请求fakeip
@@ -61,9 +60,5 @@ plugins:
       - exec: drop_resp      #丢弃用于标记的blackhole ip
       - matches: switch4 'A'
         exec: $cache_google
-      - matches:
-        - switch4 'A'
-        - has_resp
-        exec: accept
       - exec: $forward_google
       - exec: cname_remover

@@ -12,10 +12,8 @@ plugins:
   - tag: sequence_google_node
     type: sequence
     args:
+      - exec: ecs 2408:8888::8
       - exec: $cache_google_node
-      - matches: has_resp
-        exec: accept
-      - exec: ecs 2408:8214:213::1  #使用自己的公网IP，无须更新
       - exec: $forward_google_ecs
       - exec: cname_remover
 

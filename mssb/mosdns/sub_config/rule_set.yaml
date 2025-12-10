@@ -1,148 +1,169 @@
 plugins:
+#列表外域名解析IP为此列表中IP，归入直连
+  - tag: direct_ip
+    type: ip_set
+    args:
+      files:
+        - "rule/direct_ip.txt"
+
 #重定向
   - tag: rewrite
     type: rewrite
     args:
       files:
-        - "/mssb/mosdns/rule/rewrite.txt"
+        - "rule/rewrite.txt"
       dns: 127.0.0.1:2222
+
+#自定义国外域名列表
+  - tag: cusnocn
+    type: sd_set    
+    args:
+      socks5: "127.0.0.1:7891" 
+      local_config: "srs/cusnocn.json" 
+
+#自定义国内域名列表
+  - tag: cuscn
+    type: sd_set    
+    args:
+      socks5: "127.0.0.1:7891" 
+      local_config: "srs/cuscn.json" 
 
 #生成的realip规则
   - tag: my_realiprule
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/gen/realiprule.txt"
+        - "gen/realiprule.txt"
 
 #生成的fakeip规则
   - tag: my_fakeiprule
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/gen/fakeiprule.txt"
+        - "gen/fakeiprule.txt"
 
 #生成的没有v6的域名规则
   - tag: my_nov6rule
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/gen/nov6rule.txt"
+        - "gen/nov6rule.txt"
 
 #生成的没有ip的域名规则
   - tag: my_nov4rule
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/gen/nov4rule.txt"
+        - "gen/nov4rule.txt"
 
 #生成的节点没有v6的域名规则
   - tag: my_nodenov6rule
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/gen/nodenov6rule.txt"
+        - "gen/nodenov6rule.txt"
 
 #生成的节点没有ip的域名规则
   - tag: my_nodenov4rule
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/gen/nodenov4rule.txt"
+        - "gen/nodenov4rule.txt"
 
 #中国域名列表
   - tag: geosite_cn
     type: sd_set    
     args:
       socks5: "127.0.0.1:7891" 
-      local_config: "/mssb/mosdns/srs/geositecn.json"
+      local_config: "srs/geositecn.json" 
 
 #中国IP列表
   - tag: geoip_cn
     type: si_set    
     args:
       socks5: "127.0.0.1:7891" 
-      local_config: "/mssb/mosdns/srs/geoipcn.json"
+      local_config: "srs/geoipcn.json" 
 
 #需要代理的客户端IP列表
   - tag: client_ip
     type: ip_set
     args:
       files:
-        - "/mssb/mosdns/client_ip.txt"
+        - "client_ip.txt"
 
 #国外域名列表
   - tag: geosite_no_cn
     type: sd_set    
     args:
       socks5: "127.0.0.1:7891" 
-      local_config: "/mssb/mosdns/srs/geositenocn.json"
+      local_config: "srs/geositenocn.json" 
 
 #自定义白名单域名列表
   - tag: whitelist
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/rule/whitelist.txt"
+        - "rule/whitelist.txt"
 
 #屏蔽域名列表
   - tag: blocklist
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/rule/blocklist.txt"
+        - "rule/blocklist.txt"
 
 #屏蔽V4解析的域名列表
   - tag: blocklistv4
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/rule/blocklistv4.txt"
+        - "rule/blocklistv4.txt"
 
 #屏蔽V6解析的域名列表
   - tag: blocklistv6
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/rule/blocklistv6.txt"
+        - "rule/blocklistv6.txt"
 
 #国外dns解析realip域名列表
   - tag: realiplist
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/rule/realiplist.txt"
+        - "rule/realiplist.txt"
 
 #自定义强制代理域名列表
   - tag: greylist
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/rule/greylist.txt"
+        - "rule/greylist.txt"
 
 #ddns域名列表
   - tag: ddnslist
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/rule/ddnslist.txt"
+        - "rule/ddnslist.txt"
 
 #pcdn域名列表
   - tag: pcdnlist
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/rule/pcdnlist.txt"
+        - "rule/pcdnlist.txt"
 
 #pcdn正则屏蔽v4请求
   - tag: pcdnregv4
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/rule/pcdnregv4.txt"
+        - "rule/pcdnregv4.txt"
 
 #pcdn正则屏蔽v6请求
   - tag: pcdnregv6
     type: domain_set
     args:
       files:
-        - "/mssb/mosdns/rule/pcdnregv6.txt"
+        - "rule/pcdnregv6.txt"

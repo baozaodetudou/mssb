@@ -18,10 +18,6 @@ plugins:
     args:
       - matches: switch4 'A'
         exec: $cache_google
-      - matches:
-        - switch4 'A'
-        - has_resp
-        exec: accept
       - exec: $forward_google
       - exec: cname_remover
 

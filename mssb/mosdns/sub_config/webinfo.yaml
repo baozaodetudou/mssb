@@ -2,4 +2,4 @@ plugins:
   - tag: clientname
     type: webinfo
     args:
-      file: "/mssb/mosdns/webinfo/clientname.json"
+      file: "webinfo/clientname.json"

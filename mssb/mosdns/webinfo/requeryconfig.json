@@ -3,22 +3,22 @@
     "source_files": [
       {
         "alias": "FakeIP 域名",
-        "path": "/mssb/mosdns/gen/fakeiprule.txt"
+        "path": "gen/fakeiprule.txt"
       },
       {
         "alias": "RealIP 域名",
-        "path": "/mssb/mosdns/gen/realiprule.txt"
+        "path": "gen/realiprule.txt"
       },
       {
         "alias": "无V4域名",
-        "path": "/mssb/mosdns/gen/nov4rule.txt"
+        "path": "gen/nov4rule.txt"
       },
       {
         "alias": "无V6域名",
-        "path": "/mssb/mosdns/gen/nov6rule.txt"
+        "path": "gen/nov6rule.txt"
       }
     ],
-    "output_file": "/mssb/mosdns/gen/requery_backup.txt"
+    "output_file": "gen/requery_backup.txt"
   },
   "url_actions": {
     "save_rules": [
@@ -28,11 +28,6 @@
       "http://127.0.0.1:9099/plugins/my_nov6list/save"
     ],
     "flush_rules": [
-      "http://127.0.0.1:9099/plugins/cache_all/flush",
-      "http://127.0.0.1:9099/plugins/cache_all_noleak/flush",
-      "http://127.0.0.1:9099/plugins/cache_cn/flush",
-      "http://127.0.0.1:9099/plugins/cache_google/flush",
-      "http://127.0.0.1:9099/plugins/cache_google_node/flush",
       "http://127.0.0.1:9099/plugins/my_fakeiplist/flush",
       "http://127.0.0.1:9099/plugins/my_realiplist/flush",
       "http://127.0.0.1:9099/plugins/my_nov4list/flush",
@@ -51,12 +46,12 @@
   },
   "status": {
     "task_state": "idle",
-    "last_run_start_time": "2025-10-28T20:30:00.000181611Z",
-    "last_run_end_time": "2025-10-28T20:43:51.301098814Z",
-    "last_run_domain_count": 8305,
+    "last_run_start_time": "2025-12-03T20:30:00.001226964Z",
+    "last_run_end_time": "2025-12-03T20:53:46.61377338Z",
+    "last_run_domain_count": 14260,
     "progress": {
-      "processed": 8305,
-      "total": 8305
+      "processed": 14260,
+      "total": 14260
     }
   }
 }

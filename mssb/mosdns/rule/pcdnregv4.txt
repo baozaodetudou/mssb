@@ -1,43 +1,45 @@
-#¸ÉµôV4ÇëÇó£¬ÕâĞ©ÓòÃûÖ»ÓĞv6½á¹û£¬²»ĞèÒªÇëÇóv4
-# ÌÚÑ¶CDN (smtcdns.com & smtcdns.net - 48-char hex)
+#å¹²æ‰V4è¯·æ±‚ï¼Œè¿™äº›åŸŸååªæœ‰v6ç»“æœï¼Œä¸éœ€è¦è¯·æ±‚v4
+# è…¾è®¯CDN (smtcdns.com & smtcdns.net - 48-char hex)
 regexp:^[0-9a-f]{48}\.[a-z0-9]+\.smtcdns\.com$
 regexp:^[0-9a-f]{48}\.[a-z0-9]+\.smtcdns\.net$
 
-# ÌÚÑ¶P2P (ahdohpiechei.com - 32-char hex)
+# è…¾è®¯P2P (ahdohpiechei.com - 32-char hex)
 regexp:^[0-9a-f]{32}\.ahdohpiechei\.com$
 
-# ÌÚÑ¶P2P (homeborn.cn - IP-as-hostname)
+# è…¾è®¯P2P (homeborn.cn - IP-as-hostname)
 regexp:^([0-9a-f]{1,4}-){7}[0-9a-f]{1,4}-[0-9a-f]+\.erer\.homeborn\.cn$
 
-# ×Ö½ÚÌø¶¯CDN (bsgslb.cn - ¹Ì¶¨³¤¶È59)
-# ×¢Òâ: ÒÑ½«³¤¶ÈĞŞÕıÎª¾«È·µÄ {59}
+# å­—èŠ‚è·³åŠ¨CDN (bsgslb.cn - å›ºå®šé•¿åº¦59)
+# æ³¨æ„: å·²å°†é•¿åº¦ä¿®æ­£ä¸ºç²¾ç¡®çš„ {59}
 regexp:^[a-z0-9]{40,60}\.tt\.x\.bsgslb\.cn$
 
-# Ğ¡Ã×CDN (siomxity.net & siomxity.com - ¹Ì¶¨³¤¶È59)
-# ×¢Òâ: ÒÑ½«³¤¶ÈĞŞÕıÎª¾«È·µÄ {59}
+# å°ç±³CDN (siomxity.net & siomxity.com - å›ºå®šé•¿åº¦59)
+# æ³¨æ„: å·²å°†é•¿åº¦ä¿®æ­£ä¸ºç²¾ç¡®çš„ {59}
 regexp:^[a-z0-9]{40,60}\.siomxity\.(net|com)$
 
-# °¢Àï°Í°ÍCDN (sealaly.net - ¹Ì¶¨³¤¶È59)
-# ×¢Òâ: ÒÑ½«³¤¶ÈĞŞÕıÎª¾«È·µÄ {59}
+# é˜¿é‡Œå·´å·´CDN (sealaly.net - å›ºå®šé•¿åº¦59)
+# æ³¨æ„: å·²å°†é•¿åº¦ä¿®æ­£ä¸ºç²¾ç¡®çš„ {59}
 regexp:^[a-z0-9]{59}\.sealaly\.net$
 
-# ĞÂÔö: °¢Àï°Í°Í/ÌÔ±¦ CDN (tbcache.com - ¹Ì¶¨³¤¶È52)
+# æ–°å¢: é˜¿é‡Œå·´å·´/æ·˜å® CDN (tbcache.com - å›ºå®šé•¿åº¦52)
 regexp:^[a-z0-9]{40,60}\.mobgslb\.tbcache\.com$
 
-# HyperCacheNode CDN (hypercachenode.com - ¹Ì¶¨³¤¶È43)
-# ×¢Òâ: ÒÑ½«³¤¶ÈĞŞÕıÎª¾«È·µÄ {43}
+# HyperCacheNode CDN (hypercachenode.com - å›ºå®šé•¿åº¦43)
+# æ³¨æ„: å·²å°†é•¿åº¦ä¿®æ­£ä¸ºç²¾ç¡®çš„ {43}
 regexp:^[a-z0-9]{43}\.hypercachenode\.com$
 
-# ĞÂÔö: ×Ö½ÚÌø¶¯ P2P/CDN (IPv6-in-Hostname)
+# æ–°å¢: å­—èŠ‚è·³åŠ¨ P2P/CDN (IPv6-in-Hostname)
 regexp:^([0-9a-f]{1,4}_){7}[0-9a-f]{1,4}\.bytefcdnrd\.com$
 
-# ĞÂÔö: ndcpp.com (IPv6ÓÅÑ¡)
-# ½ö´¦Àí°üº¬ -v6 µÄ×ÓÓòÃû£¬ÕâÊÇÃ÷È·µÄÇ¿ĞÅºÅ
+# æ–°å¢: ndcpp.com (IPv6ä¼˜é€‰)
+# ä»…å¤„ç†åŒ…å« -v6 çš„å­åŸŸåï¼Œè¿™æ˜¯æ˜ç¡®çš„å¼ºä¿¡å·
 regexp:^.*-v6.*\.ndcpp\.com$
 
-# ĞÂÔö: NexusEdgeIO (Ç¿ÖÆIPv6, ¹Ì¶¨ºó×º)
-# Æ¥Åä42Î»¶¯Ì¬²¿·Ö + ¹Ì¶¨µÄ "888888" ºó×º
+# æ–°å¢: NexusEdgeIO (å¼ºåˆ¶IPv6, å›ºå®šåç¼€)
+# åŒ¹é…42ä½åŠ¨æ€éƒ¨åˆ† + å›ºå®šçš„ "888888" åç¼€
 regexp:^[a-z0-9]{42}888888\.nexusedgeio\.com$
 
-# ÏÂÔØÀàCDN (cdntips.net - 32-char MD5)
+# ä¸‹è½½ç±»CDN (cdntips.net - 32-char MD5)
 regexp:^[0-9a-f]{32}\.dlied1\.cdntips\.net$
+
+regexp:^([0-9a-f]{1,4}-){7}[0-9a-f]{1,4}-[0-9a-f]+\.ldhy\.click$

@@ -5,7 +5,7 @@ domain:ahdohpiechei.com
 domain:tt.x.bsgslb.cn
 domain:siomxity.net
 domain:siomxity.com
-# ÊÂÊµÖ¤Ã÷Õâ»õv4 v6Ã»¹æÂÉ ÔİÊ±·ÅĞĞ°×Ãûµ¥
+# äº‹å®è¯æ˜è¿™è´§v4 v6æ²¡è§„å¾‹ æš‚æ—¶æ”¾è¡Œç™½åå•
 # domain:sealaly.net
 domain:hypercachenode.com
 domain:bytefcdnrd.com
@@ -14,3 +14,4 @@ domain:ndcpp.com
 # domain:vegslb.com
 domain:nexusedgeio.com
 domain:dlied1.cdntips.net
+domain:ldhy.click

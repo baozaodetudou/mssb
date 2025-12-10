@@ -8,7 +8,7 @@ plugins:
 #      exclude_ip:
 #        - 28.0.0.0/8
 #        - f2b0::/18
-      dump_file: /mssb/mosdns/cache_all.dump
+      dump_file: cache/cache_all.dump
       dump_interval: 36000
 
 #全部缓存 第1层缓存 直面客户端
@@ -18,9 +18,9 @@ plugins:
       size: 20000000
       lazy_cache_ttl: 259200000
       exclude_ip:
-        - 28.0.0.0/8
-        - f2b0::/18
-      dump_file: /mssb/mosdns/cache_all_noleak.dump
+#        - 28.0.0.0/8
+#        - f2b0::/18
+      dump_file: cache/cache_all_noleak.dump
       dump_interval: 36000
 
 #中国域名列表的过期缓存
@@ -29,7 +29,7 @@ plugins:
     args:
       size: 20000000
       lazy_cache_ttl: 259200000
-      dump_file: /mssb/mosdns/cache_cn.dump
+      dump_file: cache/cache_cn.dump
       dump_interval: 36000
 
 #列表外域名的过期缓存
@@ -38,7 +38,7 @@ plugins:
     args:
       size: 20000000
       lazy_cache_ttl: 259200000
-      dump_file: /mssb/mosdns/cache_google.dump
+      dump_file: cache/cache_google.dump
       dump_interval: 36000
 
   - tag: cache_google_node
@@ -46,7 +46,8 @@ plugins:
     args:
       size: 20000000
       lazy_cache_ttl: 259200000
-      dump_file: /mssb/mosdns/cache_google_node.dump
+      enable_ecs: true
+      dump_file: cache/cache_google_node.dump
       dump_interval: 36000
 
 #节点域名列表的过期缓存
@@ -55,6 +56,6 @@ plugins:
     args:
       size: 20000000
       lazy_cache_ttl: 259200000
-      dump_file: /mssb/mosdns/cache_node.dump
+      dump_file: cache/cache_node.dump
       dump_interval: 36000
 

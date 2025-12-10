@@ -1,0 +1,51 @@
+{
+  "socks5": "127.0.0.1:7891",
+  "ecs": "2408:8214:213::1",
+  "replacements": [
+    {
+      "original": "udp://127.0.0.1:7874",
+      "new": "udp://127.0.0.1:7874",
+      "comment": "sing-box fakedns"
+    },
+    {
+      "original": "udp://127.0.0.1:1053",
+      "new": "udp://127.0.0.1:1053",
+      "comment": "mihomo fakedns"
+    },
+    {
+      "original": "127.0.0.1:7891",
+      "new": "127.0.0.1:7891",
+      "comment": "sing-box socks5"
+    },
+    {
+      "original": "114.114.114.114",
+      "new": "114.114.114.114",
+      "comment": "运营商dns"
+    },
+    {
+      "original": "ecs 2408:8214:213::1",
+      "new": "ecs 2408:8214:213::1",
+      "comment": "谷歌dns ecs ip"
+    },
+    {
+      "original": "123.123.110.123",
+      "new": "123.123.110.123",
+      "comment": "阿里私有doh ecs ip"
+    },
+    {
+      "original": "888888",
+      "new": "888888",
+      "comment": "阿里私有doh id"
+    },
+    {
+      "original": "888888_88888",
+      "new": "888888_88888",
+      "comment": "阿里私有doh key id"
+    },
+    {
+      "original": "999999999",
+      "new": "999999999",
+      "comment": "阿里私有doh key secret"
+    }
+  ]
+}

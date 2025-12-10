@@ -20,10 +20,6 @@ plugins:
         exec: $sequence_google
       - matches: mark 66
         exec: accept
-#      - matches: "!qtype 1 28"
-#        exec: $sequence_google
-#      - matches: "!qtype 1 28"
-#        exec: accept
       - matches: qname $greylist
         exec: mark 22
       - matches: mark 22
@@ -35,24 +31,21 @@ plugins:
       - matches: mark 11
         exec: $sequence_local
       - matches:
-        - "mark 11"
-        - "rcode 0 2 3 5"
-        - "!resp_ip 0.0.0.0/0 2000::/3"
-        exec: ttl 60000 #非A没有IP，延长TTL
-      - matches:
         - "qtype 28"  
         - "mark 11"
-        - "rcode 0 2 3 5"
+        - "rcode 0 3"
         - "!resp_ip 2000::/3"
-#        - "!cname keyword:."
         exec: $my_nov6list  #生成域名规则
       - matches:
         - "qtype 1"  
         - "mark 11"
-        - "rcode 0 2 3 5"
+        - "rcode 0 3"
         - "!resp_ip 0.0.0.0/0"
-#        - "!cname keyword:."
         exec: $my_nov4list  #生成域名规则
+      - matches:    #国内域名发到mihomo
+        - mark 11
+        - switch9 'B'
+        exec: $sequence_local_fake
       - matches: mark 11  #白名单中域名不往下漏
         exec: accept
       - matches: qname $realiplist
@@ -86,22 +79,21 @@ plugins:
         exec: accept                      #fakeip就接受
       - matches:
         - "!mark 888" #并没有在gen realip列表中
-        - "resp_ip 17.0.0.0/8"  #fakeip
+        - "resp_ip $direct_ip"  #fakeip
         exec: $my_realiplist  #生成域名规则
-      - matches: "resp_ip 17.0.0.0/8"
-        exec: accept                      #fakeip ios ip就接受
+      - matches: "resp_ip $direct_ip"
+        exec: mark 686 #标记
+      - matches:    #国内域名发到mihomo
+        - mark 686
+        - switch9 'B'
+        exec: $sequence_local_fake
+      - matches: mark 686
+        exec: accept                      #接受apple域名
       - matches:
         - "qtype 28"  #非A的只要不是黑洞IP，有没有IP都接受
-        - "rcode 0 2 3 5"
+        - "rcode 0 3"
         - "!resp_ip 2000::/3"
         - "!resp_ip ::1 ::2 ::3"
-        exec: ttl 60000 #非A没有IP，延长TTL
-      - matches:
-        - "qtype 28"  #非A的只要不是黑洞IP，有没有IP都接受
-        - "rcode 0 2 3 5"
-        - "!resp_ip 2000::/3"
-        - "!resp_ip ::1 ::2 ::3"
-#        - "!cname keyword:."
         exec: $my_nov6list  #生成域名规则
       - matches:
         - "qtype 28"  #非A的有realip的情况
@@ -112,6 +104,13 @@ plugins:
       - matches:
         - "qtype 28"  #非A的只要不是黑洞IP，有没有IP都接受
         - "!resp_ip ::1 ::2 ::3"
+        exec: mark 787 #
+      - matches:    #国内域名发到mihomo
+        - mark 787 
+        - switch9 'B'
+        - "resp_ip 2000::/3"   #20251124实验性
+        exec: $sequence_local_fake
+      - matches: mark 787 
         exec: accept
       - matches:
         - "qtype 1"  #A的不是黑洞IP，有正经IP才接受
@@ -123,6 +122,12 @@ plugins:
         - "qtype 1"  #A的不是黑洞IP或者污染ip，有正经IP才接受
         - "resp_ip 0.0.0.0/0"
         - "!resp_ip 0.0.0.0 127.0.0.1 127.0.0.2 127.0.0.3"
+        exec: mark 989
+      - matches:    #国内域名发到mihomo
+        - mark 989
+        - switch9 'B'
+        exec: $sequence_local_fake
+      - matches: mark 989
         exec: accept
       - matches: switch3 'A'
         exec: $sequence_not_in_list_leak

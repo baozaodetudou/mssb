@@ -1,3 +1,4 @@
+full:msmp.abchina.com.cn
 full:stun.l.google.com
 full:trace-server.prod-clustered.bugs.firebat.prime-video.amazon.dev
 full:xmbc.highrez.co.uk

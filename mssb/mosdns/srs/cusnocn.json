@@ -1,0 +1,24 @@
+[
+  {
+    "name": "cusnocn",
+    "type": "cusnocn",
+    "files": "srs/geosite-cn@!cn.srs",
+    "url": "https://raw.githubusercontent.com/nekolsd/sing-geosite/refs/heads/rule-set/geosite-cn%40!cn.srs",
+    "enabled": true,
+    "auto_update": false,
+    "update_interval_hours": 24,
+    "rule_count": 263,
+    "last_updated": "2025-12-02T20:10:07.803094591+08:00"
+  },
+  {
+    "name": "tiktok",
+    "type": "cusnocn",
+    "files": "srs/geosite-tiktok.srs",
+    "url": "https://raw.githubusercontent.com/nekolsd/sing-geosite/refs/heads/rule-set/geosite-tiktok.srs",
+    "enabled": true,
+    "auto_update": false,
+    "update_interval_hours": 24,
+    "rule_count": 21,
+    "last_updated": "2025-12-02T20:10:44.687469998+08:00"
+  }
+]

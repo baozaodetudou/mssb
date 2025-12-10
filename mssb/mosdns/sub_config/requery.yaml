@@ -2,4 +2,4 @@ plugins:
   - tag: requery
     type: requery
     args:
-      file: "/mssb/mosdns/webinfo/requeryconfig.json"
+      file: "webinfo/requeryconfig.json"

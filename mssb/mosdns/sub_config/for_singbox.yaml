@@ -20,8 +20,6 @@ plugins:
         - qname $my_nodenov6rule
         exec: reject 0
       - exec: $cache_node
-      - matches: has_resp
-        exec: accept
       - exec: sleep 1000
       - exec: $sbnodefallback
       - matches:

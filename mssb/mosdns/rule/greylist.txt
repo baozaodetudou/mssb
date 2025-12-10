@@ -1,3 +1,6 @@
+full:in.appcenter.ms
+full:onedrive.live.com
+full:www.metatrader5.com
 domain:google.cn
 domain:piaohua.com
 domain:4d4y.com

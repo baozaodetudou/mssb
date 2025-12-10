@@ -1,31 +1,32 @@
 plugins:
 #定义了一个带过期缓存的内部使用/外部使用的国内dns服务器
 #转发请求到国内dns
+  - tag: forward_local_alidoh
+    type: aliapi
+    args:
+      concurrent: 2
+      account_id: "888888"
+      access_key_id: "888888_88888"
+      access_key_secret: "999999999"
+      server_addr: "223.5.5.5"
+      ecs_client_ip: "123.123.110.123"
+      ecs_client_mask: 32
+      upstreams:
+        - tag: alidns
+          type: aliapi  
+        - addr: "223.5.5.5"
+        - addr: "114.114.114.114"
+          upstream_query_timeout: 300
+
   - tag: forward_local
     type: forward
     args:
-      concurrent: 2
+      concurrent: 3
       upstreams:
         - addr: "223.5.5.5"
-        - addr: "221.130.33.60"
+        - addr: "quic://223.5.5.5"
+        - addr: "114.114.114.114"
           upstream_query_timeout: 300
-
-#转发请求到国内dns-运营商dns+阿里云dns私有doh配置示例
-#  - tag: forward_local
-#    type: aliapi
-#    args:
-#      concurrent: 2
-#      account_id: " "
-#      access_key_id: " "
-#      access_key_secret: " "
-#      server_addr: "223.5.5.5"
-#      ecs_client_ip: "27.211.149.114"
-#      ecs_client_mask: 32
-#      upstreams:
-#        - tag: alidns
-#          type: aliapi  
-#        - addr: "202.102.128.68"
-#          upstream_query_timeout: 300
 
 #国内域名 内部使用
   - tag: sequence_local_in
@@ -33,10 +34,6 @@ plugins:
     args:
       - matches: switch4 'A'
         exec: $cache_cn
-      - matches:
-        - switch4 'A'
-        - has_resp
-        exec: accept
       - exec: $forward_local
       - exec: cname_remover
 
@@ -45,10 +42,12 @@ plugins:
     type: udp_server
     args:
       entry: sequence_local_in
-      listen: 127.0.0.1:2222
+#      listen: 127.0.0.1:2222
+      listen: ":2222"
 
   - tag: tcp_local
     type: tcp_server
     args:
       entry: sequence_local_in
-      listen: 127.0.0.1:2222
+#      listen: 127.0.0.1:2222
+      listen: ":2222"

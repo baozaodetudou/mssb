@@ -1,26 +1,10 @@
 plugins:
-#域名排行
-  - tag: top_domains
-    type: domain_output
-    args:
-      file_stat: /mssb/mosdns/gen/top_domains.txt
-      max_entries: 1000
-      dump_interval: 36000
-#列表外域名访问记录
-  - tag: my_notinlist
-    type: domain_output
-    args:
-      file_stat: /mssb/mosdns/gen/notinlist.txt
-      file_rule: /mssb/mosdns/gen/notinrule.txt
-      max_entries: 20
-      dump_interval: 36000
-
 #访问过的realip的域名清单和生成规则
   - tag: my_realiplist
     type: domain_output
     args:
-      file_stat: /mssb/mosdns/gen/realiplist.txt
-      file_rule: /mssb/mosdns/gen/realiprule.txt
+      file_stat: gen/realiplist.txt
+      file_rule: gen/realiprule.txt
       max_entries: 1000
       dump_interval: 36005
       domain_set_url: "http://127.0.0.1:9099/plugins/my_realiprule/post"
@@ -29,9 +13,9 @@ plugins:
   - tag: my_fakeiplist
     type: domain_output
     args:
-      file_stat: /mssb/mosdns/gen/fakeiplist.txt
-      file_rule: /mssb/mosdns/gen/fakeiprule.txt
-#      gen_rule: /mssb/AdGuardHome/data/userfilters/fakeip.txt
+      file_stat: gen/fakeiplist.txt
+      file_rule: gen/fakeiprule.txt
+#      gen_rule: /cus/AdGuardHome/data/userfilters/fakeip.txt
 #      pattern: "[/DOMAIN/]127.0.0.1:7874"
 #      appended_string: "udp://127.0.0.1:6666"
       max_entries: 1000
@@ -42,9 +26,9 @@ plugins:
   - tag: my_nov6list
     type: domain_output
     args:
-      file_stat: /mssb/mosdns/gen/nov6list.txt
-      file_rule: /mssb/mosdns/gen/nov6rule.txt
-#      gen_rule: /mssb/AdGuardHome/data/userfilters/nov6.txt
+      file_stat: gen/nov6list.txt
+      file_rule: gen/nov6rule.txt
+#      gen_rule: /cus/AdGuardHome/data/userfilters/nov6.txt
 #      pattern: "|DOMAIN^$dnstype=AAAA,dnsrewrite=NOERROR"
       max_entries: 100
       dump_interval: 36040
@@ -54,9 +38,9 @@ plugins:
   - tag: my_nov4list
     type: domain_output
     args:
-      file_stat: /mssb/mosdns/gen/nov4list.txt
-      file_rule: /mssb/mosdns/gen/nov4rule.txt
-#      gen_rule: /mssb/AdGuardHome/data/userfilters/nov4.txt
+      file_stat: gen/nov4list.txt
+      file_rule: gen/nov4rule.txt
+#      gen_rule: /cus/AdGuardHome/data/userfilters/nov4.txt
 #      pattern: "|DOMAIN^$dnstype=A,dnsrewrite=NOERROR"
       max_entries: 3
       dump_interval: 36030
@@ -66,8 +50,8 @@ plugins:
   - tag: my_nodenov6list
     type: domain_output
     args:
-      file_stat: /mssb/mosdns/gen/nodenov6list.txt
-      file_rule: /mssb/mosdns/gen/nodenov6rule.txt
+      file_stat: gen/nodenov6list.txt
+      file_rule: gen/nodenov6rule.txt
       max_entries: 1000
       dump_interval: 36060
       domain_set_url: "http://127.0.0.1:9099/plugins/my_nodenov6rule/post"
@@ -76,8 +60,8 @@ plugins:
   - tag: my_nodenov4list
     type: domain_output
     args:
-      file_stat: /mssb/mosdns/gen/nodenov4list.txt
-      file_rule: /mssb/mosdns/gen/nodenov4rule.txt
+      file_stat: gen/nodenov4list.txt
+      file_rule: gen/nodenov4rule.txt
       max_entries: 2
       dump_interval: 36080
       domain_set_url: "http://127.0.0.1:9099/plugins/my_nodenov4rule/post"
