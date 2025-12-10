@@ -3,8 +3,8 @@
   "ecs": "2408:8214:213::1",
   "replacements": [
     {
-      "original": "udp://127.0.0.1:7874",
-      "new": "udp://127.0.0.1:7874",
+      "original": "udp://127.0.0.1:6666",
+      "new": "udp://127.0.0.1:6666",
       "comment": "sing-box fakedns"
     },
     {
