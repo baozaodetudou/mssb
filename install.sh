@@ -778,35 +778,14 @@ EOF
                 log "警告：启用 nftables 服务失败（可能是受限环境），但规则已加载"
             fi
         fi
-    else
-        log "错误：nftables 配置文件语法检查失败！"
-        return 1
-    fi
-
-
-        echo "新规则生效"
-        if $nft_cmd -f /etc/nftables.conf; then
-            log "成功加载新的 nftables 规则"
-        else
-            log "错误：加载 nftables 规则失败！"
-            return 1
-        fi
-        sleep 1
-
-        echo "启用相关服务"
-        if systemctl enable --now nftables; then
-            log "成功启用 nftables 服务"
-        else
-            log "警告：启用 nftables 服务失败"
-        fi
-    else
-        log "错误：nftables 配置文件语法检查失败！"
-        return 1
-    fi
-    if [ "$core_name" = "sing-box" ]; then
-      # 启用 sing-box-router，禁用 mihomo-router
-      systemctl disable --now mihomo-router &>/dev/null
-      rm -f /etc/systemd/system/mihomo-router.service
+	    else
+	        log "错误：nftables 配置文件语法检查失败！"
+	        return 1
+	    fi
+	    if [ "$core_name" = "sing-box" ]; then
+	      # 启用 sing-box-router，禁用 mihomo-router
+	      systemctl disable --now mihomo-router &>/dev/null
+	      rm -f /etc/systemd/system/mihomo-router.service
       systemctl enable --now sing-box-router || { log "启用相关服务 失败！"; }
     elif [ "$core_name" = "mihomo" ]; then
       # 启用 mihomo-router，禁用 sing-box-router
@@ -1266,26 +1245,11 @@ start_all_services() {
                 cp /etc/nftables.conf.bak /etc/nftables.conf
             fi
         fi
-    fi
+	    fi
 
-        # 备份当前配置
-        cp /etc/nftables.conf /etc/nftables.conf.bak
-
-        # 检查配置语法
-        if $nft_cmd -c -f /etc/nftables.conf; then
-            $nft_cmd flush ruleset
-            sleep 1
-            $nft_cmd -f /etc/nftables.conf
-            systemctl enable --now nftables || log "nftables 服务启动失败"
-        else
-            log "nftables 配置有语法错误，已取消加载"
-            cp /etc/nftables.conf.bak /etc/nftables.conf
-        fi
-    fi
-
-    # 检查并启动对应的路由服务
-    if [ -f "/etc/systemd/system/sing-box-router.service" ]; then
-        systemctl enable --now sing-box-router || log "sing-box-router 服务启动失败"
+	    # 检查并启动对应的路由服务
+	    if [ -f "/etc/systemd/system/sing-box-router.service" ]; then
+	        systemctl enable --now sing-box-router || log "sing-box-router 服务启动失败"
     elif [ -f "/etc/systemd/system/mihomo-router.service" ]; then
         systemctl enable --now mihomo-router || log "mihomo-router 服务启动失败"
     fi
