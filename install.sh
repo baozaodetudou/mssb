@@ -47,15 +47,41 @@ update_system() {
     fi
 }
 
-# 设置时区
+# 设置时区（在 LXC/容器环境自动降级）
 set_timezone() {
-    log "设置时区为Asia/Shanghai"
-    if ! timedatectl set-timezone Asia/Shanghai; then
-        log "${red}时区设置失败！退出脚本！${reset}"
-        exit 1
+    local TZ_REGION="Asia/Shanghai"
+    log "设置时区为${TZ_REGION}"
+
+    # 在容器里一般没有完整的 systemd/DBus，先检测再决定是否回退
+    if command -v timedatectl >/dev/null 2>&1 && pidof systemd >/dev/null 2>&1; then
+        # dbus 非必须，但如果在就尝试
+        if systemctl is-active dbus >/dev/null 2>&1 || systemctl start dbus >/dev/null 2>&1; then
+            if timeout 15s timedatectl set-timezone "${TZ_REGION}"; then
+                log "时区设置成功（timedatectl）"
+                return 0
+            else
+                log "${yellow}timedatectl 设置失败，回退到文件链接方式${reset}"
+            fi
+        else
+            log "${yellow}DBus 未运行或无法启动，回退到文件链接方式${reset}"
+        fi
+    else
+        log "${yellow}未检测到可用的 systemd/timedatectl 环境，使用文件链接方式${reset}"
     fi
-    log "时区设置成功"
+
+    # 回退：直接链接 /etc/localtime + /etc/timezone
+    if [ -f "/usr/share/zoneinfo/${TZ_REGION}" ]; then
+        ln -sf "/usr/share/zoneinfo/${TZ_REGION}" /etc/localtime
+        echo "${TZ_REGION}" > /etc/timezone 2>/dev/null || true
+        log "时区设置成功（/etc/localtime 链接方式，适配 LXC）"
+        return 0
+    else
+        log "${red}找不到时区文件 /usr/share/zoneinfo/${TZ_REGION}${reset}"
+        # 在 LXC 中不要阻断安装流程
+        return 0
+    fi
 }
+
 
 # 打印横线
 print_separator() {
