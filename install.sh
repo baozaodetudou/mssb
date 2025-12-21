@@ -237,6 +237,27 @@ detect_architecture() {
     esac
 }
 
+# 检测是否在容器/非完整 systemd 环境
+is_container_env() {
+    # 1) 明确容器标识
+    if grep -qE '(lxc|container)' /proc/1/environ 2>/dev/null; then
+        return 0
+    fi
+    if grep -qE '(?:^|/)docker(?:/|$)|(?:^|/)lxc(?:/|$)' /proc/1/cgroup 2>/dev/null; then
+        return 0
+    fi
+    # 2) 没有完整的 systemd
+    if ! pidof systemd >/dev/null 2>&1; then
+        return 0
+    fi
+    # 3) systemd 运行但不可用管理（某些 LXC）
+    if ! systemctl is-system-running >/dev/null 2>&1; then
+        return 0
+    fi
+    return 1
+}
+
+
 # 检查 AMD64 架构是否支持 v3 指令集 (x86-64-v3)
 check_amd64_v3_support() {
     local arch
@@ -730,16 +751,38 @@ EOF
     log "使用 nft 命令：$nft_cmd"
 
     # 验证配置文件语法
+    # 验证并加载 nftables 规则
     if $nft_cmd -c -f /etc/nftables.conf; then
         log "nftables 配置文件语法检查通过"
 
-        echo "清空 nftables 规则"
-        if $nft_cmd flush ruleset; then
-            log "成功清空现有 nftables 规则"
+        log "清空 nftables 规则"
+        $nft_cmd flush ruleset || log "警告：清空 nftables 规则失败，继续执行"
+        sleep 1
+
+        log "加载新规则"
+        if $nft_cmd -f /etc/nftables.conf; then
+            log "成功加载新的 nftables 规则"
         else
-            log "警告：清空 nftables 规则失败，继续执行"
+            log "错误：加载 nftables 规则失败！"
+            return 1
         fi
         sleep 1
+
+        # 在容器内不启用 nftables.service
+        if is_container_env; then
+            log "检测到 LXC/容器环境：跳过启用 nftables.service，仅保持已加载规则"
+        else
+            if systemctl enable --now nftables; then
+                log "成功启用 nftables 服务"
+            else
+                log "警告：启用 nftables 服务失败（可能是受限环境），但规则已加载"
+            fi
+        fi
+    else
+        log "错误：nftables 配置文件语法检查失败！"
+        return 1
+    fi
+
 
         echo "新规则生效"
         if $nft_cmd -f /etc/nftables.conf; then
@@ -1198,16 +1241,32 @@ start_all_services() {
 
     # 检查并启动 nftables
     if [ -f "/etc/nftables.conf" ]; then
-        # 检查 nft 命令路径
         local nft_cmd=""
         if command -v nft &>/dev/null; then
             nft_cmd="nft"
         elif [ -x "/usr/sbin/nft" ]; then
             nft_cmd="/usr/sbin/nft"
         else
-            log "错误：找不到 nft 命令，跳过 nftables 启动"
-            return 1
+            log "错误：找不到 nft 命令，跳过 nftables 加载"
         fi
+
+        if [ -n "$nft_cmd" ]; then
+            cp /etc/nftables.conf /etc/nftables.conf.bak
+            if $nft_cmd -c -f /etc/nftables.conf; then
+                $nft_cmd flush ruleset
+                sleep 1
+                $nft_cmd -f /etc/nftables.conf
+                if is_container_env; then
+                    log "容器环境：已加载规则，跳过启用 nftables.service"
+                else
+                    systemctl enable --now nftables || log "nftables 服务启动失败"
+                fi
+            else
+                log "nftables 配置有语法错误，已取消加载"
+                cp /etc/nftables.conf.bak /etc/nftables.conf
+            fi
+        fi
+    fi
 
         # 备份当前配置
         cp /etc/nftables.conf /etc/nftables.conf.bak
