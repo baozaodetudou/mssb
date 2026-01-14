@@ -47,15 +47,41 @@ update_system() {
     fi
 }
 
-# 设置时区
+# 设置时区（在 LXC/容器环境自动降级）
 set_timezone() {
-    log "设置时区为Asia/Shanghai"
-    if ! timedatectl set-timezone Asia/Shanghai; then
-        log "${red}时区设置失败！退出脚本！${reset}"
-        exit 1
+    local TZ_REGION="Asia/Shanghai"
+    log "设置时区为${TZ_REGION}"
+
+    # 在容器里一般没有完整的 systemd/DBus，先检测再决定是否回退
+    if command -v timedatectl >/dev/null 2>&1 && pidof systemd >/dev/null 2>&1; then
+        # dbus 非必须，但如果在就尝试
+        if systemctl is-active dbus >/dev/null 2>&1 || systemctl start dbus >/dev/null 2>&1; then
+            if timeout 15s timedatectl set-timezone "${TZ_REGION}"; then
+                log "时区设置成功（timedatectl）"
+                return 0
+            else
+                log "${yellow}timedatectl 设置失败，回退到文件链接方式${reset}"
+            fi
+        else
+            log "${yellow}DBus 未运行或无法启动，回退到文件链接方式${reset}"
+        fi
+    else
+        log "${yellow}未检测到可用的 systemd/timedatectl 环境，使用文件链接方式${reset}"
     fi
-    log "时区设置成功"
+
+    # 回退：直接链接 /etc/localtime + /etc/timezone
+    if [ -f "/usr/share/zoneinfo/${TZ_REGION}" ]; then
+        ln -sf "/usr/share/zoneinfo/${TZ_REGION}" /etc/localtime
+        echo "${TZ_REGION}" > /etc/timezone 2>/dev/null || true
+        log "时区设置成功（/etc/localtime 链接方式，适配 LXC）"
+        return 0
+    else
+        log "${red}找不到时区文件 /usr/share/zoneinfo/${TZ_REGION}${reset}"
+        # 在 LXC 中不要阻断安装流程
+        return 0
+    fi
 }
+
 
 # 打印横线
 print_separator() {
@@ -210,6 +236,27 @@ detect_architecture() {
             ;;
     esac
 }
+
+# 检测是否在容器/非完整 systemd 环境
+is_container_env() {
+    # 1) 明确容器标识
+    if grep -qE '(lxc|container)' /proc/1/environ 2>/dev/null; then
+        return 0
+    fi
+    if grep -qE '(?:^|/)docker(?:/|$)|(?:^|/)lxc(?:/|$)' /proc/1/cgroup 2>/dev/null; then
+        return 0
+    fi
+    # 2) 没有完整的 systemd
+    if ! pidof systemd >/dev/null 2>&1; then
+        return 0
+    fi
+    # 3) systemd 运行但不可用管理（某些 LXC）
+    if ! systemctl is-system-running >/dev/null 2>&1; then
+        return 0
+    fi
+    return 1
+}
+
 
 # 检查 AMD64 架构是否支持 v3 指令集 (x86-64-v3)
 check_amd64_v3_support() {
@@ -704,18 +751,15 @@ EOF
     log "使用 nft 命令：$nft_cmd"
 
     # 验证配置文件语法
+    # 验证并加载 nftables 规则
     if $nft_cmd -c -f /etc/nftables.conf; then
         log "nftables 配置文件语法检查通过"
 
-        echo "清空 nftables 规则"
-        if $nft_cmd flush ruleset; then
-            log "成功清空现有 nftables 规则"
-        else
-            log "警告：清空 nftables 规则失败，继续执行"
-        fi
+        log "清空 nftables 规则"
+        $nft_cmd flush ruleset || log "警告：清空 nftables 规则失败，继续执行"
         sleep 1
 
-        echo "新规则生效"
+        log "加载新规则"
         if $nft_cmd -f /etc/nftables.conf; then
             log "成功加载新的 nftables 规则"
         else
@@ -724,20 +768,24 @@ EOF
         fi
         sleep 1
 
-        echo "启用相关服务"
-        if systemctl enable --now nftables; then
-            log "成功启用 nftables 服务"
+        # 在容器内不启用 nftables.service
+        if is_container_env; then
+            log "检测到 LXC/容器环境：跳过启用 nftables.service，仅保持已加载规则"
         else
-            log "警告：启用 nftables 服务失败"
+            if systemctl enable --now nftables; then
+                log "成功启用 nftables 服务"
+            else
+                log "警告：启用 nftables 服务失败（可能是受限环境），但规则已加载"
+            fi
         fi
-    else
-        log "错误：nftables 配置文件语法检查失败！"
-        return 1
-    fi
-    if [ "$core_name" = "sing-box" ]; then
-      # 启用 sing-box-router，禁用 mihomo-router
-      systemctl disable --now mihomo-router &>/dev/null
-      rm -f /etc/systemd/system/mihomo-router.service
+	    else
+	        log "错误：nftables 配置文件语法检查失败！"
+	        return 1
+	    fi
+	    if [ "$core_name" = "sing-box" ]; then
+	      # 启用 sing-box-router，禁用 mihomo-router
+	      systemctl disable --now mihomo-router &>/dev/null
+	      rm -f /etc/systemd/system/mihomo-router.service
       systemctl enable --now sing-box-router || { log "启用相关服务 失败！"; }
     elif [ "$core_name" = "mihomo" ]; then
       # 启用 mihomo-router，禁用 sing-box-router
@@ -1172,35 +1220,36 @@ start_all_services() {
 
     # 检查并启动 nftables
     if [ -f "/etc/nftables.conf" ]; then
-        # 检查 nft 命令路径
         local nft_cmd=""
         if command -v nft &>/dev/null; then
             nft_cmd="nft"
         elif [ -x "/usr/sbin/nft" ]; then
             nft_cmd="/usr/sbin/nft"
         else
-            log "错误：找不到 nft 命令，跳过 nftables 启动"
-            return 1
+            log "错误：找不到 nft 命令，跳过 nftables 加载"
         fi
 
-        # 备份当前配置
-        cp /etc/nftables.conf /etc/nftables.conf.bak
-
-        # 检查配置语法
-        if $nft_cmd -c -f /etc/nftables.conf; then
-            $nft_cmd flush ruleset
-            sleep 1
-            $nft_cmd -f /etc/nftables.conf
-            systemctl enable --now nftables || log "nftables 服务启动失败"
-        else
-            log "nftables 配置有语法错误，已取消加载"
-            cp /etc/nftables.conf.bak /etc/nftables.conf
+        if [ -n "$nft_cmd" ]; then
+            cp /etc/nftables.conf /etc/nftables.conf.bak
+            if $nft_cmd -c -f /etc/nftables.conf; then
+                $nft_cmd flush ruleset
+                sleep 1
+                $nft_cmd -f /etc/nftables.conf
+                if is_container_env; then
+                    log "容器环境：已加载规则，跳过启用 nftables.service"
+                else
+                    systemctl enable --now nftables || log "nftables 服务启动失败"
+                fi
+            else
+                log "nftables 配置有语法错误，已取消加载"
+                cp /etc/nftables.conf.bak /etc/nftables.conf
+            fi
         fi
-    fi
+	    fi
 
-    # 检查并启动对应的路由服务
-    if [ -f "/etc/systemd/system/sing-box-router.service" ]; then
-        systemctl enable --now sing-box-router || log "sing-box-router 服务启动失败"
+	    # 检查并启动对应的路由服务
+	    if [ -f "/etc/systemd/system/sing-box-router.service" ]; then
+	        systemctl enable --now sing-box-router || log "sing-box-router 服务启动失败"
     elif [ -f "/etc/systemd/system/mihomo-router.service" ]; then
         systemctl enable --now mihomo-router || log "mihomo-router 服务启动失败"
     fi
