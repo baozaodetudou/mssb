@@ -870,8 +870,8 @@ mosdns_configure_files() {
         sed -i "s/addr: \"114.114.114.114\"/addr: \"$dns\"/" "$forward_local_yaml"
         log "已更新运营商 DNS 地址为：$dns"
     else
-        log "env 里的 DNS 地址格式不正确，将使用默认值 119.29.29.29"
-        sed -i "s/addr: \"114.114.114.114\"/addr: \"119.29.29.29\"/" "$forward_local_yaml"
+        log "env 里的 DNS 地址格式不正确，将使用默认值 114.114.114.114"
+        #sed -i "s/addr: \"114.114.114.114\"/addr: \"119.29.29.29\"/" "$forward_local_yaml"
     fi
 
     # 恢复 rule 目录
