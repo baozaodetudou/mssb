@@ -7,6 +7,9 @@
 > ⚠️ **版本更新**：2025.6.23 之前的是 v1 版本，现在是 v2 版本。
 > 如果你当前使用的是 v1 版本，建议先停止所有服务并手动删除目录 `/mssb` 后重新安装本脚本。
 
+## 欢迎使用隔壁完全自重写项目，比本项目更美观友好
+>  链接 https://msm9527.github.io/msm-wiki/zh/
+
 ### 分支说明
 
 - **主分支**：Mosdns + Singbox/Mihomo - [https://github.com/baozaodetudou/mssb](https://github.com/baozaodetudou/mssb)
