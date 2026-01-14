@@ -1,0 +1,8 @@
+index.html最后的
+<script src="assets/js/log.min.js" defer></script>
+要改成
+<script src="ilog/assets/js/log.min.js" defer></script>
+或者改成绝对路径（未测试验证）
+<script src="/ilog/assets/js/log.min.js" defer></script>
+这样才能使用磁盘上的js文件，默认的url拼装是ip:port/assets/js/log.min.js，
+这样使用了打包到二进制中的js资源，会导致修改不生效。

@@ -1,0 +1,15 @@
+full:localhost.wbridge.wps.cn
+full:localhost.work.weixin.qq.com
+full:localhost.weixin.qq.com
+full:localhost.sec.qq.com
+full:localhost.ptlogin2.qq.com
+full:2.datadog.pool.ntp.org
+full:lancache.steamcontent.com
+full:cn.ntp.org.cn
+full:pool.ntp.org
+domain:mi.com
+domain:market.xiaomi.com
+domain:msftncsi.com
+domain:msftconnecttest.com
+regexp:^time[1-5]?\..*\.com$
+regexp:^ntp[1-2]?\..*\.com$

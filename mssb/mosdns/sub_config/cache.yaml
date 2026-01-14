@@ -59,3 +59,11 @@ plugins:
       dump_file: cache/cache_node.dump
       dump_interval: 36000
 
+#cnmihomo fakeip过期缓存
+  - tag: cache_cnmihomo
+    type: cache
+    args:
+      size: 20000000
+      lazy_cache_ttl: 259200000
+      dump_file: cache/cache_cnmihomo.dump
+      dump_interval: 36000

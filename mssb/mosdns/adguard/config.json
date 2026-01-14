@@ -7,7 +7,7 @@
     "auto_update": false,
     "update_interval_hours": 24,
     "rule_count": 64,
-    "last_updated": "2025-12-02T20:11:13.360347274+08:00"
+    "last_updated": "2025-12-19T16:33:45.931421657+08:00"
   },
   {
     "id": "60f0c53b-e140-4add-8f71-9a069fe94796",
@@ -17,7 +17,7 @@
     "auto_update": false,
     "update_interval_hours": 24,
     "rule_count": 20,
-    "last_updated": "2025-12-02T20:11:13.07857506+08:00"
+    "last_updated": "2025-12-19T16:33:45.666214798+08:00"
   },
   {
     "id": "caa59e00-10ff-410b-a908-eda46343b666",
@@ -27,6 +27,6 @@
     "auto_update": false,
     "update_interval_hours": 24,
     "rule_count": 33,
-    "last_updated": "2025-12-02T20:11:13.07934743+08:00"
+    "last_updated": "2025-12-19T16:33:45.646122908+08:00"
   }
 ]

@@ -1,0 +1,21 @@
+plugins:
+#列表外的域名的处理逻辑 兼容模式IPV4
+  - tag: sequence_not_in_list_leak_v4
+    type: sequence
+    args:
+      - exec: $sequence_local                    #表外域名先发到国内   
+      - matches: "!resp_ip 0.0.0.0/0"            #rcode 235及没有IP等情况
+        exec: mark 123
+      - matches: "resp_ip 127.0.0.1 0.0.0.0"     #有污染IP的
+        exec: mark 123
+      - matches: mark 123                        #没有ip或者有污染ip
+        exec: $sequence_google                   #google dns再查一次
+      - matches:
+        - "rcode 0 3"
+        - "!resp_ip 0.0.0.0/0"
+        exec: $my_nov4list                       #还没有ip就加入自生成无v4域名列表
+      - matches: "!resp_ip 0.0.0.0/0"
+        exec: exit                               #还没有ip就接受结果结束流程
+      - matches: "resp_ip 127.0.0.1 0.0.0.0" 
+        exec: exit                               #谷歌dns结果没有正常ip也接受
+      - exec: $sequence_not_in_list_ipmatch      #表外域名对上游获取到的ip进行对比并处理 

@@ -1,0 +1,11 @@
+plugins:
+#处理非A、AAAA请求
+  - tag: sequence_other
+    type: sequence
+    args:
+      - matches: qname $geosite_cn     
+        exec: mark 99
+      - matches: mark 99
+        exec: $sequence_local          #geositecn向国内dns请求
+      - matches: "!mark 99"
+        exec: $sequence_google         #!geositecn向国外dns请求

@@ -43,3 +43,6 @@ regexp:^[a-z0-9]{42}888888\.nexusedgeio\.com$
 regexp:^[0-9a-f]{32}\.dlied1\.cdntips\.net$
 
 regexp:^([0-9a-f]{1,4}-){7}[0-9a-f]{1,4}-[0-9a-f]+\.ldhy\.click$
+
+#抖音
+regexp:^240[0-9a-f]-.*\.free-lbv6\.idouyinvod\.com$

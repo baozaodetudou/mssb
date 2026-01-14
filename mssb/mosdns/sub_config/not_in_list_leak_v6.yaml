@@ -1,0 +1,23 @@
+plugins:
+#列表外的域名的处理逻辑 兼容模式IPV6
+  - tag: sequence_not_in_list_leak_v6
+    type: sequence
+    args:
+      - exec: $sequence_local                    #表外域名先发到国内
+      - matches:
+        - "rcode 0 3"
+        - "!resp_ip 2000::/3"
+        - "!resp_ip ::1"
+        exec: $my_nov6list                       #没有ip就加入自生成无v6域名列表
+      - matches:
+        - "rcode 0 2 3 5"
+        - "!resp_ip 2000::/3"
+        - "!resp_ip ::1"
+        exec: mark 707                           #没有ip不再向国外上游查询，结束流程
+      - matches: mark 707
+        exec:
+          - drop_resp                            #避免cname传递
+          - reject 0                             #此处仅跳出当前exec隐藏子序列并设置rcode
+      - matches: mark 707
+        exec: exit                               #跳出所有处理逻辑结束处理
+      - exec: $sequence_not_in_list_ipmatch      #表外域名对上游获取到的ip进行对比并处理 

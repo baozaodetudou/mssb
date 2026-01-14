@@ -1,0 +1,24 @@
+[
+  {
+    "name": "netflix",
+    "type": "nft_add",
+    "files": "nft/netflix.srs",
+    "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/sing/geo/geoip/netflix.srs",
+    "enabled": true,
+    "auto_update": false,
+    "update_interval_hours": 24,
+    "rule_count": 81,
+    "last_updated": "2025-12-19T16:33:16.955378702+08:00"
+  },
+  {
+    "name": "telegram",
+    "type": "nft_add",
+    "files": "nft/telegram.srs",
+    "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/refs/heads/sing/geo/geoip/telegram.srs",
+    "enabled": true,
+    "auto_update": false,
+    "update_interval_hours": 24,
+    "rule_count": 12,
+    "last_updated": "2025-12-19T16:33:22.285478834+08:00"
+  }
+]

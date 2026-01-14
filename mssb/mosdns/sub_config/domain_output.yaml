@@ -1,4 +1,13 @@
 plugins:
+#域名排行
+  - tag: top_domains
+    type: domain_output
+    args:
+      file_stat: gen/top_domains.txt
+      enable_flags: true
+      max_entries: 1000
+      dump_interval: 36000
+
 #访问过的realip的域名清单和生成规则
   - tag: my_realiplist
     type: domain_output

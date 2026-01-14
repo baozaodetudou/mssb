@@ -1,0 +1,85 @@
+{
+  "domestic": [
+    {
+      "tag": "阿里私享DOH",
+      "enabled": false,
+      "protocol": "aliapi",
+      "server_addr": "223.5.5.5",
+      "ecs_client_mask": 32
+    },
+    {
+      "tag": "阿里UDP",
+      "enabled": true,
+      "protocol": "udp",
+      "addr": "223.5.5.5"
+    },
+    {
+      "tag": "阿里TCP",
+      "enabled": true,
+      "protocol": "tcp",
+      "addr": "tcp://223.5.5.5"
+    },
+    {
+      "tag": "阿里DOH",
+      "enabled": true,
+      "protocol": "https",
+      "addr": "https://dns.alidns.com/dns-query",
+      "dial_addr": "223.5.5.5"
+    },
+    {
+      "tag": "阿里DOT",
+      "enabled": true,
+      "protocol": "tls",
+      "addr": "tls://223.5.5.5"
+    },
+    {
+      "tag": "运营商",
+      "enabled": true,
+      "protocol": "udp",
+      "addr": "202.102.128.68"
+    }
+  ],
+  "foreign": [
+    {
+      "tag": "google",
+      "enabled": true,
+      "protocol": "https",
+      "addr": "https://dns.google/dns-query",
+      "dial_addr": "8.8.8.8",
+      "socks5": "127.0.0.1:7891"
+    },
+    {
+      "tag": "cloudflare",
+      "enabled": true,
+      "protocol": "https",
+      "addr": "https://1.1.1.1/dns-query",
+      "socks5": "127.0.0.1:7891"
+    }
+  ],
+  "foreignecs": [
+    {
+      "tag": "google",
+      "enabled": true,
+      "protocol": "https",
+      "addr": "https://dns.google/dns-query",
+      "dial_addr": "8.8.8.8",
+      "socks5": "127.0.0.1:7891"
+    }
+  ],
+  "mihomo": [
+    {
+      "tag": "mihomo",
+      "enabled": true,
+      "protocol": "udp",
+      "addr": "udp://127.0.0.1:1053"
+    }
+  ],
+  "sing-box": [
+    {
+      "tag": "sing-box",
+      "enabled": true,
+      "protocol": "udp",
+      "addr": "udp://127.0.0.1:7874"
+    }
+  ]
+}

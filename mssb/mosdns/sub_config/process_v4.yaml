@@ -1,0 +1,69 @@
+plugins:
+#处理A请求
+  - tag: sequence_ipv4
+    type: sequence
+    args:
+      - matches: qname $greylist                           #灰名单域名向sing-box请求fakeip
+        exec:
+          - $sequence_fakeip
+          - exit
+      - matches: qname $whitelist                          #匹配白名单域名
+        exec: mark 11
+      - matches: mark 11
+        exec: $sequence_local
+      - matches:                                           #对于白名单中无IP的域名生成无v4清单
+        - "mark 11"
+        - "rcode 0 3"
+        - "!resp_ip 0.0.0.0/0"
+        exec: $my_nov4list
+      - matches:                                           #开启cntomihomo开关后国内域名向mihomo请求fakeip
+        - mark 11
+        - switch9 'B'
+        exec: $sequence_local_fake
+      - matches: mark 11                                   #白名单中域名无ipv4，不再向国外dns请求
+        exec: exit
+      - matches: qname $realiplist                         #!cn fakeip filter，向国外dns请求realip
+        exec:
+          - $sequence_google
+          - exit
+      - exec: $domain_match                                #自生成域名清单、geosite域名匹配
+      - matches: mark 801 888
+        exec: $sequence_local                              #国内域名向国内dns请求realip
+      - matches: mark 901 999
+        exec: $sequence_fakeip                             #国外域名向sing-box请求fakeip
+      - matches:
+        - "mark 901"                                       #国外域名
+        - "!mark 999"                                      #且没有在自生成国外域名列表中
+        exec: $my_fakeiplist                               #加入自生成国外域名列表
+      - matches: mark 901 999
+        exec: exit                                         #已请求fakeip，结束流程
+      - matches: "resp_ip $direct_ip"
+        exec: mark 686                                     #标记上游dns返回了直连ip列表中的ip
+      - matches:
+        - "mark 686"                                       #且上游dns返回了直连ip列表中的ip
+        - "!mark 888"                                      #域名不在生成国内域名列表中
+        exec: $my_realiplist                               #把此域名加入自生成国内域名列表
+      - matches:                                           #开启cntomihomo开关后国内域名向mihomo请求fakeip
+        - mark 686
+        - switch9 'B'
+        exec: $sequence_local_fake
+      - matches: mark 686
+        exec: exit                                         #上游dns返回了自定义直连ip列表中的ip，结束流程
+      - matches:
+        - "resp_ip 0.0.0.0/0"                              
+        - "!resp_ip 0.0.0.0 127.0.0.1 127.0.0.2 127.0.0.3" #存在没有受污染的ip
+        exec: mark 989                                     #标记有ip且ip没有受污染
+      - matches:
+        - "mark 989"                                       #有ip且没有受污染
+        - "!mark 888"                                      #域名不在生成国内域名列表中
+        exec: $my_realiplist                               #加入自生成国外域名列表
+      - matches:                                           #开启cntomihomo开关后国内域名向mihomo请求fakeip
+        - mark 989
+        - switch9 'B'
+        exec: $sequence_local_fake
+      - matches: mark 989                                  #未开启cntomihomo开关的情况则接受上游返回的realip
+        exec: exit
+      - matches: switch3 'A'                               #兼容模式处理列表外域名
+        exec: $sequence_not_in_list_leak_v4
+      - matches: switch3 'B'                               #安全模式处理列表外域名
+        exec: $sequence_not_in_list_noleak_v4

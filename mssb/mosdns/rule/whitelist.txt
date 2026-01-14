@@ -13,6 +13,7 @@ full:6.ipw.cn
 full:test6.ustc.edu.cn
 full:apiauth.quickconnect.to
 domain:nkvod.com
+domain:philma.fun
 domain:mbjlkg.lol
 domain:huacloud.xyz
 domain:rfp4ucx.xyz

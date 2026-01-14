@@ -1,94 +1,35 @@
 plugins:
-##序列定义，等待被主序列调用
-##用生成的域名列表和网上的域名列表进行匹配，对于国内域名发黑洞IP 127.0.0.1 ::1
-##对于国外域名发黑洞IP 127.0.0.2 ::2，不能确认的，发黑洞IP 127.0.0.3 ::3
-#生成的规则用本地dns查询
-  - tag: gen_is_local_dns
-    type: sequence
-    args:
-      - matches: qname $my_realiprule
-        exec: black_hole 127.0.0.1 ::1
+# geosite-geolocation-!cn@cn/geosite_cn 801
+# geosite-cn@!cn/geosite_no_cn          901
+# my_realiprule                         888
+# my_fakeiprule                         999
+# other                                 1000
 
-#生成的规则请求fakeip
-  - tag: gen_is_fakeip
-    type: sequence
-    args:
-      - matches: qname $my_fakeiprule
-        exec: black_hole 127.0.0.2 ::2
-      - matches: "!resp_ip 127.0.0.2 ::2"
-        exec: black_hole 127.0.0.3 ::3
-
-#自定义在线规则国内匹配
-  - tag: cuscnmatch
+  - tag: domain_match
     type: sequence
     args:
       - matches: qname $cuscn
-        exec: black_hole 127.0.0.1 ::1
-
-#自定义在线规则国外匹配
-  - tag: cusnocnmatch
-    type: sequence
-    args:
-      - matches: qname $cusnocn
-        exec: black_hole 127.0.0.2 ::2
-      - matches: "!resp_ip 127.0.0.2 ::2"
-        exec: black_hole 127.0.0.3 ::3
-
-#自定义在线规则并发匹配
-  - tag: gen_cusmatch
-    type: fallback
-    args:
-      primary: cuscnmatch
-      secondary: cusnocnmatch
-      threshold: 20000
-      always_standby: true
-
-#生成的列表国内国外并发匹配，结果是black_hole的即列表外域名
-  - tag: gen_concgen
-    type: fallback
-    args:
-      primary: gen_is_local_dns
-      secondary: gen_is_fakeip
-      threshold: 20000
-      always_standby: true
-
-#先并发在线自定义列表，再匹配生成域名列表
-  - tag: gen_conc
-    type: sequence
-    args:
-      - exec: $gen_cusmatch
-      - matches: "resp_ip 127.0.0.3 ::3"
-        exec: mark 121
-      - matches: mark 121
-        exec: drop_resp
-      - matches: mark 121
-        exec: $gen_concgen
-
-#用本地dns查询
-  - tag: query_is_local_dns
-    type: sequence
-    args:
-      - matches: qname $geosite_cn
-        exec: black_hole 127.0.0.1 ::1
-
-#fallback并发primary和secondary都没有IP返回，会抛出错误
-#导致后续逻辑无法执行，在secondary中使用black_hole给假
-#ip作为标记供后续判断
-
-#国外域名列表/灰名单直接请求fakeip
-  - tag: query_is_fakeip
-    type: sequence
-    args:
-      - matches: qname $geosite_no_cn
-        exec: black_hole 127.0.0.2 ::2
-      - matches: "!resp_ip 127.0.0.2 ::2"
-        exec: black_hole 127.0.0.3 ::3
-
-#列表内域名国内国外并发匹配，结果是black_hole的即列表外域名
-  - tag: conc_lookup
-    type: fallback
-    args:
-      primary: query_is_local_dns
-      secondary: query_is_fakeip
-      threshold: 20000
-      always_standby: true
+        exec: mark 801
+      - matches:
+        - "!mark 801"
+        - "qname $cusnocn"
+        exec: mark 901 
+      - matches:
+        - "!mark 801 901"
+        - "qname $my_realiprule"
+        exec: mark 888
+      - matches:
+        - "!mark 801 888 901"
+        - "qname $my_fakeiprule"
+        exec: mark 999 
+      - matches:
+        - "!mark 801 888 901 999"
+        - "qname $geosite_cn"
+        exec: mark 801
+      - matches:
+        - "!mark 801 888 901 999"
+        - "qname $geosite_no_cn"
+        exec: mark 901
+      - matches:
+        - "!mark 801 888 901 999"
+        exec: mark 1000

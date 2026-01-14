@@ -82,10 +82,24 @@ plugins:
     args:
       initial_value: "rule/switch10.txt"
 
-#是否使用阿里私有DOH 'A'-使用  'B'-使用运营商dns
+#是否使用阿里私有DOH 'A'-使用  'B'-不使用
   - tag: switch11
     type: switch11
     args:
       initial_value: "rule/switch11.txt"
+
+#是否使用运营商dns 'A'-使用  'B'-使用运营商dns
+  - tag: switch14
+    type: switch14
+    args:
+      initial_value: "rule/switch14.txt"
+
+#是否使用其它dns 'A'-使用  'B'-使用其它dns
+  - tag: switch15
+    type: switch15
+    args:
+      initial_value: "rule/switch15.txt"
+
+
 
 

@@ -8,131 +8,123 @@ api:
 
 #子配置，不要调整顺序
 include:
-  - "sub_config/adguard.yaml"              #Adguard插件
-  - "sub_config/domain_output.yaml"        #域名规则生成输出插件定义
-  - "sub_config/rule_set.yaml"                    #数据插件定义
-  - "sub_config/cache.yaml"                       #缓存插件定义
-  - "sub_config/forward_local.yaml"           #带过期缓存的内部使用国内dns服务器
-  - "sub_config/forward_nocn.yaml"           #带过期缓存的内部使用国外dns服务器
-  - "sub_config/forward_nocn_ecs.yaml"    #带过期缓存的内部使用国外dns服务器（带ecs）节点使用
-  - "sub_config/forward_1.yaml"                 #使用前面定义的内部dns服务器定义序列 1代表调用层级 大的调用小的
-  - "sub_config/con_match.yaml"               #定义序列对域名列表进行并发匹配生成黑洞IP
-  - "sub_config/switch.yaml"                       #切换开关定义
-  - "sub_config/not_in_list_leak.yaml"        #列表外的域名泄露版的处理逻辑
-  - "sub_config/not_in_list_noleak.yaml"    #列表外的域名不泄露版的处理逻辑
-  - "sub_config/main.yaml"                         #主分流序列
-  - "sub_config/for_singbox.yaml"              #专供sing-box使用
-  - "sub_config/webinfo.yaml"                 #前端信息与配置存储
-  - "sub_config/requery.yaml"                 #分流与缓存刷新功能
+  - "sub_config/adguard.yaml"               #Adguard插件
+  - "sub_config/domain_output.yaml"         #域名规则生成输出插件定义
+  - "sub_config/rule_set.yaml"              #数据插件定义
+  - "sub_config/cache.yaml"                 #缓存插件定义
+  - "sub_config/forward_local.yaml"         #带过期缓存的内部使用国内dns服务器
+  - "sub_config/forward_nocn.yaml"          #带过期缓存的内部使用国外dns服务器
+  - "sub_config/forward_nocn_ecs.yaml"      #带过期缓存的内部使用国外dns服务器（带ecs）节点使用
+  - "sub_config/forward_1.yaml"             #使用前面定义的内部dns服务器定义序列 1代表调用层级 大的调用小的
+  - "sub_config/con_match.yaml"             #定义序列对域名列表进行并发匹配生成黑洞IP
+  - "sub_config/switch.yaml"                #切换开关定义
+  - "sub_config/not_in_list_ipmatch.yaml"   #列表外的域名获取上游dns响应结果后进行ip对比
+  - "sub_config/not_in_list_leak_v4.yaml"   #列表外的域名泄露版的处理逻辑
+  - "sub_config/not_in_list_leak_v6.yaml"   #列表外的域名泄露版的处理逻辑
+  - "sub_config/not_in_list_noleak_v4.yaml" #列表外的域名不泄露版的处理逻辑
+  - "sub_config/not_in_list_noleak_v6.yaml" #列表外的域名不泄露版的处理逻辑
+  - "sub_config/process_ot.yaml"            #主分流序列-其它类型dns请求
+  - "sub_config/process_v4.yaml"            #主分流序列-IPV4类型dns请求
+  - "sub_config/process_v6.yaml"            #主分流序列-IPV6类型dns请求
+  - "sub_config/for_singbox.yaml"           #专供sing-box使用
+  - "sub_config/webinfo.yaml"               #前端信息与配置存储
+  - "sub_config/requery.yaml"               #分流与缓存刷新功能
 
 plugins:
-  #缓存序列-all 直面客户端的缓存 不包含fakeip（被强制排除）
-  - tag: sequence_all_single
-    type: sequence
-    args:
-      - exec: $sequence_main
-
-  #使用fallback机制，当main进程无响应时，300ms后重发（多一层保障）
-  - tag: sequence_all
-    type: fallback
-    args:
-      primary: sequence_all_single
-      secondary: sequence_all_single
-      threshold: 300
-      always_standby: false
-
   - tag: sequence_6666
     type: sequence
     args:
-      #      - exec: $top_domains
-      - matches:    #阻止AAAA类型的dns查询
-          - switch6 'A'
-          - "qtype 28"
+      - matches:                            #阻止SOA PTR HTTPS类型的dns查询
+        - "qtype 6 12 65"
+        - switch5 'A'
         exec: reject 0
-      - matches:    #阻止SOA PTR HTTPS类型的dns查询
-          - switch5 'A'
-          - "qtype 6 12 65"
+      - matches:                            #阻止AAAA类型的dns查询
+        - "qtype 28"
+        - switch6 'A'
         exec: reject 0
-      #向上游请求ddns域名，无过期缓存
-      - matches: qname $ddnslist
-        exec: mark 1
-      - matches: mark 1
-        exec: $forward_local
-      - matches: mark 1
-        exec: accept
-      #屏蔽blocklist、没有解析记录的A、AAAA请求
-      - matches: switch1 'A'
+      - matches: switch1 'A'                #屏蔽blocklist、没有解析记录的A、AAAA请求
         exec: mark 2
-      - matches:    #屏蔽没有v4地址的域名
-          - qtype 1
-          - mark 2
-          - qname $my_nov4rule
+      - matches:                            #屏蔽黑名单域名
+        - mark 2
+        - qname $blocklist
         exec: reject 0
-      - matches:    #屏蔽没有v6地址的域名
-          - qtype 28
-          - mark 2
-          - qname $my_nov6rule
+      - matches:                            #屏蔽没有v4地址的域名
+        - qtype 1
+        - mark 2
+        - qname $my_nov4rule
         exec: reject 0
-      - matches:    #屏蔽黑名单域名
-          - mark 2
-          - qname $blocklist
-        exec: reject 3
-      - matches:    #屏蔽pcdn v4
-          - mark 2
-          - qtype 1
-          - qname $pcdnlist
-          - qname $pcdnregv4
+      - matches:                            #屏蔽没有v6地址的域名
+        - qtype 28
+        - mark 2
+        - qname $my_nov6rule
         exec: reject 0
-      - matches:    #屏蔽pcdn v6
-          - mark 2
-          - qtype 28
-          - qname $pcdnlist
-          - qname $pcdnregv6
+      - matches:                            #屏蔽pcdn v4
+        - qtype 1
+        - mark 2
+        - qname $pcdnlist
+        - qname $pcdnregv4
         exec: reject 0
-      - matches:    #屏蔽广告
-          - switch7 'A'
-          - "qname $adguard"
-        exec: reject 3
-      - matches: #当mosdns占用53直面客户端，只有client_ip.txt中指定的IP才科学                   
-          - switch2 'A'
-          - switch12 'B'
-          - "!client_ip $client_ip"
-        exec: mark 3
-      - matches: #当mosdns占用53直面客户端，client_ip.txt中指定的IP不科学
-          - switch2 'B'
-          - switch12 'A'
-          - "client_ip $client_ip"
-        exec: mark 3
-      - matches: mark 3
-        exec: $sequence_local
-      - matches: mark 3
+      - matches:                            #屏蔽pcdn v6
+        - qtype 28
+        - mark 2
+        - qname $pcdnlist
+        - qname $pcdnregv6
+        exec: reject 0
+      - matches:                            #屏蔽广告
+        - switch7 'A'
+        - "qname $adguard"
+        exec: reject 0
+      - exec: $top_domains
+      - matches: qname $ddnslist            #向上游请求ddns域名，无过期缓存
+        exec:
+          - $domestic
+          - exit
+      - exec: $rewrite
+      - matches: has_resp
         exec: accept
+      - matches:                            #当mosdns占用53直面客户端，只有client_ip.txt中指定的IP才科学
+        - switch2 'A'
+        - switch12 'B'
+        - "!client_ip $client_ip"
+        exec: mark 3
+      - matches:                            #当mosdns占用53直面客户端，client_ip.txt中指定的IP不科学
+        - switch2 'B'
+        - switch12 'A'
+        - "client_ip $client_ip"
+        exec: mark 3
+      - matches: mark 3
+        exec:
+          - $sequence_local
+          - exit
       - matches:
-          - switch8 'A'    #Prefer IPV4开
-          - switch10 'B'   #Prefer IPV6关
+        - switch8 'A'                       #Prefer IPV4开
+        - switch10 'B'                      #Prefer IPV6关
         exec: prefer_ipv4
       - matches:
-          - switch8 'B'    #Prefer IPV4关
-          - switch10 'A'   #Prefer IPV6开
+        - switch8 'B'                       #Prefer IPV4关
+        - switch10 'A'                      #Prefer IPV6开
         exec: prefer_ipv6
-      #web ui中选择泄露版（默认），用cache_all，否则用cache_all_noleak
-      - matches:
-          - switch3 'A'    #泄露模式
-          - switch13 'A'    #缓存开关打开
+      - matches:                            #web ui中选择泄露版（默认），用cache_all，否则用cache_all_noleak
+        - switch3 'A'                       #泄露模式
+        - switch13 'A'                      #缓存开关打开
         exec: $cache_all
       - matches:
-          - switch3 'B'    #非泄露模式
-          - switch13 'A'    #缓存开关打开
+        - switch3 'B'                       #非泄露模式
+        - switch13 'A'                      #缓存开关打开
         exec: $cache_all_noleak
-      - exec: $sequence_all
+      - matches: qtype 1                    #处理A请求
+        exec: $sequence_ipv4
+      - matches: qtype 28                   #处理AAAA请求
+        exec: $sequence_ipv6
+      - matches: "!qtype 1 28"              #处理非A、AAAA请求
+        exec: $sequence_other
 
-  #对外服务器
+#对外服务器
   - tag: udp_all
     type: udp_server
     args:
       entry: sequence_6666
       listen: ":53"
-      #      listen: 127.0.0.1:6666
       enable_audit: true
 
   - tag: tcp_all
@@ -140,45 +132,153 @@ plugins:
     args:
       entry: sequence_6666
       listen: ":53"
-      #      listen: 127.0.0.1:6666
       enable_audit: true
       idle_timeout: 720
 
-  #刷新服务器
+  - tag: sequence_requery
+    type: sequence
+    args:
+      - matches:                            #阻止SOA PTR HTTPS类型的dns查询
+        - "qtype 6 12 65"
+        - switch5 'A'
+        exec: reject 0
+      - matches:                            #阻止AAAA类型的dns查询
+        - "qtype 28"
+        - switch6 'A'
+        exec: reject 0
+      - matches: switch1 'A'                #屏蔽blocklist、没有解析记录的A、AAAA请求
+        exec: mark 2
+      - matches:                            #屏蔽黑名单域名
+        - mark 2
+        - qname $blocklist
+        exec: reject 0
+      - matches:                            #屏蔽没有v4地址的域名
+        - qtype 1
+        - mark 2
+        - qname $my_nov4rule
+        exec: reject 0
+      - matches:                            #屏蔽没有v6地址的域名
+        - qtype 28
+        - mark 2
+        - qname $my_nov6rule
+        exec: reject 0
+      - matches:                            #屏蔽pcdn v4
+        - qtype 1
+        - mark 2
+        - qname $pcdnlist
+        - qname $pcdnregv4
+        exec: reject 0
+      - matches:                            #屏蔽pcdn v6
+        - qtype 28
+        - mark 2
+        - qname $pcdnlist
+        - qname $pcdnregv6
+        exec: reject 0
+      - matches:                            #屏蔽广告
+        - switch7 'A'
+        - "qname $adguard"
+        exec: reject 0
+      - matches: qname $ddnslist            #向上游请求ddns域名，无过期缓存
+        exec:
+          - $domestic
+          - exit
+      - exec: $rewrite
+      - matches: has_resp
+        exec: accept
+      - matches:                            #当mosdns占用53直面客户端，只有client_ip.txt中指定的IP才科学
+        - switch2 'A'
+        - switch12 'B'
+        - "!client_ip $client_ip"
+        exec: mark 3
+      - matches:                            #当mosdns占用53直面客户端，client_ip.txt中指定的IP不科学
+        - switch2 'B'
+        - switch12 'A'
+        - "client_ip $client_ip"
+        exec: mark 3
+      - matches: mark 3
+        exec:
+          - $sequence_local
+          - exit
+      - matches:
+        - switch8 'A'                       #Prefer IPV4开
+        - switch10 'B'                      #Prefer IPV6关
+        exec: prefer_ipv4
+      - matches:
+        - switch8 'B'                       #Prefer IPV4关
+        - switch10 'A'                      #Prefer IPV6开
+        exec: prefer_ipv6
+      - matches:                            #web ui中选择泄露版（默认），用cache_all，否则用cache_all_noleak
+        - switch3 'A'                       #泄露模式
+        - switch13 'A'                      #缓存开关打开
+        exec: $cache_all
+      - matches:
+        - switch3 'B'                       #非泄露模式
+        - switch13 'A'                      #缓存开关打开
+        exec: $cache_all_noleak
+      - matches: qtype 1                    #处理A请求
+        exec: $sequence_ipv4
+      - matches: qtype 28                   #处理AAAA请求
+        exec: $sequence_ipv6
+      - matches: "!qtype 1 28"              #处理非A、AAAA请求
+        exec: $sequence_other
+
+                                                  #刷新分流与缓存的服务器，不记录日志，不计算tom_domains请求数
   - tag: udp_requery
     type: udp_server
     args:
-      entry: sequence_6666
+      entry: sequence_requery
       listen: ":66"
 
   - tag: tcp_requery
     type: tcp_server
     args:
-      entry: sequence_6666
+      entry: sequence_requery
       listen: ":66"
 
-  - tag: sequence_for_mihomo
+  - tag: sequence_for_stash
     type: sequence
     args:
       - exec: $sequence_6666
-      - matches: "resp_ip 30.0.0.0/8 2400::1/64"
-        exec: mark 131
-      - matches: mark 131
-        exec: drop_resp
-      - matches: mark 131
-        exec: drop_resp
-      - matches: mark 131
-        exec: $sequence_local
+      - matches: "resp_ip 30.0.0.0/8 2400::1/64"  #如果主路由返回了国内fakeip
+        exec: $sequence_local                     #为stash转换回国内realip
 
-  #给mihomo回家用的dns服务器
-  - tag: udp_mihomo
+                                                  #给stash回家用的dns服务器
+  - tag: udp_stash
     type: udp_server
     args:
-      entry: sequence_for_mihomo
+      entry: sequence_for_stash
       listen: ":77"
+      enable_audit: true
 
-  - tag: tcp_mihomo
+  - tag: tcp_stash
     type: tcp_server
     args:
-      entry: sequence_for_mihomo
+      entry: sequence_for_stash
       listen: ":77"
+      enable_audit: true
+
+  - tag: sequence_for_clashmi                      #给clashmi回家用的服务器
+    type: sequence
+    args:
+      - exec: $sequence_6666
+      - matches: "resp_ip 28.0.0.0/8 2001:2::/64"
+        exec: mark 199
+      - matches: "!resp_ip 0.0.0.0/0 2000::/3"     #给clashmi透传屏蔽的域名响应
+        exec: accept
+      - matches: "!mark 199"
+        exec: $sequence_local_fake                 #解析国内域名为fakeip供clashmi标记
+
+                                                   #给clashmi回家用的dns服务器
+  - tag: udp_clashmi
+    type: udp_server
+    args:
+      entry: sequence_for_clashmi
+      listen: ":99"
+      enable_audit: true
+
+  - tag: tcp_clashmi
+    type: tcp_server
+    args:
+      entry: sequence_for_clashmi
+      listen: ":99"
+      enable_audit: true

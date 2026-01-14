@@ -3,19 +3,14 @@
   "ecs": "2408:8214:213::1",
   "replacements": [
     {
-      "original": "udp://127.0.0.1:6666",
-      "new": "udp://127.0.0.1:6666",
+      "original": "udp://127.0.0.1:7874",
+      "new": "udp://127.0.0.1:7874",
       "comment": "sing-box fakedns"
     },
     {
       "original": "udp://127.0.0.1:1053",
       "new": "udp://127.0.0.1:1053",
       "comment": "mihomo fakedns"
-    },
-    {
-      "original": "127.0.0.1:7891",
-      "new": "127.0.0.1:7891",
-      "comment": "sing-box socks5"
     },
     {
       "original": "114.114.114.114",
@@ -46,6 +41,31 @@
       "original": "999999999",
       "new": "999999999",
       "comment": "阿里私有doh key secret"
+    },
+    {
+      "original": "nft_false",
+      "new": "nft_false",
+      "comment": "启用添加nft规则功能"
+    },
+    {
+      "original": "nft/nft.conf",
+      "new": "/cus/sbmi.conf",
+      "comment": "初始加载的nft规则文件"
+    },
+    {
+      "original": "sing-box",
+      "new": "sing-box",
+      "comment": "nft table名称"
+    },
+    {
+      "original": "local_ipv4",
+      "new": "local_ipv4",
+      "comment": "添加在线ip集至此nft ipv4 ipset"
+    },
+    {
+      "original": "local_ipv6",
+      "new": "local_ipv6",
+      "comment": "添加在线ip集至此nft ipv6 ipset"
     }
   ]
 }

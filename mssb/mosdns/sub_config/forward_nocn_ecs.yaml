@@ -1,8 +1,8 @@
 plugins:
 #定义了一个带过期缓存的内部使用/外部使用的国外dns服务器（带ecs），供节点域名解析使用
 #在不泄露版本中，供不在域名列表中的域名初次解析使用
-  - tag: forward_google_ecs
-    type: forward
+  - tag: foreignecs
+    type: aliapi
     args:
       concurrent: 1
       upstreams:
@@ -14,17 +14,17 @@ plugins:
     args:
       - exec: ecs 2408:8888::8
       - exec: $cache_google_node
-      - exec: $forward_google_ecs
+      - exec: $foreignecs
       - exec: cname_remover
 
   - tag: udp_google_ecs
     type: udp_server
     args:
       entry: sequence_google_node
-      listen: 127.0.0.1:4444
+      listen: ":4444"
 
   - tag: tcp_google_ecs
     type: tcp_server
     args:
       entry: sequence_google_node
-      listen: 127.0.0.1:4444
+      listen: ":4444"

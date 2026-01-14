@@ -1,10 +1,33 @@
 plugins:
+#给mosdns虚拟机添加nft规则，适用于openwrt及sing-box/mosdns安装在同一虚拟机的情况
+  - tag: nft_add
+    type: nft_add
+    args:
+      socks5: "127.0.0.1:7891"
+      local_config: "nft/nftadd.json"
+      nft_config:
+        enable: "nft_false"
+        startup_delay: 5
+        table_family: "inet"
+        table_name: "sing-box"
+        set_v4: "local_ipv4"
+        set_v6: "local_ipv6"
+        fixip: "nft/fixip.txt"
+        nftfile: "nft/nft.conf"
+
 #列表外域名解析IP为此列表中IP，归入直连
   - tag: direct_ip
     type: ip_set
     args:
       files:
         - "rule/direct_ip.txt"
+
+#列表外域名解析IP为此列表中IP，归入直连
+  - tag: nft_ip
+    type: ip_set
+    args:
+      files:
+        - "nft/fixip.txt"
 
 #重定向
   - tag: rewrite
@@ -104,6 +127,13 @@ plugins:
     args:
       files:
         - "rule/whitelist.txt"
+
+#自定义白名单域名列表
+  - tag: cnfakeipfilter
+    type: domain_set
+    args:
+      files:
+        - "rule/cnfakeipfilter.txt"
 
 #屏蔽域名列表
   - tag: blocklist

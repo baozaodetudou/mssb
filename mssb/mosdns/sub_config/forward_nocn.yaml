@@ -1,8 +1,8 @@
 plugins:
 #定义了一个带过期缓存的内部使用/外部使用的国外dns服务器
 #转发dns请求到国外dns
-  - tag: forward_google
-    type: forward
+  - tag: foreign
+    type: aliapi
     args:
       concurrent: 2
       upstreams:
@@ -18,7 +18,7 @@ plugins:
     args:
       - matches: switch4 'A'
         exec: $cache_google
-      - exec: $forward_google
+      - exec: $foreign
       - exec: cname_remover
 
 #国外
@@ -26,10 +26,10 @@ plugins:
     type: udp_server
     args:
       entry: sequence_google_in
-      listen: 127.0.0.1:3333
+      listen: ":3333"
 
   - tag: tcp_google
     type: tcp_server
     args:
       entry: sequence_google_in
-      listen: 127.0.0.1:3333
+      listen: ":3333"
