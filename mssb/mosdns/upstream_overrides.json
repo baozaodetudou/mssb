@@ -79,7 +79,7 @@
       "tag": "sing-box",
       "enabled": true,
       "protocol": "udp",
-      "addr": "udp://127.0.0.1:7874"
+      "addr": "udp://127.0.0.1:6666"
     }
   ]
 }

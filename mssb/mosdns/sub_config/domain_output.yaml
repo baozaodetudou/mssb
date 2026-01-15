@@ -25,7 +25,7 @@ plugins:
       file_stat: gen/fakeiplist.txt
       file_rule: gen/fakeiprule.txt
 #      gen_rule: /cus/AdGuardHome/data/userfilters/fakeip.txt
-#      pattern: "[/DOMAIN/]127.0.0.1:7874"
+#      pattern: "[/DOMAIN/]127.0.0.1:6666"
 #      appended_string: "udp://127.0.0.1:6666"
       max_entries: 1000
       dump_interval: 36010

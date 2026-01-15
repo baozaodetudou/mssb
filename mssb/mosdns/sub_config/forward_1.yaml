@@ -6,7 +6,7 @@ plugins:
     args:
       concurrent: 1
       upstreams:
-        - addr: "udp://127.0.0.1:7874"
+        - addr: "udp://127.0.0.1:6666"
 
 #向mihomo请求国内的fakeip
   - tag: cnfake
