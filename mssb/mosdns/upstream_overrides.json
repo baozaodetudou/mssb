@@ -66,7 +66,7 @@
       "socks5": "127.0.0.1:7891"
     }
   ],
-  "mihomo": [
+  "cnfake": [
     {
       "tag": "mihomo",
       "enabled": true,
@@ -74,7 +74,7 @@
       "addr": "udp://127.0.0.1:1053"
     }
   ],
-  "sing-box": [
+  "nocnfake": [
     {
       "tag": "sing-box",
       "enabled": true,

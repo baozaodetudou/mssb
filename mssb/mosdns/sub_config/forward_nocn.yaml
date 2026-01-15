@@ -7,9 +7,9 @@ plugins:
       concurrent: 2
       upstreams:
         - addr: "https://1.1.1.1/dns-query"
-          socks5: "127.0.0.1:7891"
+          socks5: ""
         - addr: "https://8.8.8.8/dns-query"
-          socks5: "127.0.0.1:7891"
+          socks5: ""
           upstream_query_timeout: 1000
 
 #国内域名 内部使用

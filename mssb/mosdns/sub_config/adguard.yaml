@@ -3,4 +3,4 @@ plugins:
     type: adguard_rule
     args:
       dir: "adguard/"
-      socks5: "127.0.0.1:7891"
+      socks5: ""

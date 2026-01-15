@@ -1,15 +1,15 @@
 plugins:
 #使用前面定义的内部dns服务器，并定义可复用的序列，文件名中的1代表了层级
 #转发请求至sing-box/mihome dns请求fakeip
-  - tag: sing-box
+  - tag: nocnfake
     type: aliapi
     args:
       concurrent: 1
       upstreams:
-        - addr: "udp://127.0.0.1:6666"
+        - addr: "udp://127.0.0.1:7874"
 
 #向mihomo请求国内的fakeip
-  - tag: mihomo
+  - tag: cnfake
     type: aliapi
     args:
       concurrent: 1
@@ -36,14 +36,14 @@ plugins:
       - matches: mark 29
         exec: $sequence_local
       - matches: "!mark 29"
-        exec: $mihomo
+        exec: $cnfake
       - exec: ttl 5
 
 #单次请求fakeip
   - tag: sequence_fakeip
     type: sequence
     args:
-      - exec: $sing-box
+      - exec: $nocnfake
 
 #缓存序列-列表外域名
   - tag: sequence_google

@@ -3,7 +3,7 @@ plugins:
   - tag: nft_add
     type: nft_add
     args:
-      socks5: "127.0.0.1:7891"
+      socks5: ""
       local_config: "nft/nftadd.json"
       nft_config:
         enable: "nft_false"
@@ -41,14 +41,14 @@ plugins:
   - tag: cusnocn
     type: sd_set    
     args:
-      socks5: "127.0.0.1:7891" 
+      socks5: "" 
       local_config: "srs/cusnocn.json" 
 
 #自定义国内域名列表
   - tag: cuscn
     type: sd_set    
     args:
-      socks5: "127.0.0.1:7891" 
+      socks5: "" 
       local_config: "srs/cuscn.json" 
 
 #生成的realip规则
@@ -97,14 +97,14 @@ plugins:
   - tag: geosite_cn
     type: sd_set    
     args:
-      socks5: "127.0.0.1:7891" 
+      socks5: "" 
       local_config: "srs/geositecn.json" 
 
 #中国IP列表
   - tag: geoip_cn
     type: si_set    
     args:
-      socks5: "127.0.0.1:7891" 
+      socks5: "" 
       local_config: "srs/geoipcn.json" 
 
 #需要代理的客户端IP列表
@@ -112,13 +112,13 @@ plugins:
     type: ip_set
     args:
       files:
-        - "client_ip.txt"
+        - "rule/client_ip.txt"
 
 #国外域名列表
   - tag: geosite_no_cn
     type: sd_set    
     args:
-      socks5: "127.0.0.1:7891" 
+      socks5: "" 
       local_config: "srs/geositenocn.json" 
 
 #自定义白名单域名列表
