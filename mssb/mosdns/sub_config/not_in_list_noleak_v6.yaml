@@ -13,17 +13,17 @@ plugins:
       - matches: "rcode 2 5"                         #cf再失败或者拒绝
         exec: $sequence_local                        #用国内dns再查一次
       - matches: "!resp_ip 2000::/3"
-        exec: mark 662                               #没有ip标记
+        exec: fast_mark 28                           #没有ip标记
       - matches:
         - "rcode 0 3"
-        - "mark 662"
+        - "fast_mark 28"
         exec: $my_nov6list                           #还没有ip就加入自生成无v6域名列表
       - matches: "rcode 2 3 5"                       #失败、拒绝、无域名
         exec: exit                                   #再没有ip就接受并结束流程
-      - matches: mark 662
+      - matches: fast_mark 28
         exec:
           - drop_resp                                #避免cname传递
           - reject 0                                 #此处仅跳出当前exec隐藏子序列并设置rcode
-      - matches: mark 662
+      - matches: fast_mark 28
         exec: exit                                   #跳出所有处理逻辑结束处理
       - exec: $sequence_not_in_list_ipmatch          #表外域名对上游获取到的ip进行对比并处理 

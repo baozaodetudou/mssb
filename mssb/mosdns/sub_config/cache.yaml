@@ -7,7 +7,7 @@ plugins:
       lazy_cache_ttl: 259200000
 #      exclude_ip:
 #        - 28.0.0.0/8
-#        - f2b0::/18
+#        - 2001:2::/64
       dump_file: cache/cache_all.dump
       dump_interval: 36000
 
@@ -19,7 +19,7 @@ plugins:
       lazy_cache_ttl: 259200000
       exclude_ip:
 #        - 28.0.0.0/8
-#        - f2b0::/18
+#        - 2001:2::/64
       dump_file: cache/cache_all_noleak.dump
       dump_interval: 36000
 

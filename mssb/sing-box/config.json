@@ -37,7 +37,7 @@
                 "type": "fakeip",
                 "tag": "fakeipDNS",
                 "inet4_range": "28.0.0.1/8",
-                "inet6_range": "f2b0::/18"
+                "inet6_range": "2001:2::/64"
             }
         ],
         "rules": [

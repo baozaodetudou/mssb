@@ -4,24 +4,22 @@ plugins:
     type: sequence
     args:
       - matches: "resp_ip $direct_ip"            
-        exec: mark 101                           #标记上游dns返回了直连ip列表中的ip
-      - matches: mark 101
+        exec: fast_mark 24                       #标记上游dns返回了直连ip列表中的ip
+      - matches: fast_mark 24
         exec: $my_realiplist                     #把此域名加入自生成国内域名列表
       - matches:                                 #开启cntomihomo开关后国内域名向mihomo请求fakeip
-        - mark 101
+        - fast_mark 24
         - switch9 'B'
         exec: $sequence_local_fake
-      - matches: mark 101                        #上游dns返回了自定义直连ip列表中的ip，结束流程
+      - matches: fast_mark 24                    #上游dns返回了自定义直连ip列表中的ip，结束流程
         exec: exit
       - matches: "!resp_ip $geoip_cn"            #标记列表外域名上游dns获取了!cn ip
-        exec: mark 89
-      - matches: mark 89                         #向sing-box请求fakeip并加入自生成国外域名列表
-        exec:
-          - $sequence_fakeip
-          - $my_fakeiplist
-      - matches: "!mark 89"
+        exec: fast_mark 25
+      - matches: fast_mark 25                    #向sing-box请求fakeip并加入自生成国外域名列表
+        exec: $sequence_fakeip_addlist
+      - matches: "!fast_mark 25"
         exec: $my_realiplist                     #如果获取了cn ip，则加入自生成国内域名列表
       - matches:                                 #开启cntomihomo开关后国内域名向mihomo请求fakeip，否则接受上游ip
-        - "!mark 89"                             
+        - "!fast_mark 25"                             
         - switch9 'B'
         exec: $sequence_local_fake

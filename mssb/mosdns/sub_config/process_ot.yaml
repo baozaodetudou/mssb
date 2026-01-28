@@ -3,9 +3,8 @@ plugins:
   - tag: sequence_other
     type: sequence
     args:
-      - matches: qname $geosite_cn     
-        exec: mark 99
-      - matches: mark 99
+      - exec: $unified_matcher5        #匹配其它域名表并设置相应的fast_mark
+      - matches: fast_mark 16
         exec: $sequence_local          #geositecn向国内dns请求
-      - matches: "!mark 99"
+      - matches: "!fast_mark 16"
         exec: $sequence_google         #!geositecn向国外dns请求

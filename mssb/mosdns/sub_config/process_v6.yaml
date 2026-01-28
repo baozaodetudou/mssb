@@ -3,80 +3,77 @@ plugins:
   - tag: sequence_ipv6
     type: sequence
     args:
-      - matches: qname $greylist                           #灰名单域名向sing-box请求fakeip
-        exec:
-          - $sequence_fakeip
-          - exit
-      - matches: qname $whitelist                          #匹配白名单域名
-        exec: mark 11
-      - matches: mark 11
+      - exec: $unified_matcher4                            #匹配灰白域名表并设置相应的fast_mark
+      - matches: fast_mark 7                               #灰名单域名向sing-box请求fakeip并结束
+        exec: $sequence_fakeip
+      - matches: fast_mark 8
         exec: $sequence_local
       - matches:                                           #对于白名单中无IP的域名生成无v6清单
-        - "mark 11"
+        - "fast_mark 8"
         - "rcode 0 3"
         - "!resp_ip 2000::/3"
         exec: $my_nov6list  
       - matches:                                           #开启cntomihomo开关后国内域名向mihomo请求fakeip
-        - mark 11
+        - fast_mark 8
         - switch9 'B'
-        exec: $sequence_local_fake
-      - matches: mark 11                                   #白名单中域名无ipv6，不再向国外dns请求
+        exec: $sequence_local_fake_exit
+      - matches: fast_mark 8                               #白名单中域名无ipv6，不再向国外dns请求
         exec: exit
-      - matches: qname $realiplist                         #!cn fakeip filter，向国外dns请求realip
-        exec:
-          - $sequence_google
-          - exit
-      - exec: $domain_match                                #自生成域名清单、geosite域名匹配
-      - matches: mark 801 888
-        exec: $sequence_local                              #国内域名向国内dns请求realip
-      - matches: mark 901 999
-        exec: $sequence_fakeip                             #国外域名向sing-box请求fakeip
+      - exec: $unified_matcher5                            #匹配其它域名表并设置相应的fast_mark
+      - matches: fast_mark 11
+        exec: $sequence_local_divert                       #自生成国内域名请求real或者fakeip并结束
+      - matches: fast_mark 12
+        exec: $sequence_fakeip                             #自生成国外域名向sing-box请求fakeip并结束
+      - matches: fast_mark 13
+        exec: $sequence_local                              #cuscn域名向国内dns请求realip
       - matches:
-        - "mark 901"                                       #国外域名
-        - "!mark 999"                                      #且没有在自生成国外域名列表中
-        exec: $my_fakeiplist                               #加入自生成国外域名列表
-      - matches: mark 901 999
-        exec: exit                                         #已请求fakeip，结束流程
+        - "fast_mark 14"                                   #geosite-geolocation-!cn                            
+        - "!fast_mark 13"                                  #不在geolocation-!cn@cn中
+        exec: $sequence_fakeip_addlist                     #geosite-geolocation-!cn向sing-box请求fakeip加入清单并结束
+      - matches: fast_mark 15
+        exec: $sequence_fakeip_addlist                     #cusnocn域名向sing-box请求fakeip加入清单并结束
+      - matches: fast_mark 16
+        exec: $sequence_local                              #geosite_cn域名向国内dns请求realip
       - matches: "resp_ip $direct_ip"
-        exec: mark 686                                     #标记上游dns返回了直连ip列表中的ip
+        exec: fast_mark 18                                 #标记上游dns返回了直连ip列表中的ip
       - matches:
-        - "mark 686"                                       #且上游dns返回了直连ip列表中的ip
-        - "!mark 888"                                      #域名不在生成国内域名列表中
+        - "fast_mark 18"                                   #且上游dns返回了直连ip列表中的ip
+        - "!fast_mark 11"                                  #域名不在生成国内域名列表中
         exec: $my_realiplist                               #把此域名加入自生成国内域名列表
       - matches:                                           #开启cntomihomo开关后国内域名向mihomo请求fakeip
-        - mark 686
+        - fast_mark 18
         - switch9 'B'
-        exec: $sequence_local_fake
-      - matches: mark 686
+        exec: $sequence_local_fake_exit
+      - matches: fast_mark 18
         exec: exit                                         #上游dns返回了自定义直连ip列表中的ip，结束流程
       - matches:                                           #上游dns未返回ip或者返回了受污染的ip
         - "rcode 0 3"
         - "!resp_ip 2000::/3"
         - "!resp_ip ::1 ::2 ::3"
-        exec: mark 565
-      - matches: mark 565
+        exec: fast_mark 20
+      - matches: fast_mark 20
         exec: $my_nov6list                                 #加入自生成无v6域名清单
       - matches:                                           #存在没有受污染的ip
         - "resp_ip 2000::/3"                               
         - "!resp_ip ::1 ::2 ::3"
-        exec: mark 787
+        exec: fast_mark 21
       - matches:
-        - "mark 787"                                       #存在没有受污染的ip
-        - "!mark 888"                                      #域名不在生成国内域名列表中
+        - "fast_mark 21"                                   #存在没有受污染的ip
+        - "!fast_mark 11"                                  #域名不在生成国内域名列表中
         exec: $my_realiplist                               #把此域名加入自生成国内域名列表
-      - matches: mark 565                                  #上游dns未返回ip或者返回了受污染的ip
+      - matches: fast_mark 20                              #上游dns未返回ip或者返回了受污染的ip
         exec:
           - drop_resp                                      #避免cname传递
           - reject 0                                       #此处仅跳出当前exec隐藏子序列并设置rcode
-      - matches: mark 565
+      - matches: fast_mark 20
         exec: exit                                         #跳出所有处理逻辑结束处理
       - matches:                                           #开启cntomihomo开关后国内域名向mihomo请求fakeip
-        - mark 787 
+        - fast_mark 21 
         - switch9 'B'
-        exec: $sequence_local_fake
+        exec: $sequence_local_fake_exit
       - matches:                                           #未开启cntomihomo开关的情况则接受上游返回的realip                                        
-        - "mark 787"
-        - "!mark 1000"                                     #对于列表外的域名此时尚未请求任何上游dns，不能结束
+        - "fast_mark 21"
+        - "!fast_mark 17"                                  #对于列表外的域名此时尚未请求任何上游dns，不能结束
         exec: exit
       - matches: switch3 'A'                               #兼容模式处理列表外域名
         exec: $sequence_not_in_list_leak_v6

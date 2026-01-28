@@ -41,7 +41,7 @@
         "fakeip": {
             "enabled": true,
             "inet4_range": "28.0.0.0/8",
-            "inet6_range": "f2b0::/18"
+            "inet6_range": "2001:2::/64"
         },
         "rules": [
             {

@@ -5,10 +5,10 @@ plugins:
     args:
       - exec: $sequence_local                    #表外域名先发到国内   
       - matches: "!resp_ip 0.0.0.0/0"            #rcode 235及没有IP等情况
-        exec: mark 123
+        exec: fast_mark 22
       - matches: "resp_ip 127.0.0.1 0.0.0.0"     #有污染IP的
-        exec: mark 123
-      - matches: mark 123                        #没有ip或者有污染ip
+        exec: fast_mark 22
+      - matches: fast_mark 22                        #没有ip或者有污染ip
         exec: $sequence_google                   #google dns再查一次
       - matches:
         - "rcode 0 3"

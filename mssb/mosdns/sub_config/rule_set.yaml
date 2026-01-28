@@ -39,42 +39,42 @@ plugins:
 
 #自定义国外域名列表
   - tag: cusnocn
-    type: sd_set    
+    type: sd_set_light    
     args:
       socks5: "" 
       local_config: "srs/cusnocn.json" 
 
 #自定义国内域名列表
   - tag: cuscn
-    type: sd_set    
+    type: sd_set_light    
     args:
       socks5: "" 
       local_config: "srs/cuscn.json" 
 
 #生成的realip规则
   - tag: my_realiprule
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "gen/realiprule.txt"
 
 #生成的fakeip规则
   - tag: my_fakeiprule
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "gen/fakeiprule.txt"
 
 #生成的没有v6的域名规则
   - tag: my_nov6rule
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "gen/nov6rule.txt"
 
 #生成的没有ip的域名规则
   - tag: my_nov4rule
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "gen/nov4rule.txt"
@@ -95,7 +95,7 @@ plugins:
 
 #中国域名列表
   - tag: geosite_cn
-    type: sd_set    
+    type: sd_set_light    
     args:
       socks5: "" 
       local_config: "srs/geositecn.json" 
@@ -112,74 +112,60 @@ plugins:
     type: ip_set
     args:
       files:
-        - "rule/client_ip.txt"
+        - "client_ip.txt"
 
 #国外域名列表
   - tag: geosite_no_cn
-    type: sd_set    
+    type: sd_set_light    
     args:
       socks5: "" 
       local_config: "srs/geositenocn.json" 
 
 #自定义白名单域名列表
   - tag: whitelist
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "rule/whitelist.txt"
 
 #自定义白名单域名列表
   - tag: cnfakeipfilter
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "rule/cnfakeipfilter.txt"
 
 #屏蔽域名列表
   - tag: blocklist
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "rule/blocklist.txt"
 
-#屏蔽V4解析的域名列表
-  - tag: blocklistv4
-    type: domain_set
-    args:
-      files:
-        - "rule/blocklistv4.txt"
-
-#屏蔽V6解析的域名列表
-  - tag: blocklistv6
-    type: domain_set
-    args:
-      files:
-        - "rule/blocklistv6.txt"
-
 #国外dns解析realip域名列表
   - tag: realiplist
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "rule/realiplist.txt"
 
 #自定义强制代理域名列表
   - tag: greylist
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "rule/greylist.txt"
 
 #ddns域名列表
   - tag: ddnslist
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "rule/ddnslist.txt"
 
 #pcdn域名列表
   - tag: pcdnlist
-    type: domain_set
+    type: domain_set_light
     args:
       files:
         - "rule/pcdnlist.txt"
@@ -197,3 +183,77 @@ plugins:
     args:
       files:
         - "rule/pcdnregv6.txt"
+
+#统一域名匹配,设置fast_mark和域名输出tag，屏蔽部分
+  - tag: unified_matcher1
+    type: domain_mapper
+    args:
+      rules:
+        - tag: blocklist
+          mark: 1 
+          output_tag: "黑名单"
+        - tag: my_nov4rule
+          mark: 2 
+          output_tag: "记忆无V4"
+        - tag: my_nov6rule
+          mark: 3 
+          output_tag: "记忆无V6"
+        - tag: pcdnlist
+          mark: 4 
+          output_tag: "PCDN"
+        - tag: adguard
+          mark: 5 
+          output_tag: "广告屏蔽"
+        - tag: ddnslist
+          mark: 6 
+          output_tag: "DDNS域名"
+
+#统一域名匹配,设置mark和域名输出tag，fakeip filter部分
+  - tag: unified_matcher3
+    type: domain_mapper
+    args:
+      rules:
+        - tag: realiplist
+          mark: 9
+          output_tag: "!CN fakeip filter"
+        - tag: cnfakeipfilter
+          mark: 10
+          output_tag: "CN fakeip filter"
+
+#统一域名匹配,设置mark和域名输出tag，灰白名单匹配部分
+  - tag: unified_matcher4
+    type: domain_mapper
+    args:
+      rules:
+        - tag: greylist
+          mark: 7
+          output_tag: "灰名单"
+        - tag: whitelist
+          mark: 8 
+          output_tag: "白名单"
+
+#统一域名匹配,设置mark和域名输出tag，其它名单匹配部分
+  - tag: unified_matcher5
+    type: domain_mapper
+    args:
+      default_mark: 17 
+      default_tag: "未命中"
+      rules:
+        - tag: my_realiprule
+          mark: 11
+          output_tag: "记忆直连"
+        - tag: my_fakeiprule
+          mark: 12
+          output_tag: "记忆代理"
+        - tag: cuscn
+          mark: 13
+          output_tag: "订阅直连补充"
+        - tag: geosite_no_cn
+          mark: 14
+          output_tag: "订阅代理"
+        - tag: cusnocn
+          mark: 15
+          output_tag: "订阅代理补充"
+        - tag: geosite_cn
+          mark: 16
+          output_tag: "订阅直连"

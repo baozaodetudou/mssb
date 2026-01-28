@@ -16,7 +16,6 @@ include:
   - "sub_config/forward_nocn.yaml"          #带过期缓存的内部使用国外dns服务器
   - "sub_config/forward_nocn_ecs.yaml"      #带过期缓存的内部使用国外dns服务器（带ecs）节点使用
   - "sub_config/forward_1.yaml"             #使用前面定义的内部dns服务器定义序列 1代表调用层级 大的调用小的
-  - "sub_config/con_match.yaml"             #定义序列对域名列表进行并发匹配生成黑洞IP
   - "sub_config/switch.yaml"                #切换开关定义
   - "sub_config/not_in_list_ipmatch.yaml"   #列表外的域名获取上游dns响应结果后进行ip对比
   - "sub_config/not_in_list_leak_v4.yaml"   #列表外的域名泄露版的处理逻辑
@@ -42,59 +41,57 @@ plugins:
         - "qtype 28"
         - switch6 'A'
         exec: reject 0
-      - matches: switch1 'A'                #屏蔽blocklist、没有解析记录的A、AAAA请求
-        exec: mark 2
+      - exec: $unified_matcher1             #匹配屏蔽域名表并设置相应的fast_mark
       - matches:                            #屏蔽黑名单域名
-        - mark 2
-        - qname $blocklist
+        - switch1 'A'
+        - fast_mark 1
         exec: reject 0
       - matches:                            #屏蔽没有v4地址的域名
         - qtype 1
-        - mark 2
-        - qname $my_nov4rule
+        - switch1 'A'
+        - fast_mark 2
         exec: reject 0
       - matches:                            #屏蔽没有v6地址的域名
         - qtype 28
-        - mark 2
-        - qname $my_nov6rule
+        - switch1 'A'
+        - fast_mark 3
         exec: reject 0
       - matches:                            #屏蔽pcdn v4
         - qtype 1
-        - mark 2
-        - qname $pcdnlist
+        - switch1 'A'
+        - fast_mark 4
         - qname $pcdnregv4
         exec: reject 0
       - matches:                            #屏蔽pcdn v6
         - qtype 28
-        - mark 2
-        - qname $pcdnlist
+        - switch1 'A'
+        - fast_mark 4
         - qname $pcdnregv6
         exec: reject 0
       - matches:                            #屏蔽广告
         - switch7 'A'
-        - "qname $adguard"
+        - fast_mark 5
         exec: reject 0
       - exec: $top_domains
-      - matches: qname $ddnslist            #向上游请求ddns域名，无过期缓存
+      - exec: $rewrite                      #匹配成功重定向后直接结束不执行后续流程
+      - matches: fast_mark 6                #向上游请求ddns域名，无过期缓存
         exec:
           - $domestic
           - exit
-      - exec: $rewrite
-      - matches: has_resp
-        exec: accept
       - matches:                            #当mosdns占用53直面客户端，只有client_ip.txt中指定的IP才科学
         - switch2 'A'
         - switch12 'B'
         - "!client_ip $client_ip"
-        exec: mark 3
+        exec: fast_mark 39
       - matches:                            #当mosdns占用53直面客户端，client_ip.txt中指定的IP不科学
         - switch2 'B'
         - switch12 'A'
         - "client_ip $client_ip"
-        exec: mark 3
-      - matches: mark 3
+        exec: fast_mark 39
+      - matches: fast_mark 39
         exec:
           - $sequence_local
+          - tag_setter 指定客户端直连
           - exit
       - matches:
         - switch8 'A'                       #Prefer IPV4开
@@ -146,58 +143,56 @@ plugins:
         - "qtype 28"
         - switch6 'A'
         exec: reject 0
-      - matches: switch1 'A'                #屏蔽blocklist、没有解析记录的A、AAAA请求
-        exec: mark 2
+      - exec: $unified_matcher1             #匹配屏蔽域名表并设置相应的fast_mark
       - matches:                            #屏蔽黑名单域名
-        - mark 2
-        - qname $blocklist
+        - switch1 'A'
+        - fast_mark 1
         exec: reject 0
       - matches:                            #屏蔽没有v4地址的域名
         - qtype 1
-        - mark 2
-        - qname $my_nov4rule
+        - switch1 'A'
+        - fast_mark 2
         exec: reject 0
       - matches:                            #屏蔽没有v6地址的域名
         - qtype 28
-        - mark 2
-        - qname $my_nov6rule
+        - switch1 'A'
+        - fast_mark 3
         exec: reject 0
       - matches:                            #屏蔽pcdn v4
         - qtype 1
-        - mark 2
-        - qname $pcdnlist
+        - switch1 'A'
+        - fast_mark 4
         - qname $pcdnregv4
         exec: reject 0
       - matches:                            #屏蔽pcdn v6
         - qtype 28
-        - mark 2
-        - qname $pcdnlist
+        - switch1 'A'
+        - fast_mark 4
         - qname $pcdnregv6
         exec: reject 0
       - matches:                            #屏蔽广告
         - switch7 'A'
-        - "qname $adguard"
+        - fast_mark 5
         exec: reject 0
-      - matches: qname $ddnslist            #向上游请求ddns域名，无过期缓存
+      - exec: $rewrite                      #匹配成功重定向后直接结束不执行后续流程
+      - matches: fast_mark 6                #向上游请求ddns域名，无过期缓存
         exec:
           - $domestic
           - exit
-      - exec: $rewrite
-      - matches: has_resp
-        exec: accept
       - matches:                            #当mosdns占用53直面客户端，只有client_ip.txt中指定的IP才科学
         - switch2 'A'
         - switch12 'B'
         - "!client_ip $client_ip"
-        exec: mark 3
+        exec: fast_mark 39
       - matches:                            #当mosdns占用53直面客户端，client_ip.txt中指定的IP不科学
         - switch2 'B'
         - switch12 'A'
         - "client_ip $client_ip"
-        exec: mark 3
-      - matches: mark 3
+        exec: fast_mark 39
+      - matches: fast_mark 39
         exec:
           - $sequence_local
+          - tag_setter 指定客户端直连
           - exit
       - matches:
         - switch8 'A'                       #Prefer IPV4开
@@ -238,12 +233,19 @@ plugins:
   - tag: sequence_for_stash
     type: sequence
     args:
-      - exec: $sequence_6666
+      - exec: try $sequence_6666                  #捕获exit动作后继续后续流程
       - matches: "resp_ip 30.0.0.0/8 2400::1/64"  #如果主路由返回了国内fakeip
-        exec: $sequence_local                     #为stash转换回国内realip
+        exec:
+          - $sequence_local
+          - tag_setter stash国内
+          - exit
+      - matches: "resp_ip 28.0.0.0/8 2001:2::/64"
+        exec:
+          - tag_setter stash国外
+          - exit
+      - exec: tag_setter stash国内
 
-                                                  #给stash回家用的dns服务器
-  - tag: udp_stash
+  - tag: udp_stash                                #给stash回家用的dns服务器
     type: udp_server
     args:
       entry: sequence_for_stash
@@ -260,16 +262,21 @@ plugins:
   - tag: sequence_for_clashmi                      #给clashmi回家用的服务器
     type: sequence
     args:
-      - exec: $sequence_6666
+      - exec: try $sequence_6666
       - matches: "resp_ip 28.0.0.0/8 2001:2::/64"
-        exec: mark 199
+        exec:
+          - fast_mark 26
+          - tag_setter clashmi国外
+          - exit
       - matches: "!resp_ip 0.0.0.0/0 2000::/3"     #给clashmi透传屏蔽的域名响应
-        exec: accept
-      - matches: "!mark 199"
-        exec: $sequence_local_fake                 #解析国内域名为fakeip供clashmi标记
+        exec: exit
+      - matches: "!fast_mark 26"
+        exec:
+          - $sequence_local_fake_clashmi
+          - tag_setter clashmi国内
+          - exit
 
-                                                   #给clashmi回家用的dns服务器
-  - tag: udp_clashmi
+  - tag: udp_clashmi                               #给clashmi回家用的dns服务器
     type: udp_server
     args:
       entry: sequence_for_clashmi
@@ -281,4 +288,32 @@ plugins:
     args:
       entry: sequence_for_clashmi
       listen: ":99"
+      enable_audit: true
+
+  - tag: sequence_for_singbox
+    type: sequence
+    args:
+      - exec: try $sequence_6666                  #捕获exit动作后继续后续流程
+      - matches: "resp_ip 30.0.0.0/8 2400::1/64"  #如果主路由返回了国内fakeip
+        exec:
+          - tag_setter sing-box国内
+          - exit
+      - matches: "resp_ip 28.0.0.0/8 2001:2::/64"
+        exec:
+          - tag_setter sing-box国外
+          - exit
+      - exec: tag_setter sing-box国内
+
+  - tag: udp_singbox                               #给sing-box回家用的dns服务器
+    type: udp_server
+    args:
+      entry: sequence_for_singbox
+      listen: ":111"
+      enable_audit: true
+
+  - tag: tcp_singbox
+    type: tcp_server
+    args:
+      entry: sequence_for_singbox
+      listen: ":111"
       enable_audit: true

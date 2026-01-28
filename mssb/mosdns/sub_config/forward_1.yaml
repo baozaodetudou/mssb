@@ -17,6 +17,15 @@ plugins:
         - addr: "udp://127.0.0.1:1053"
 
 #缓存序列-国内域名realip
+  - tag: sequence_local_exit
+    type: sequence
+    args:
+      - matches: switch4 'A'
+        exec: $cache_cn
+      - exec: $domestic
+      - exec: cname_remover
+      - exec: exit
+
   - tag: sequence_local
     type: sequence
     args:
@@ -25,25 +34,53 @@ plugins:
       - exec: $domestic
       - exec: cname_remover
 
-#向mihomo请求国内的fakeip序列
+#向mihomo请求国内的fakeip序列，重新向国内dns请求
   - tag: sequence_local_fake
     type: sequence
     args:
       - matches: switch4 'A'
         exec: $cache_cnmihomo
-      - matches: qname $cnfakeipfilter
-        exec: mark 29
-      - matches: mark 29
+      - exec: $unified_matcher3  #匹配fakeip filter域名表并设置相应的fast_mark
+      - matches: fast_mark 10
         exec: $sequence_local
-      - matches: "!mark 29"
+      - matches: "!fast_mark 10"
+        exec: $cnfake
+      - exec: ttl 5
+      - exec: exit
+
+  - tag: sequence_local_fake_clashmi
+    type: sequence
+    args:
+      - matches: switch4 'A'
+        exec: $cache_cnmihomo
+      - exec: $unified_matcher3  #匹配fakeip filter域名表并设置相应的fast_mark
+      - matches: fast_mark 10
+        exec: $sequence_local
+      - matches: "!fast_mark 10"
         exec: $cnfake
       - exec: ttl 5
 
-#单次请求fakeip
-  - tag: sequence_fakeip
+#向mihomo请求国内的fakeip序列,直接接受前一步国内dns的结果
+  - tag: sequence_local_fake_exit
     type: sequence
     args:
-      - exec: $nocnfake
+      - exec: $unified_matcher3  #匹配fakeip filter域名表并设置相应的fast_mark
+      - matches: fast_mark 10
+        exec: exit               #直接采用前一步国内dns的realip并结束
+      - matches: switch4 'A'
+        exec: $cache_cnmihomo
+      - exec: $cnfake
+      - exec: ttl 5
+      - exec: exit
+
+#国内fake real分流
+  - tag: sequence_local_divert
+    type: sequence
+    args:
+      - matches: switch9 'A'              #realip
+        exec: $sequence_local_exit
+      - matches: switch9 'B'              #fakeip
+        exec: $sequence_local_fake
 
 #缓存序列-列表外域名
   - tag: sequence_google
@@ -53,6 +90,32 @@ plugins:
         exec: $cache_google
       - exec: $foreign
       - exec: cname_remover
+
+#请求fakeip
+  - tag: sequence_fakeip
+    type: sequence
+    args:
+      - exec: $unified_matcher3  #匹配fakeip filter域名表并设置相应的fast_mark
+      - matches: fast_mark 9          #!cn fakeip filter，向国外dns请求realip
+        exec:
+          - $sequence_google
+          - exit
+      - exec: $nocnfake
+      - exec: exit
+
+#请求fakeip并加入清单
+  - tag: sequence_fakeip_addlist
+    type: sequence
+    args:
+      - exec: $unified_matcher3  #匹配fakeip filter域名表并设置相应的fast_mark
+      - matches: fast_mark 9          #!cn fakeip filter，向国外dns请求realip
+        exec:
+          - $sequence_google
+          - exit
+      - exec: $nocnfake
+      - matches: "!fast_mark 12"       
+        exec: $my_fakeiplist     #加入自生成国外域名列表
+      - exec: exit
 
 #国内域名 内部使用
   - tag: sequence_local_in
